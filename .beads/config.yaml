@@ -2,5 +2,8 @@
 # Note: scripts/beads/bd.mjs has this prefix hardcoded in regex patterns.
 issue-prefix: 'bead'
 
+# Use JSONL-only mode (bypass corrupt Dolt database)
+no-db: true
+
 # Branch name used by `bd sync` for metadata exchange.
 sync-branch: 'beads-metadata'
