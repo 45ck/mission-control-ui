@@ -1,6 +1,7 @@
 import { useParams, Link } from 'react-router';
 import { ArrowLeft } from 'lucide-react';
 import { missions } from '../data/missions';
+import { workflows } from '../data/workflows';
 import { escalations } from '../data/escalations';
 import { agentSessions } from '../data/agent-sessions';
 import { aw } from '../theme/tokens';
@@ -8,17 +9,28 @@ import { TopBar } from '../components/shell/TopBar';
 import { EscalationHeader } from '../components/escalation/EscalationHeader';
 import { ReplayTimeline } from '../components/escalation/ReplayTimeline';
 import { ConsequencePanel } from '../components/escalation/ConsequencePanel';
+import { CornerBracket } from '../components/primitives/CornerBracket';
+import { PanelPins } from '../components/primitives/PanelPins';
+import { PageTransition } from '../components/shell/PageTransition';
 
 export function MissionEscalation() {
-  const { id } = useParams<{ id: string }>();
-  const mission = missions.find((m) => m.id === id);
+  const { missionId, workflowId } = useParams<{ missionId: string; workflowId?: string }>();
+  const mission = missions.find((m) => m.id === missionId);
+  const workflow = workflowId ? workflows.find((w) => w.id === workflowId) : undefined;
 
   if (!mission) {
     return (
       <div className="flex h-full items-center justify-center">
-        <span className="aw-section text-[14px]" style={{ color: aw.textSoft }}>
+        <span className="aw-section" style={{ color: aw.textSoft }}>
           Mission not found
         </span>
+        <Link
+          to="/missions"
+          className="aw-focus-ring mt-2 inline-flex items-center gap-1 aw-micro transition-colors hover:text-[var(--color-aw-text-strong)]"
+          style={{ color: aw.textSoft }}
+        >
+          Back to missions
+        </Link>
       </div>
     );
   }
@@ -29,63 +41,98 @@ export function MissionEscalation() {
 
   if (!primaryEscalation) {
     return (
-      <>
-        <TopBar missionId={mission.id} breadcrumbs={['Missions', mission.title, 'Escalation']} />
+      <PageTransition>
+        <TopBar
+          missionId={mission.id}
+          breadcrumbs={
+            workflow
+              ? [
+                  { label: 'Workflows', to: '/workflows' },
+                  { label: workflow.title, to: `/workflows/${workflow.id}` },
+                  { label: mission.title },
+                  { label: 'Escalation' },
+                ]
+              : [
+                  { label: 'Missions', to: '/missions' },
+                  { label: mission.title, to: `/missions/${missionId}` },
+                  { label: 'Escalation' },
+                ]
+          }
+        />
         <div className="flex h-full items-center justify-center">
-          <span className="aw-body text-[11px]" style={{ color: aw.textSoft }}>
+          <span className="aw-body" style={{ color: aw.textSoft }}>
             No escalations for this mission.
           </span>
         </div>
-      </>
+      </PageTransition>
     );
   }
 
   return (
-    <>
-      <TopBar missionId={mission.id} breadcrumbs={['Missions', mission.title, 'Escalation']} />
+    <PageTransition>
+      <TopBar
+        missionId={mission.id}
+        breadcrumbs={
+          workflow
+            ? [
+                { label: 'Workflows', to: '/workflows' },
+                { label: workflow.title, to: `/workflows/${workflow.id}` },
+                { label: mission.title },
+                { label: 'Escalation' },
+              ]
+            : [
+                { label: 'Missions', to: '/missions' },
+                { label: mission.title, to: `/missions/${missionId}` },
+                { label: 'Escalation' },
+              ]
+        }
+      />
 
       <EscalationHeader escalation={primaryEscalation} />
 
       <div className="flex flex-1 overflow-hidden">
         {/* Center: issue detail + replay */}
-        <div className="flex-1 overflow-y-auto p-6 pb-16">
+        <div className="flex-1 overflow-y-auto p-8 pb-16">
           <Link
-            to="/missions"
-            className="mb-4 inline-flex items-center gap-1 aw-micro text-[8px] transition-colors hover:text-[var(--color-aw-text-strong)]"
+            to={workflowId ? `/workflows/${workflowId}` : '/missions'}
+            className="aw-focus-ring mb-4 inline-flex items-center gap-1 aw-micro transition-colors hover:text-[var(--color-aw-text-strong)]"
             style={{ color: aw.textSoft }}
           >
             <ArrowLeft className="h-3 w-3" />
-            Back to missions
+            {workflowId ? 'Back to workflow' : 'Back to missions'}
           </Link>
 
           {/* Issue detail */}
-          <div className="border p-4" style={{ borderColor: aw.lineDark }}>
-            <div className="aw-micro text-[8px]" style={{ color: aw.textSoft }}>
+          <div className="relative border p-5" style={{ borderColor: aw.lineDark }}>
+            <CornerBracket side="left" />
+            <CornerBracket side="right" />
+            <PanelPins />
+            <div className="aw-micro" style={{ color: aw.textSoft }}>
               ISSUE DETAIL
             </div>
-            <div className="aw-body mt-2 text-[10px] leading-relaxed" style={{ color: aw.text }}>
+            <div className="aw-body mt-2 leading-relaxed" style={{ color: aw.text }}>
               {primaryEscalation.detail}
             </div>
           </div>
 
           {/* Replay timeline */}
-          <div className="mt-6">
+          <div className="mt-8">
             <ReplayTimeline sessions={mSessions} />
           </div>
 
           {/* Other escalations */}
           {mEscalations.length > 1 && (
-            <div className="mt-6">
-              <div className="aw-micro text-[8px]" style={{ color: aw.textSoft }}>
+            <div className="mt-8">
+              <div className="aw-micro" style={{ color: aw.textSoft }}>
                 RELATED ESCALATIONS ({mEscalations.length - 1})
               </div>
-              <div className="mt-2 space-y-3">
+              <div className="mt-3 space-y-4">
                 {mEscalations.slice(1).map((esc) => (
-                  <div key={esc.id} className="border p-3" style={{ borderColor: aw.lineDark }}>
-                    <div className="aw-section text-[9px]" style={{ color: aw.textStrong }}>
+                  <div key={esc.id} className="border p-4" style={{ borderColor: aw.lineDark }}>
+                    <div className="aw-section-sm" style={{ color: aw.textStrong }}>
                       {esc.title}
                     </div>
-                    <div className="aw-body mt-1 text-[8px]" style={{ color: aw.text }}>
+                    <div className="aw-body-sm mt-1" style={{ color: aw.text }}>
                       {esc.summary}
                     </div>
                   </div>
@@ -103,6 +150,6 @@ export function MissionEscalation() {
           <ConsequencePanel options={primaryEscalation.options} />
         </div>
       </div>
-    </>
+    </PageTransition>
   );
 }

@@ -1,27 +1,46 @@
+import { useState, useEffect } from 'react';
 import { Outlet } from 'react-router';
+import { AnimatePresence } from 'framer-motion';
 import { LeftNav } from './LeftNav';
+import { CommandPalette } from './CommandPalette';
 import { AmbientDots } from '../primitives/AmbientDots';
 import { aw } from '../../theme/tokens';
 
 export function AppShell() {
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setCommandPaletteOpen((prev) => !prev);
+      }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, []);
+
   return (
     <div className="aw-paper relative flex h-screen overflow-hidden">
       <AmbientDots />
       <LeftNav />
+      <CommandPalette open={commandPaletteOpen} onClose={() => setCommandPaletteOpen(false)} />
       <main
         className="relative flex flex-1 flex-col overflow-hidden"
         style={{ backgroundColor: 'transparent' }}
       >
         {/* Faint radial glow */}
         <div
-          className="pointer-events-none absolute inset-0 opacity-[0.08]"
+          className="pointer-events-none absolute inset-0 opacity-[0.14]"
           style={{
             background:
               'radial-gradient(circle at 50% 30%, rgba(255,255,255,0.76), transparent 58%)',
           }}
         />
-        <div className="relative flex flex-1 flex-col overflow-hidden">
-          <Outlet />
+        <div className="aw-scanlines relative flex flex-1 flex-col overflow-hidden">
+          <AnimatePresence mode="wait">
+            <Outlet />
+          </AnimatePresence>
         </div>
       </main>
       {/* Bottom timestamp bar */}
@@ -29,10 +48,10 @@ export function AppShell() {
         className="absolute bottom-0 left-0 right-0 z-10 flex items-center justify-between border-t px-5 py-1.5"
         style={{ borderColor: aw.line, backgroundColor: aw.haze }}
       >
-        <div className="aw-micro text-[7px]" style={{ color: aw.textSoft }}>
+        <div className="aw-micro text-[9px]" style={{ color: aw.textSoft }}>
           MISSION.CTRL // OPERATING SURFACE v0.1.0
         </div>
-        <div className="aw-timestamp text-[10px]" style={{ color: aw.lineDark }}>
+        <div className="aw-timestamp text-[12px]" style={{ color: aw.lineDark }}>
           {new Date().toLocaleTimeString([], {
             hour: '2-digit',
             minute: '2-digit',

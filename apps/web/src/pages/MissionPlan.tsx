@@ -1,6 +1,7 @@
 import { useParams, Link } from 'react-router';
 import { ArrowLeft } from 'lucide-react';
 import { missions } from '../data/missions';
+import { workflows } from '../data/workflows';
 import { evidence } from '../data/evidence';
 import { aw } from '../theme/tokens';
 import { TopBar } from '../components/shell/TopBar';
@@ -8,17 +9,26 @@ import { MissionHeader } from '../components/mission/MissionHeader';
 import { EvidenceRail } from '../components/evidence/EvidenceRail';
 import { PanelPins } from '../components/primitives/PanelPins';
 import { CornerBracket } from '../components/primitives/CornerBracket';
+import { PageTransition } from '../components/shell/PageTransition';
 
 export function MissionPlan() {
-  const { id } = useParams<{ id: string }>();
-  const mission = missions.find((m) => m.id === id);
+  const { missionId, workflowId } = useParams<{ missionId: string; workflowId?: string }>();
+  const mission = missions.find((m) => m.id === missionId);
+  const workflow = workflowId ? workflows.find((w) => w.id === workflowId) : undefined;
 
   if (!mission) {
     return (
       <div className="flex h-full items-center justify-center">
-        <span className="aw-section text-[14px]" style={{ color: aw.textSoft }}>
+        <span className="aw-section" style={{ color: aw.textSoft }}>
           Mission not found
         </span>
+        <Link
+          to="/missions"
+          className="aw-focus-ring mt-2 inline-flex items-center gap-1 aw-micro transition-colors hover:text-[var(--color-aw-text-strong)]"
+          style={{ color: aw.textSoft }}
+        >
+          Back to missions
+        </Link>
       </div>
     );
   }
@@ -26,61 +36,73 @@ export function MissionPlan() {
   const missionEvidence = evidence.filter((e) => e.missionId === mission.id);
 
   return (
-    <>
-      <TopBar missionId={mission.id} breadcrumbs={['Missions', mission.title, 'Plan']} />
+    <PageTransition>
+      <TopBar
+        missionId={mission.id}
+        breadcrumbs={
+          workflow
+            ? [
+                { label: 'Workflows', to: '/workflows' },
+                { label: workflow.title, to: `/workflows/${workflow.id}` },
+                { label: mission.title },
+                { label: 'Plan' },
+              ]
+            : [
+                { label: 'Missions', to: '/missions' },
+                { label: mission.title, to: `/missions/${missionId}` },
+                { label: 'Plan' },
+              ]
+        }
+      />
 
       <div className="flex flex-1 overflow-hidden">
         {/* Center: Plan content */}
-        <div className="flex-1 overflow-y-auto p-6 pb-16">
+        <div className="flex-1 overflow-y-auto p-8 pb-16">
           <Link
-            to="/missions"
-            className="mb-4 inline-flex items-center gap-1 aw-micro text-[8px] transition-colors hover:text-[var(--color-aw-text-strong)]"
+            to={workflowId ? `/workflows/${workflowId}` : '/missions'}
+            className="aw-focus-ring mb-4 inline-flex items-center gap-1 aw-micro transition-colors hover:text-[var(--color-aw-text-strong)]"
             style={{ color: aw.textSoft }}
           >
             <ArrowLeft className="h-3 w-3" />
-            Back to missions
+            {workflowId ? 'Back to workflow' : 'Back to missions'}
           </Link>
 
           <MissionHeader mission={mission} />
 
           {/* Goal section */}
-          <div className="relative mt-6 border p-4" style={{ borderColor: aw.lineDark }}>
+          <div className="relative mt-6 border p-5" style={{ borderColor: aw.lineDark }}>
             <CornerBracket side="left" />
             <CornerBracket side="right" />
-            <div className="aw-micro text-[8px]" style={{ color: aw.textSoft }}>
+            <div className="aw-micro" style={{ color: aw.textSoft }}>
               MISSION GOAL
             </div>
-            <div className="aw-body mt-2 text-[11px]" style={{ color: aw.text }}>
+            <div className="aw-body mt-2" style={{ color: aw.text }}>
               {mission.goal}
             </div>
           </div>
 
           {/* Scope boundary */}
-          <div className="relative mt-4 border p-4" style={{ borderColor: aw.lineDark }}>
+          <div className="relative mt-6 border p-5" style={{ borderColor: aw.lineDark }}>
             <PanelPins />
-            <div className="aw-micro text-[8px]" style={{ color: aw.textSoft }}>
+            <div className="aw-micro" style={{ color: aw.textSoft }}>
               SCOPE BOUNDARY
             </div>
-            <div className="aw-body mt-2 text-[11px]" style={{ color: aw.text }}>
+            <div className="aw-body mt-2" style={{ color: aw.text }}>
               {mission.scopeBoundary}
             </div>
           </div>
 
           {/* Acceptance criteria */}
-          <div className="relative mt-4 border p-4" style={{ borderColor: aw.lineDark }}>
+          <div className="relative mt-6 border p-5" style={{ borderColor: aw.lineDark }}>
             <PanelPins />
-            <div className="aw-micro text-[8px]" style={{ color: aw.textSoft }}>
+            <div className="aw-micro" style={{ color: aw.textSoft }}>
               ACCEPTANCE CRITERIA
             </div>
-            <ul className="mt-2 space-y-1.5">
+            <ul className="mt-2 space-y-2">
               {mission.acceptanceCriteria.map((c, i) => (
-                <li
-                  key={i}
-                  className="flex items-start gap-2 aw-body text-[10px]"
-                  style={{ color: aw.text }}
-                >
+                <li key={i} className="flex items-start gap-2 aw-body" style={{ color: aw.text }}>
                   <span
-                    className="mt-[3px] inline-block h-[5px] w-[5px] shrink-0 rounded-full"
+                    className="mt-[5px] inline-block h-[5px] w-[5px] shrink-0 rounded-full"
                     style={{ backgroundColor: aw.lineInk }}
                   />
                   {c}
@@ -90,20 +112,18 @@ export function MissionPlan() {
           </div>
 
           {/* Risks */}
-          <div className="relative mt-4 border p-4" style={{ borderColor: aw.lineDark }}>
+          <div className="relative mt-6 border p-5" style={{ borderColor: aw.lineDark }}>
+            <CornerBracket side="left" />
+            <CornerBracket side="right" />
             <PanelPins />
-            <div className="aw-micro text-[8px]" style={{ color: aw.accentStrong }}>
+            <div className="aw-micro" style={{ color: aw.accentStrong }}>
               IDENTIFIED RISKS
             </div>
-            <ul className="mt-2 space-y-1.5">
+            <ul className="mt-2 space-y-2">
               {mission.risks.map((r, i) => (
-                <li
-                  key={i}
-                  className="flex items-start gap-2 aw-body text-[10px]"
-                  style={{ color: aw.text }}
-                >
+                <li key={i} className="flex items-start gap-2 aw-body" style={{ color: aw.text }}>
                   <span
-                    className="mt-[3px] inline-block h-[5px] w-[5px] shrink-0 rotate-45"
+                    className="mt-[5px] inline-block h-[5px] w-[5px] shrink-0 rotate-45"
                     style={{ backgroundColor: aw.accent }}
                   />
                   {r}
@@ -114,9 +134,9 @@ export function MissionPlan() {
 
           {/* Approval CTA */}
           {mission.stage === 'plan' && (
-            <div className="mt-6 flex items-center gap-3">
+            <div className="mt-8 flex items-center gap-3">
               <button
-                className="aw-section px-4 py-2 text-[10px]"
+                className="aw-focus-ring aw-section px-5 py-2.5"
                 style={{
                   backgroundColor: aw.plateDark,
                   color: aw.inverse,
@@ -125,7 +145,7 @@ export function MissionPlan() {
                 Approve Plan & Begin Execution
               </button>
               <button
-                className="aw-section border px-4 py-2 text-[10px]"
+                className="aw-focus-ring aw-section border px-5 py-2.5 transition-colors hover:bg-[var(--color-aw-haze)]"
                 style={{ borderColor: aw.lineDark, color: aw.text }}
               >
                 Request Changes
@@ -139,14 +159,14 @@ export function MissionPlan() {
           className="w-[280px] shrink-0 overflow-y-auto border-l p-4 pb-16"
           style={{ borderColor: aw.line }}
         >
-          <div className="aw-micro text-[8px]" style={{ color: aw.textSoft }}>
+          <div className="aw-micro" style={{ color: aw.textSoft }}>
             RISK & EVIDENCE SUMMARY
           </div>
           <div className="mt-3">
             {missionEvidence.length > 0 ? (
               <EvidenceRail items={missionEvidence} />
             ) : (
-              <div className="aw-body py-4 text-center text-[9px]" style={{ color: aw.textSoft }}>
+              <div className="aw-body py-4 text-center" style={{ color: aw.textSoft }}>
                 No evidence gathered yet.
                 <br />
                 Evidence will appear once execution begins.
@@ -155,6 +175,6 @@ export function MissionPlan() {
           </div>
         </div>
       </div>
-    </>
+    </PageTransition>
   );
 }
