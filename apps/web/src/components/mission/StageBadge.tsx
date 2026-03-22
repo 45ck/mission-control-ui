@@ -1,0 +1,21 @@
+import type { Stage } from '../../data/missions';
+import { aw } from '../../theme/tokens';
+
+const stageConfig: Record<Stage, { label: string; bg: string }> = {
+  plan: { label: 'PLAN', bg: aw.plate },
+  execute: { label: 'EXECUTE', bg: aw.plateDark },
+  review: { label: 'REVIEW', bg: aw.accentStrong },
+  escalation: { label: 'ESCALATION', bg: aw.accent },
+};
+
+export function StageBadge({ stage }: { stage: Stage }) {
+  const config = stageConfig[stage];
+  return (
+    <span
+      className="aw-micro inline-flex items-center px-2 py-[3px] text-[8px]"
+      style={{ backgroundColor: config.bg, color: aw.inverse }}
+    >
+      {config.label}
+    </span>
+  );
+}

@@ -1,0 +1,110 @@
+@import "tailwindcss";
+
+@theme {
+  /* AW palette */
+  --color-aw-shell: #d8ddde;
+  --color-aw-paper-top: #f7f8f8;
+  --color-aw-paper-bottom: #eceeef;
+  --color-aw-haze: #eef1f1;
+  --color-aw-map: #dadedf;
+  --color-aw-map-soft: #e5e8e8;
+  --color-aw-line-faint: #dcdfdf;
+  --color-aw-line: #bec4c6;
+  --color-aw-line-dark: #a4abae;
+  --color-aw-line-ink: #8c9396;
+  --color-aw-text-strong: #5a6266;
+  --color-aw-text: #6e767a;
+  --color-aw-text-soft: #93999c;
+  --color-aw-plate: #63696d;
+  --color-aw-plate-dark: #4f5559;
+  --color-aw-accent: #d56f5f;
+  --color-aw-accent-strong: #c85f49;
+  --color-aw-accent-soft: #ebbab0;
+  --color-aw-inverse: #f8f8f8;
+
+  /* Typography */
+  --font-display: "Orbitron", sans-serif;
+  --font-section: "Rajdhani", sans-serif;
+  --font-body: "IBM Plex Sans Condensed", sans-serif;
+}
+
+/* Typography utilities */
+.aw-display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-aw-text-strong);
+}
+
+.aw-subdisplay {
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.aw-section {
+  font-family: var(--font-section);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.aw-micro {
+  font-family: var(--font-section);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.aw-body {
+  font-family: var(--font-body);
+  font-weight: 400;
+  line-height: 1.55;
+}
+
+.aw-timestamp {
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  color: var(--color-aw-line-dark);
+}
+
+/* Base styles */
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  background-color: var(--color-aw-shell);
+  color: var(--color-aw-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Paper background utility */
+.aw-paper {
+  background-color: var(--color-aw-paper-bottom);
+  background-image:
+    radial-gradient(circle at 14% 16%, rgba(255, 255, 255, 0.82) 0, rgba(255, 255, 255, 0.12) 30%, transparent 58%),
+    radial-gradient(circle at 74% 22%, rgba(255, 255, 255, 0.34) 0, transparent 42%),
+    radial-gradient(circle at 28% 72%, rgba(255, 255, 255, 0.22) 0, transparent 42%),
+    radial-gradient(circle at 1px 1px, rgba(111, 118, 122, 0.1) 0.8px, transparent 1px),
+    linear-gradient(180deg, var(--color-aw-paper-top) 0%, var(--color-aw-paper-bottom) 100%);
+  background-size: auto, auto, auto, 18px 18px, auto;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-aw-haze);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-aw-line-dark);
+  border-radius: 3px;
+}
