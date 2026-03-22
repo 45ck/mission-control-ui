@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import type { Mission } from '../../data/missions';
-import { aw, transitions } from '../../theme/tokens';
+import { agentSessions } from '../../data/agent-sessions';
+import { aw, semantic, transitions } from '../../theme/tokens';
 import { CornerBracket } from '../primitives/CornerBracket';
 import { FeedTicks } from '../primitives/FeedTicks';
 import { StageBadge } from './StageBadge';
@@ -17,6 +18,10 @@ export function MissionCard({
   selected: boolean;
   onClick: () => void;
 }) {
+  const isLive =
+    mission.stage === 'execute' &&
+    agentSessions.some((s) => s.missionId === mission.id && s.status === 'active');
+
   return (
     <motion.button
       onClick={onClick}
@@ -37,8 +42,22 @@ export function MissionCard({
       <CornerBracket side="right" />
       <FeedTicks />
 
-      <div className="aw-micro" style={{ color: aw.textSoft }}>
-        {mission.id}
+      <div className="flex items-center gap-2">
+        <span className="aw-micro" style={{ color: aw.textSoft }}>
+          {mission.id}
+        </span>
+        {isLive && (
+          <span
+            className="aw-micro inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-[9px]"
+            style={{ backgroundColor: semantic.successSoft, color: semantic.success }}
+          >
+            <span
+              className="inline-block h-[5px] w-[5px] animate-pulse rounded-full"
+              style={{ backgroundColor: semantic.success }}
+            />
+            LIVE
+          </span>
+        )}
       </div>
 
       <div className="aw-section mt-1 leading-tight" style={{ color: aw.textStrong }}>

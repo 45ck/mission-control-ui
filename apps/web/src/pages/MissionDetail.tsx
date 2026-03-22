@@ -15,6 +15,7 @@ import { VerificationBadge } from '../components/evidence/VerificationBadge';
 import { HeatNode } from '../components/primitives/HeatNode';
 
 import { MissionTimeline } from '../components/mission/MissionTimeline';
+import { StageTabBar } from '../components/mission/StageTabBar';
 
 export function MissionDetail() {
   const { missionId, workflowId } = useParams<{ missionId: string; workflowId?: string }>();
@@ -92,6 +93,8 @@ export function MissionDetail() {
               ]
         }
       />
+
+      <StageTabBar missionId={mission.id} workflowId={workflowId} currentStage="overview" />
 
       <div className="flex-1 overflow-y-auto p-6 pb-16">
         <div className="mx-auto max-w-3xl space-y-5">

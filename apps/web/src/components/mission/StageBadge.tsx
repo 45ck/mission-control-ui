@@ -12,7 +12,7 @@ export function StageBadge({ stage }: { stage: Stage }) {
   const config = stageConfig[stage];
   return (
     <span
-      className="aw-micro inline-flex items-center px-2 py-[3px] text-[8px]"
+      className="aw-micro inline-flex items-center rounded-sm px-3 py-1 text-[9px]"
       style={{ backgroundColor: config.bg, color: aw.inverse }}
     >
       {config.label}

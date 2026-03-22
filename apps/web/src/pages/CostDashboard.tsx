@@ -104,8 +104,10 @@ export function CostDashboard() {
   const modelGroups = groupByModel();
   const workflowGroups = groupByWorkflow();
 
-  const maxMissionTokens = Math.max(...missionGroups.map((g) => g.totalTokens), 1);
-  const maxModelCost = Math.max(...modelGroups.map((g) => g.totalCost), 0.01);
+  const missionTokenValues = missionGroups.map((g) => g.totalTokens);
+  const maxMissionTokens = missionTokenValues.length > 0 ? Math.max(...missionTokenValues, 1) : 1;
+  const modelCostValues = modelGroups.map((g) => g.totalCost);
+  const maxModelCost = modelCostValues.length > 0 ? Math.max(...modelCostValues, 0.01) : 0.01;
 
   return (
     <PageTransition>

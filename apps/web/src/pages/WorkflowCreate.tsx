@@ -1,14 +1,16 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { useNavigate, useBlocker } from 'react-router';
 import { motion, AnimatePresence } from 'framer-motion';
-import { GripVertical, X } from 'lucide-react';
+import { GripVertical, X, ListChecks } from 'lucide-react';
 import { missions as allMissions } from '../data/missions';
 import type { Mission } from '../data/missions';
-import { aw, transitions } from '../theme/tokens';
+import { aw, semantic, transitions } from '../theme/tokens';
 import { TopBar } from '../components/shell/TopBar';
 import { PageTransition } from '../components/shell/PageTransition';
 import { PanelPins } from '../components/primitives/PanelPins';
 import { CornerBracket } from '../components/primitives/CornerBracket';
 import { RuleLabel } from '../components/primitives/RuleLabel';
+import { EmptyState } from '../components/primitives/EmptyState';
 
 /* ------------------------------------------------------------------ */
 /*  Sub-component: Mission selector (checkbox list)                    */
@@ -66,8 +68,12 @@ function OrderedMissionList({
 }) {
   if (missions.length === 0) {
     return (
-      <div className="aw-body mt-2" style={{ color: aw.textSoft }}>
-        No missions selected
+      <div className="mt-2">
+        <EmptyState
+          icon={ListChecks}
+          title="No missions selected"
+          description="Select missions above to add them to this workflow."
+        />
       </div>
     );
   }
@@ -143,11 +149,39 @@ function WorkflowPreview({
 /*  Main page component                                                */
 /* ------------------------------------------------------------------ */
 export function WorkflowCreate() {
+  const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [owner, setOwner] = useState('');
   const [selectedMissionIds, setSelectedMissionIds] = useState<string[]>([]);
   const [showToast, setShowToast] = useState(false);
+  const [errors, setErrors] = useState<{ title?: string }>({});
+  const [submitted, setSubmitted] = useState(false);
+
+  const isDirty =
+    title !== '' || description !== '' || owner !== '' || selectedMissionIds.length > 0;
+
+  const blocker = useBlocker(isDirty && !submitted);
+
+  useEffect(() => {
+    if (blocker.state === 'blocked') {
+      const leave = window.confirm('You have unsaved changes. Leave anyway?');
+      if (leave) {
+        blocker.proceed();
+      } else {
+        blocker.reset();
+      }
+    }
+  }, [blocker]);
+
+  useEffect(() => {
+    if (!isDirty || submitted) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [isDirty, submitted]);
 
   const handleTitleChange = useCallback((val: string) => {
     setTitle(val);
@@ -166,8 +200,17 @@ export function WorkflowCreate() {
   const selectedMissions = allMissions.filter((m) => selectedMissionIds.includes(m.id));
 
   function handleCreate() {
+    const newErrors: { title?: string } = {};
+    if (!title.trim()) newErrors.title = 'Title is required';
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) return;
+
+    setSubmitted(true);
     setShowToast(true);
-    setTimeout(() => setShowToast(false), 2000);
+    setTimeout(() => {
+      void navigate('/workflows');
+    }, 1200);
   }
 
   return (
@@ -178,7 +221,12 @@ export function WorkflowCreate() {
         {/* Left column: form */}
         <div className="w-[60%] overflow-y-auto p-6 pb-16">
           <div className="space-y-5">
-            <FormFieldTitle value={title} onChange={handleTitleChange} />
+            <FormFieldTitle
+              value={title}
+              onChange={handleTitleChange}
+              error={errors.title}
+              onClearError={() => setErrors((prev) => ({ ...prev, title: undefined }))}
+            />
             <FormFieldDescription value={description} onChange={setDescription} />
             <FormFieldOwner value={owner} onChange={setOwner} />
 
@@ -260,23 +308,48 @@ export function WorkflowCreate() {
 /* ------------------------------------------------------------------ */
 /*  Extracted form fields (to keep main function under 80 lines)       */
 /* ------------------------------------------------------------------ */
-function FormFieldTitle({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+function FormFieldTitle({
+  value,
+  onChange,
+  error,
+  onClearError,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  error?: string;
+  onClearError?: () => void;
+}) {
   return (
-    <div className="relative border p-5" style={{ borderColor: aw.lineDark }}>
+    <div
+      className="relative border p-5"
+      style={{ borderColor: error ? semantic.error : aw.lineDark }}
+    >
       <PanelPins corners="all" />
       <CornerBracket side="left" />
       <CornerBracket side="right" />
       <label className="aw-micro" style={{ color: aw.textSoft }}>
-        TITLE
+        TITLE <span style={{ color: semantic.error }}>*</span>
       </label>
       <input
         type="text"
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => {
+          onChange(e.target.value);
+          if (error) onClearError?.();
+        }}
         className="aw-section aw-focus-ring mt-2 block w-full border px-3 py-2"
-        style={{ borderColor: aw.lineDark, backgroundColor: 'transparent', color: aw.textStrong }}
+        style={{
+          borderColor: error ? semantic.error : aw.lineDark,
+          backgroundColor: 'transparent',
+          color: aw.textStrong,
+        }}
         placeholder="Workflow title"
       />
+      {error && (
+        <div className="aw-micro mt-1" style={{ color: semantic.error }}>
+          {error}
+        </div>
+      )}
     </div>
   );
 }

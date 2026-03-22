@@ -6,31 +6,67 @@ import { PanelPins } from '../primitives/PanelPins';
 
 export function BrowserSessionPane({ session }: { session: BrowserSession }) {
   return (
-    <div className="relative border p-3" style={{ borderColor: aw.lineDark }}>
+    <div className="relative border p-4" style={{ borderColor: aw.lineDark }}>
       <PanelPins />
       <div className="flex items-center gap-2">
-        <Globe className="h-[12px] w-[12px]" style={{ color: aw.textSoft }} />
-        <span className="aw-micro text-[7px]" style={{ color: aw.textSoft }}>
+        <Globe className="h-4 w-4" style={{ color: aw.textSoft }} />
+        <span className="aw-micro" style={{ color: aw.textSoft }}>
           BROWSER // {session.status.toUpperCase()}
         </span>
       </div>
-      <div className="mt-1 font-mono text-[8px]" style={{ color: aw.text }}>
+      <div className="mt-1.5 font-mono text-[10px]" style={{ color: aw.text }}>
         {session.url}
       </div>
-      <div className="aw-body mt-2 text-[8px]" style={{ color: aw.text }}>
+      <div className="aw-body-sm mt-2" style={{ color: aw.text }}>
         {session.semanticSummary}
       </div>
-      {/* Placeholder for screenshot */}
-      <div
-        className="mt-2 flex h-[80px] items-center justify-center border"
-        style={{
-          borderColor: aw.lineFaint,
-          backgroundColor: aw.map,
-        }}
-      >
-        <span className="aw-micro text-[7px]" style={{ color: aw.textSoft }}>
-          {session.screenshotPlaceholder}
-        </span>
+      {/* Fake browser chrome */}
+      <div className="mt-3 overflow-hidden border" style={{ borderColor: aw.lineFaint }}>
+        {/* Browser toolbar */}
+        <div
+          className="flex items-center gap-2 border-b px-3 py-1.5"
+          style={{ borderColor: aw.lineFaint, backgroundColor: aw.haze }}
+        >
+          <div className="flex gap-1">
+            <div
+              className="h-[6px] w-[6px] rounded-full"
+              style={{ backgroundColor: aw.lineDark }}
+            />
+            <div
+              className="h-[6px] w-[6px] rounded-full"
+              style={{ backgroundColor: aw.lineDark }}
+            />
+            <div
+              className="h-[6px] w-[6px] rounded-full"
+              style={{ backgroundColor: aw.lineDark }}
+            />
+          </div>
+          <div
+            className="flex-1 rounded-sm border px-2 py-0.5 font-mono text-[9px]"
+            style={{ borderColor: aw.line, backgroundColor: aw.paperTop, color: aw.textSoft }}
+          >
+            {session.url}
+          </div>
+        </div>
+        {/* Viewport placeholder */}
+        <div
+          className="flex h-[140px] items-center justify-center"
+          style={{ backgroundColor: aw.map }}
+        >
+          <div className="text-center">
+            <div
+              className="mx-auto mb-2 h-px w-16"
+              style={{ backgroundColor: aw.lineDark, opacity: 0.4 }}
+            />
+            <span className="aw-micro" style={{ color: aw.textSoft }}>
+              {session.screenshotPlaceholder}
+            </span>
+            <div
+              className="mx-auto mt-2 h-px w-16"
+              style={{ backgroundColor: aw.lineDark, opacity: 0.4 }}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -38,22 +74,22 @@ export function BrowserSessionPane({ session }: { session: BrowserSession }) {
 
 export function TerminalSessionPane({ session }: { session: TerminalSession }) {
   return (
-    <div className="relative border p-3" style={{ borderColor: aw.lineDark }}>
+    <div className="relative border p-4" style={{ borderColor: aw.lineDark }}>
       <PanelPins />
       <div className="flex items-center gap-2">
-        <Terminal className="h-[12px] w-[12px]" style={{ color: aw.textSoft }} />
-        <span className="aw-micro text-[7px]" style={{ color: aw.textSoft }}>
+        <Terminal className="h-4 w-4" style={{ color: aw.textSoft }} />
+        <span className="aw-micro" style={{ color: aw.textSoft }}>
           TERMINAL // {session.status.toUpperCase()}
         </span>
       </div>
-      <div className="mt-1 font-mono text-[8px]" style={{ color: aw.text }}>
+      <div className="mt-1.5 font-mono text-[10px]" style={{ color: aw.text }}>
         $ {session.command}
       </div>
-      <div className="aw-body mt-2 text-[8px]" style={{ color: aw.text }}>
+      <div className="aw-body-sm mt-2" style={{ color: aw.text }}>
         {session.semanticSummary}
       </div>
       <pre
-        className="mt-2 overflow-auto border p-2 text-[7px] leading-relaxed"
+        className="mt-3 overflow-auto border p-3 text-[10px] leading-relaxed"
         style={{
           borderColor: aw.lineFaint,
           backgroundColor: aw.plateDark,

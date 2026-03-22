@@ -21,3 +21,24 @@ export const aw = {
 } as const;
 
 export type AwToken = keyof typeof aw;
+
+export const semantic = {
+  success: '#5a8a5a',
+  successSoft: '#f0f5f0',
+  successMuted: '#4a6b4a',
+  warning: '#b8860b',
+  warningSoft: '#f5f0e0',
+  error: '#c85f49',
+  errorSoft: '#f5e8e6',
+  info: '#5a7a8a',
+  infoSoft: '#e8f0f5',
+} as const;
+
+export type SemanticToken = keyof typeof semantic;
+
+export const transitions = {
+  fast: { duration: 0.12, ease: 'easeOut' },
+  normal: { duration: 0.2, ease: 'easeOut' },
+  slow: { duration: 0.35, ease: 'easeInOut' },
+  spring: { type: 'spring', stiffness: 300, damping: 24 },
+} as const;

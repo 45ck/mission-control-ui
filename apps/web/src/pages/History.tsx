@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { Link } from 'react-router';
 import { missions } from '../data/missions';
 import { aw } from '../theme/tokens';
 import { TopBar } from '../components/shell/TopBar';
@@ -54,15 +55,23 @@ export function History() {
                   <CornerBracket side="right" />
                   <FeedTicks />
                   <div className="flex items-center gap-2">
-                    <span className="aw-micro" style={{ color: aw.textSoft }}>
+                    <Link
+                      to={`/missions/${m.id}`}
+                      className="aw-micro transition-colors hover:text-[var(--color-aw-accent-strong)]"
+                      style={{ color: aw.textSoft }}
+                    >
                       {m.id}
-                    </span>
+                    </Link>
                     <StageBadge stage={m.stage} />
                     <VerificationBadge state={m.verificationState} />
                   </div>
-                  <div className="aw-section mt-1" style={{ color: aw.textStrong }}>
+                  <Link
+                    to={`/missions/${m.id}`}
+                    className="aw-section mt-1 block transition-colors hover:text-[var(--color-aw-accent-strong)]"
+                    style={{ color: aw.textStrong }}
+                  >
                     {m.title}
-                  </div>
+                  </Link>
                   <div className="aw-body-sm mt-1" style={{ color: aw.text }}>
                     {m.goal}
                   </div>

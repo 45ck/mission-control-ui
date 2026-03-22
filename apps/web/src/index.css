@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @theme {
   /* AW palette */
@@ -22,16 +22,29 @@
   --color-aw-accent-soft: #ebbab0;
   --color-aw-inverse: #f8f8f8;
 
+  /* Semantic colors */
+  --color-aw-success: #5a8a5a;
+  --color-aw-success-soft: #f0f5f0;
+  --color-aw-success-muted: #4a6b4a;
+  --color-aw-warning: #b8860b;
+  --color-aw-warning-soft: #f5f0e0;
+  --color-aw-error: #c85f49;
+  --color-aw-error-soft: #f5e8e6;
+  --color-aw-info: #5a7a8a;
+  --color-aw-info-soft: #e8f0f5;
+
   /* Typography */
-  --font-display: "Orbitron", sans-serif;
-  --font-section: "Rajdhani", sans-serif;
-  --font-body: "IBM Plex Sans Condensed", sans-serif;
+  --font-display: 'Orbitron', sans-serif;
+  --font-section: 'Rajdhani', sans-serif;
+  --font-body: 'IBM Plex Sans Condensed', sans-serif;
 }
 
-/* Typography utilities */
+/* ── Typography utilities ── */
 .aw-display {
   font-family: var(--font-display);
   font-weight: 700;
+  font-size: 48px;
+  line-height: 1.1;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--color-aw-text-strong);
@@ -40,6 +53,8 @@
 .aw-subdisplay {
   font-family: var(--font-display);
   font-weight: 500;
+  font-size: 28px;
+  line-height: 1.2;
   letter-spacing: 0.03em;
   text-transform: uppercase;
 }
@@ -47,6 +62,26 @@
 .aw-section {
   font-family: var(--font-section);
   font-weight: 700;
+  font-size: 15px;
+  line-height: 1.35;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.aw-section-lg {
+  font-family: var(--font-section);
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 1.35;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.aw-section-sm {
+  font-family: var(--font-section);
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1.35;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -54,6 +89,17 @@
 .aw-micro {
   font-family: var(--font-section);
   font-weight: 500;
+  font-size: 9px;
+  line-height: 1.3;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.aw-micro-lg {
+  font-family: var(--font-section);
+  font-weight: 500;
+  font-size: 11px;
+  line-height: 1.3;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -61,20 +107,37 @@
 .aw-body {
   font-family: var(--font-body);
   font-weight: 400;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.aw-body-lg {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.aw-body-sm {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 12px;
   line-height: 1.55;
 }
 
 .aw-timestamp {
   font-family: var(--font-display);
   font-weight: 500;
+  font-size: 14px;
   letter-spacing: 0.18em;
   color: var(--color-aw-line-dark);
 }
 
-/* Base styles */
+/* ── Base styles ── */
 body {
   margin: 0;
   font-family: var(--font-body);
+  font-size: 13px;
   background-color: var(--color-aw-shell);
   color: var(--color-aw-text);
   -webkit-font-smoothing: antialiased;
@@ -85,19 +148,29 @@ body {
   box-sizing: border-box;
 }
 
-/* Paper background utility */
+/* ── Paper background utility ── */
 .aw-paper {
   background-color: var(--color-aw-paper-bottom);
   background-image:
-    radial-gradient(circle at 14% 16%, rgba(255, 255, 255, 0.82) 0, rgba(255, 255, 255, 0.12) 30%, transparent 58%),
+    radial-gradient(
+      circle at 14% 16%,
+      rgba(255, 255, 255, 0.82) 0,
+      rgba(255, 255, 255, 0.12) 30%,
+      transparent 58%
+    ),
     radial-gradient(circle at 74% 22%, rgba(255, 255, 255, 0.34) 0, transparent 42%),
     radial-gradient(circle at 28% 72%, rgba(255, 255, 255, 0.22) 0, transparent 42%),
     radial-gradient(circle at 1px 1px, rgba(111, 118, 122, 0.1) 0.8px, transparent 1px),
     linear-gradient(180deg, var(--color-aw-paper-top) 0%, var(--color-aw-paper-bottom) 100%);
-  background-size: auto, auto, auto, 18px 18px, auto;
+  background-size:
+    auto,
+    auto,
+    auto,
+    18px 18px,
+    auto;
 }
 
-/* Scrollbar styling */
+/* ── Scrollbar styling ── */
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -107,4 +180,121 @@ body {
 ::-webkit-scrollbar-thumb {
   background: var(--color-aw-line-dark);
   border-radius: 3px;
+}
+
+/* ── Utility classes ── */
+.aw-focus-ring {
+  outline: none;
+}
+.aw-focus-ring:focus-visible {
+  outline: 2px solid var(--color-aw-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.aw-transition {
+  transition: all 0.2s ease-out;
+}
+
+.aw-card-hover {
+  transition:
+    transform 0.2s ease-out,
+    box-shadow 0.2s ease-out;
+}
+.aw-card-hover:hover {
+  transform: translateY(-1px) scale(1.005);
+  box-shadow:
+    0 4px 12px rgba(90, 98, 102, 0.12),
+    0 1px 3px rgba(90, 98, 102, 0.08);
+}
+
+.aw-scanlines::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(90, 98, 102, 0.015) 2px,
+    rgba(90, 98, 102, 0.015) 4px
+  );
+  z-index: 1;
+}
+
+.aw-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-aw-haze) 25%,
+    var(--color-aw-line-faint) 50%,
+    var(--color-aw-haze) 75%
+  );
+  background-size: 200% 100%;
+  animation: aw-shimmer 1.5s ease-in-out infinite;
+  border-radius: 2px;
+}
+
+@keyframes aw-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.aw-pulse-accent {
+  animation: aw-pulse 2s ease-in-out infinite;
+}
+
+@keyframes aw-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+@keyframes feedTickPulse {
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* ── Responsive breakpoints ── */
+@media (max-width: 1024px) {
+  .aw-display {
+    font-size: 36px;
+  }
+  .aw-subdisplay {
+    font-size: 22px;
+  }
+  .aw-section-lg {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .aw-display {
+    font-size: 28px;
+  }
+  .aw-subdisplay {
+    font-size: 18px;
+  }
+  .aw-section {
+    font-size: 14px;
+  }
+  .aw-section-lg {
+    font-size: 15px;
+  }
+  .aw-body {
+    font-size: 12px;
+  }
 }

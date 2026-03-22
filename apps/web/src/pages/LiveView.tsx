@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, X } from 'lucide-react';
 import { workspaces } from '../data/workspaces';
 import { missions } from '../data/missions';
 import { workflows } from '../data/workflows';
@@ -65,9 +65,15 @@ function LiveViewHeader({
             </span>
           </>
         )}
-        <span className="aw-micro text-[11px]" style={{ color: aw.textSoft }}>
+        <Link
+          to={
+            workflowId ? `/workflows/${workflowId}/missions/${missionId}` : `/missions/${missionId}`
+          }
+          className="aw-micro text-[11px] transition-colors hover:text-[var(--color-aw-text-strong)]"
+          style={{ color: aw.textSoft }}
+        >
           {missionTitle}
-        </span>
+        </Link>
         <span className="aw-micro text-[11px]" style={{ color: aw.lineDark }}>
           /
         </span>
@@ -169,6 +175,13 @@ export function LiveView() {
       >
         <span className="aw-micro font-mono tracking-widest">LIVE SUPERVISION MODE</span>
         <span className="ml-auto aw-micro">Press Esc to exit</span>
+        <button
+          className="aw-focus-ring ml-2 flex items-center justify-center rounded p-0.5 transition-colors hover:bg-[rgba(255,255,255,0.15)]"
+          onClick={() => void navigate(liveBackTo)}
+          title="Close Live View"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
       </div>
       <LiveViewHeader
         missionTitle={mission.title}

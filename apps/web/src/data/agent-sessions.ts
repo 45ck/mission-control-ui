@@ -6,6 +6,12 @@ export interface AgentStep {
   timestamp: string;
 }
 
+export interface TokenUsage {
+  input: number;
+  output: number;
+  total: number;
+}
+
 export interface AgentSession {
   id: string;
   missionId: string;
@@ -16,6 +22,10 @@ export interface AgentSession {
   semanticSummary: string;
   startedAt: string;
   updatedAt: string;
+  tokensUsed?: TokenUsage;
+  estimatedCost?: number;
+  toolsUsed?: string[];
+  branch?: string;
 }
 
 export const agentSessions: AgentSession[] = [
@@ -66,6 +76,10 @@ export const agentSessions: AgentSession[] = [
       'Replaced session-cookie auth with OAuth2 PKCE flow for public API routes. Implemented JWT validation middleware, PKCE code generation, and refresh token rotation. Admin routes left untouched.',
     startedAt: '2026-03-21T09:00:00Z',
     updatedAt: '2026-03-21T10:00:00Z',
+    tokensUsed: { input: 45200, output: 18300, total: 63500 },
+    estimatedCost: 0.87,
+    toolsUsed: ['file_read', 'file_write', 'terminal', 'git'],
+    branch: 'feature/auth-pkce',
   },
   {
     id: 'AS-002',
@@ -100,6 +114,10 @@ export const agentSessions: AgentSession[] = [
       'Wrote and executed 22 tests covering PKCE flow, JWT validation, refresh token rotation, and admin session backward compatibility. 94% code coverage achieved.',
     startedAt: '2026-03-21T10:00:00Z',
     updatedAt: '2026-03-21T10:30:00Z',
+    tokensUsed: { input: 32100, output: 14500, total: 46600 },
+    estimatedCost: 0.64,
+    toolsUsed: ['file_read', 'file_write', 'terminal'],
+    branch: 'feature/auth-pkce',
   },
   {
     id: 'AS-003',
@@ -141,6 +159,10 @@ export const agentSessions: AgentSession[] = [
       'Building per-tenant rate limiting for ingestion pipeline. Sliding window algorithm implemented, currently wiring into request middleware.',
     startedAt: '2026-03-22T09:00:00Z',
     updatedAt: '2026-03-22T09:35:00Z',
+    tokensUsed: { input: 28400, output: 11200, total: 39600 },
+    estimatedCost: 0.54,
+    toolsUsed: ['file_read', 'file_write', 'terminal', 'browser'],
+    branch: 'feature/rate-limiting',
   },
   {
     id: 'AS-004',
@@ -175,6 +197,10 @@ export const agentSessions: AgentSession[] = [
       'Extended billing domain for multi-currency support. FX rate integration working but invoice generation has rounding errors for GBP. Paused pending human decision on rounding strategy.',
     startedAt: '2026-03-20T10:00:00Z',
     updatedAt: '2026-03-20T11:00:00Z',
+    tokensUsed: { input: 62800, output: 24100, total: 86900 },
+    estimatedCost: 1.95,
+    toolsUsed: ['file_read', 'file_write', 'terminal', 'browser', 'git'],
+    branch: 'feature/multi-currency',
   },
   {
     id: 'AS-005',
@@ -202,6 +228,10 @@ export const agentSessions: AgentSession[] = [
       'Researched currency handling requirements. ISO 4217 compliance needs explicit minor unit handling. Stripe gateway confirmed to support EUR/GBP with specific amount formatting.',
     startedAt: '2026-03-20T11:30:00Z',
     updatedAt: '2026-03-20T11:45:00Z',
+    tokensUsed: { input: 18600, output: 8900, total: 27500 },
+    estimatedCost: 0.38,
+    toolsUsed: ['file_read', 'browser'],
+    branch: 'feature/multi-currency',
   },
   {
     id: 'AS-006',
@@ -243,5 +273,9 @@ export const agentSessions: AgentSession[] = [
       'Fully instrumented API gateway with OpenTelemetry. Trace context propagation working via W3C headers. Latency overhead well within budget at 2.3ms P99.',
     startedAt: '2026-03-22T08:00:00Z',
     updatedAt: '2026-03-22T08:50:00Z',
+    tokensUsed: { input: 35700, output: 15200, total: 50900 },
+    estimatedCost: 0.7,
+    toolsUsed: ['file_read', 'file_write', 'terminal'],
+    branch: 'feature/otel-tracing',
   },
 ];

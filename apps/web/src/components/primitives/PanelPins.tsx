@@ -1,6 +1,6 @@
 import { aw } from '../../theme/tokens';
 
-export function PanelPins() {
+export function PanelPins({ corners = 'top' }: { corners?: 'top' | 'all' }) {
   return (
     <>
       <div
@@ -19,6 +19,26 @@ export function PanelPins() {
         className="absolute right-0 top-0 h-px w-[10px]"
         style={{ backgroundColor: aw.lineInk }}
       />
+      {corners === 'all' && (
+        <>
+          <div
+            className="absolute bottom-0 left-0 h-[10px] w-px"
+            style={{ backgroundColor: aw.lineInk }}
+          />
+          <div
+            className="absolute bottom-0 left-0 h-px w-[10px]"
+            style={{ backgroundColor: aw.lineInk }}
+          />
+          <div
+            className="absolute bottom-0 right-0 h-[10px] w-px"
+            style={{ backgroundColor: aw.lineInk }}
+          />
+          <div
+            className="absolute bottom-0 right-0 h-px w-[10px]"
+            style={{ backgroundColor: aw.lineInk }}
+          />
+        </>
+      )}
     </>
   );
 }

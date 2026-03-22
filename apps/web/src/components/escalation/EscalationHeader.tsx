@@ -12,33 +12,30 @@ const typeLabels: Record<string, string> = {
 
 export function EscalationHeader({ escalation }: { escalation: Escalation }) {
   return (
-    <div className="border-b px-5 py-4" style={{ borderColor: aw.lineDark }}>
+    <div className="border-b px-6 py-5" style={{ borderColor: aw.lineDark }}>
       <div className="flex items-center gap-2">
-        <AlertTriangle className="h-[15px] w-[15px]" style={{ color: aw.accentStrong }} />
-        <div className="aw-micro text-[9px]" style={{ color: aw.accentStrong }}>
+        <AlertTriangle className="h-4 w-4" style={{ color: aw.accentStrong }} />
+        <div className="aw-micro-lg" style={{ color: aw.accentStrong }}>
           {typeLabels[escalation.type] ?? escalation.type.toUpperCase()}
         </div>
         <div
-          className="h-[9px] w-[74px] opacity-60"
+          className="h-[10px] w-[100px] opacity-80"
           style={{
             backgroundImage:
-              'repeating-linear-gradient(135deg, rgba(111,118,122,0.55) 0 2px, transparent 2px 5px)',
+              'repeating-linear-gradient(135deg, rgba(111,118,122,0.75) 0 2px, transparent 2px 5px)',
           }}
         />
       </div>
 
       <div
-        className="relative mt-2 inline-flex overflow-hidden"
+        className="relative mt-3 inline-flex overflow-hidden"
         style={{ backgroundColor: aw.accent }}
       >
-        <div
-          className="aw-section px-3 py-[8px] pr-[60px] text-[12px]"
-          style={{ color: aw.inverse }}
-        >
+        <div className="aw-section px-4 py-2.5 pr-[60px] text-[16px]" style={{ color: aw.inverse }}>
           {escalation.title}
         </div>
         <div
-          className="absolute right-0 top-0 h-full w-[44px] opacity-55"
+          className="absolute right-0 top-0 h-full w-[44px] opacity-75"
           style={{
             backgroundImage:
               'repeating-linear-gradient(135deg, rgba(255,255,255,0.42) 0 2px, transparent 2px 5px)',
@@ -46,11 +43,11 @@ export function EscalationHeader({ escalation }: { escalation: Escalation }) {
         />
       </div>
 
-      <div className="aw-body mt-3 max-w-[600px] text-[10px]" style={{ color: aw.text }}>
+      <div className="aw-body mt-3 max-w-[600px]" style={{ color: aw.text }}>
         {escalation.summary}
       </div>
 
-      <div className="aw-micro mt-2 text-[7px]" style={{ color: aw.textSoft }}>
+      <div className="aw-micro mt-2" style={{ color: aw.textSoft }}>
         Checkpoint: {escalation.checkpoint} &middot;{' '}
         {new Date(escalation.timestamp).toLocaleString()}
       </div>

@@ -1,5 +1,5 @@
 import { useParams, Link } from 'react-router';
-import { Eye } from 'lucide-react';
+import { Eye, FolderOpen } from 'lucide-react';
 import { workflows } from '../data/workflows';
 import { missions } from '../data/missions';
 import { agentSessions } from '../data/agent-sessions';
@@ -10,6 +10,8 @@ import { PageTransition } from '../components/shell/PageTransition';
 import { CornerBracket } from '../components/primitives/CornerBracket';
 import { RuleLabel } from '../components/primitives/RuleLabel';
 import { RiskBadge } from '../components/review/RiskBadge';
+import { VerificationBadge } from '../components/evidence/VerificationBadge';
+import { EmptyState } from '../components/primitives/EmptyState';
 
 /* ------------------------------------------------------------------ */
 /*  Stage column for the Kanban board                                  */
@@ -35,8 +37,9 @@ function MissionBoardCard({ mission, workflowId }: { mission: Mission; workflowI
       >
         {mission.title}
       </Link>
-      <div className="mt-2 flex items-center gap-1.5">
+      <div className="mt-2 flex flex-wrap items-center gap-1.5">
         <RiskBadge tier={mission.riskTier} />
+        <VerificationBadge state={mission.verificationState} />
         {activeAgents > 0 && (
           <span className="aw-micro" style={{ color: semantic.success }}>
             {activeAgents} active
@@ -77,16 +80,20 @@ export function WorkflowDetail() {
           ]}
         />
         <div className="flex h-full items-center justify-center p-12">
-          <div className="aw-section" style={{ color: aw.textSoft }}>
-            Workflow not found
+          <div className="text-center">
+            <EmptyState
+              icon={FolderOpen}
+              title="Workflow not found"
+              description="This workflow does not exist or has been removed."
+            />
+            <Link
+              to="/workflows"
+              className="aw-section aw-focus-ring mt-4 inline-block border px-4 py-2 transition-colors hover:bg-[var(--color-aw-haze)]"
+              style={{ borderColor: aw.lineDark, color: aw.textStrong }}
+            >
+              View all workflows
+            </Link>
           </div>
-          <Link
-            to="/workflows"
-            className="aw-section aw-focus-ring mt-4 border px-4 py-2 transition-colors hover:bg-[var(--color-aw-haze)]"
-            style={{ borderColor: aw.lineDark, color: aw.textStrong }}
-          >
-            View all workflows
-          </Link>
         </div>
       </PageTransition>
     );

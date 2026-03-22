@@ -18,6 +18,7 @@ import { BrowserSessionPane, TerminalSessionPane } from '../components/execute/S
 import { EvidenceRail } from '../components/evidence/EvidenceRail';
 import { CodeViewer } from '../components/workspace/CodeViewer';
 import { PageTransition } from '../components/shell/PageTransition';
+import { StageTabBar } from '../components/mission/StageTabBar';
 
 export function MissionExecute() {
   const { missionId, workflowId } = useParams<{ missionId: string; workflowId?: string }>();
@@ -28,18 +29,27 @@ export function MissionExecute() {
 
   if (!mission) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <span className="aw-section" style={{ color: aw.textSoft }}>
-          Mission not found
-        </span>
-        <Link
-          to="/missions"
-          className="aw-focus-ring mt-2 inline-flex items-center gap-1 aw-micro transition-colors hover:text-[var(--color-aw-text-strong)]"
-          style={{ color: aw.textSoft }}
-        >
-          Back to missions
-        </Link>
-      </div>
+      <PageTransition>
+        <TopBar
+          breadcrumbs={[
+            { label: 'Missions', to: '/missions' },
+            { label: missionId ?? 'Unknown' },
+            { label: 'Execute' },
+          ]}
+        />
+        <div className="flex h-full flex-col items-center justify-center gap-2">
+          <span className="aw-section" style={{ color: aw.textSoft }}>
+            Mission not found
+          </span>
+          <Link
+            to="/missions"
+            className="aw-focus-ring inline-flex items-center gap-1 aw-micro transition-colors hover:text-[var(--color-aw-text-strong)]"
+            style={{ color: aw.textSoft }}
+          >
+            Back to missions
+          </Link>
+        </div>
+      </PageTransition>
     );
   }
 
@@ -61,7 +71,7 @@ export function MissionExecute() {
             ? [
                 { label: 'Workflows', to: '/workflows' },
                 { label: workflow.title, to: `/workflows/${workflow.id}` },
-                { label: mission.title },
+                { label: mission.title, to: `/workflows/${workflowId}/missions/${missionId}` },
                 { label: 'Execute' },
               ]
             : [
@@ -72,6 +82,8 @@ export function MissionExecute() {
         }
       />
 
+      <StageTabBar missionId={mission.id} workflowId={workflowId} currentStage="execute" />
+
       <div className="flex flex-1 overflow-hidden">
         {/* Left: mini mission context */}
         <div
@@ -79,12 +91,16 @@ export function MissionExecute() {
           style={{ borderColor: aw.line }}
         >
           <Link
-            to={workflowId ? `/workflows/${workflowId}` : '/missions'}
+            to={
+              workflowId
+                ? `/workflows/${workflowId}/missions/${missionId}`
+                : `/missions/${missionId}`
+            }
             className="aw-focus-ring mb-3 inline-flex items-center gap-1 aw-micro transition-colors hover:text-[var(--color-aw-text-strong)]"
             style={{ color: aw.textSoft }}
           >
             <ArrowLeft className="h-3 w-3" />
-            {workflowId ? 'Workflow' : 'Missions'}
+            Back to mission
           </Link>
 
           <div className="aw-micro" style={{ color: aw.textSoft }}>
@@ -231,7 +247,7 @@ export function MissionExecute() {
                               <span className="aw-body-sm" style={{ color: aw.text }}>
                                 {step.action}: {step.detail}
                               </span>
-                              {step.status === 'success' && (
+                              {step.status === 'completed' && (
                                 <span className="aw-micro" style={{ color: semantic.success }}>
                                   ✓
                                 </span>

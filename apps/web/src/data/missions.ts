@@ -1,6 +1,9 @@
-export type Stage = 'plan' | 'execute' | 'review' | 'escalation';
+/** @deprecated 'escalation' as a stage is being replaced by the escalationActive overlay flag */
+export type Stage = 'plan' | 'execute' | 'review' | 'escalation' | 'completed';
 export type RiskTier = 'low' | 'medium' | 'high';
 export type VerificationState = 'pending' | 'passing' | 'failing' | 'blocked';
+
+export type Priority = 'low' | 'medium' | 'high' | 'critical';
 
 export interface Mission {
   id: string;
@@ -20,6 +23,14 @@ export interface Mission {
   escalationIds: string[];
   createdAt: string;
   updatedAt: string;
+  blockedBy?: string[];
+  blocks?: string[];
+  priority?: Priority;
+  tags?: string[];
+  workflowId?: string;
+  branch?: string;
+  /** When true, an escalation overlay is active regardless of current stage */
+  escalationActive?: boolean;
 }
 
 export const missions: Mission[] = [
@@ -50,6 +61,10 @@ export const missions: Mission[] = [
     escalationIds: ['ESC-001'],
     createdAt: '2026-03-20T09:15:00Z',
     updatedAt: '2026-03-22T11:30:00Z',
+    priority: 'high',
+    tags: ['security', 'auth', 'api'],
+    workflowId: 'WF-001',
+    branch: 'feature/auth-pkce',
   },
   {
     id: 'MSN-002',
@@ -74,6 +89,11 @@ export const missions: Mission[] = [
     escalationIds: [],
     createdAt: '2026-03-21T14:00:00Z',
     updatedAt: '2026-03-22T10:15:00Z',
+    blockedBy: ['MSN-001'],
+    priority: 'medium',
+    tags: ['infrastructure', 'redis', 'rate-limiting'],
+    workflowId: 'WF-001',
+    branch: 'feature/rate-limiting',
   },
   {
     id: 'MSN-003',
@@ -97,6 +117,9 @@ export const missions: Mission[] = [
     escalationIds: [],
     createdAt: '2026-03-22T08:00:00Z',
     updatedAt: '2026-03-22T08:00:00Z',
+    blockedBy: ['MSN-001'],
+    priority: 'low',
+    tags: ['bug-fix', 'scheduler'],
   },
   {
     id: 'MSN-004',
@@ -116,7 +139,7 @@ export const missions: Mission[] = [
       'Existing USD billing unchanged',
     ],
     owner: 'Aisha Patel',
-    stage: 'escalation',
+    stage: 'review',
     riskTier: 'high',
     verificationState: 'blocked',
     agentSessionIds: ['AS-004', 'AS-005'],
@@ -126,6 +149,12 @@ export const missions: Mission[] = [
     escalationIds: ['ESC-002', 'ESC-003'],
     createdAt: '2026-03-19T16:30:00Z',
     updatedAt: '2026-03-22T12:00:00Z',
+    blocks: ['MSN-005'],
+    priority: 'critical',
+    tags: ['billing', 'multi-currency', 'compliance'],
+    workflowId: 'WF-002',
+    branch: 'feature/multi-currency',
+    escalationActive: true,
   },
   {
     id: 'MSN-005',
@@ -150,5 +179,25 @@ export const missions: Mission[] = [
     escalationIds: [],
     createdAt: '2026-03-21T11:00:00Z',
     updatedAt: '2026-03-22T09:45:00Z',
+    blockedBy: ['MSN-004'],
+    priority: 'medium',
+    tags: ['observability', 'tracing', 'api-gateway'],
+    workflowId: 'WF-003',
+    branch: 'feature/otel-tracing',
   },
 ];
+
+import { evidence } from './evidence';
+
+/** Compute verification state from evidence items instead of relying on denormalized field */
+export function computeVerificationState(evidenceIds: string[]): VerificationState {
+  const items = evidence.filter((e) => evidenceIds.includes(e.id));
+  if (items.length === 0) return 'pending';
+
+  const statuses = items.map((e) => e.status);
+  if (statuses.includes('fail')) return 'failing';
+  if (statuses.includes('warning')) return 'blocked';
+  if (statuses.includes('pending')) return 'pending';
+  if (statuses.every((s) => s === 'pass')) return 'passing';
+  return 'pending';
+}

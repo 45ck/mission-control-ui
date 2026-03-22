@@ -1,7 +1,8 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { useNavigate, useBlocker } from 'react-router';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Mission, Stage, RiskTier, VerificationState } from '../data/missions';
-import { aw, transitions } from '../theme/tokens';
+import { aw, semantic, transitions } from '../theme/tokens';
 import { TopBar } from '../components/shell/TopBar';
 import { PageTransition } from '../components/shell/PageTransition';
 import { PanelPins } from '../components/primitives/PanelPins';
@@ -9,6 +10,7 @@ import { CornerBracket } from '../components/primitives/CornerBracket';
 import { MissionCard } from '../components/mission/MissionCard';
 
 export function MissionCreate() {
+  const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [goal, setGoal] = useState('');
   const [scopeBoundary, setScopeBoundary] = useState('');
@@ -19,6 +21,38 @@ export function MissionCreate() {
   const [criterionInput, setCriterionInput] = useState('');
   const [riskInput, setRiskInput] = useState('');
   const [showToast, setShowToast] = useState(false);
+  const [errors, setErrors] = useState<{ title?: string; goal?: string }>({});
+  const [submitted, setSubmitted] = useState(false);
+
+  const isDirty =
+    title !== '' ||
+    goal !== '' ||
+    scopeBoundary !== '' ||
+    owner !== '' ||
+    acceptanceCriteria.length > 0 ||
+    risks.length > 0;
+
+  const blocker = useBlocker(isDirty && !submitted);
+
+  useEffect(() => {
+    if (blocker.state === 'blocked') {
+      const leave = window.confirm('You have unsaved changes. Leave anyway?');
+      if (leave) {
+        blocker.proceed();
+      } else {
+        blocker.reset();
+      }
+    }
+  }, [blocker]);
+
+  useEffect(() => {
+    if (!isDirty || submitted) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [isDirty, submitted]);
 
   const previewMission: Mission = {
     id: 'MSN-NEW',
@@ -65,8 +99,18 @@ export function MissionCreate() {
   }, []);
 
   function handleCreate() {
+    const newErrors: { title?: string; goal?: string } = {};
+    if (!title.trim()) newErrors.title = 'Title is required';
+    if (!goal.trim()) newErrors.goal = 'Goal is required';
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) return;
+
+    setSubmitted(true);
     setShowToast(true);
-    setTimeout(() => setShowToast(false), 2000);
+    setTimeout(() => {
+      void navigate('/missions');
+    }, 1200);
   }
 
   return (
@@ -78,47 +122,69 @@ export function MissionCreate() {
         <div className="w-[60%] overflow-y-auto p-6 pb-16">
           <div className="space-y-5">
             {/* Title */}
-            <div className="relative border p-5" style={{ borderColor: aw.lineDark }}>
+            <div
+              className="relative border p-5"
+              style={{ borderColor: errors.title ? semantic.error : aw.lineDark }}
+            >
               <PanelPins corners="all" />
               <CornerBracket side="left" />
               <CornerBracket side="right" />
               <label className="aw-micro" style={{ color: aw.textSoft }}>
-                TITLE
+                TITLE <span style={{ color: semantic.error }}>*</span>
               </label>
               <input
                 type="text"
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e) => {
+                  setTitle(e.target.value);
+                  if (errors.title) setErrors((prev) => ({ ...prev, title: undefined }));
+                }}
                 className="aw-section aw-focus-ring mt-2 block w-full border px-3 py-2"
                 style={{
-                  borderColor: aw.lineDark,
+                  borderColor: errors.title ? semantic.error : aw.lineDark,
                   backgroundColor: 'transparent',
                   color: aw.textStrong,
                 }}
                 placeholder="Mission title"
               />
+              {errors.title && (
+                <div className="aw-micro mt-1" style={{ color: semantic.error }}>
+                  {errors.title}
+                </div>
+              )}
             </div>
 
             {/* Goal */}
-            <div className="relative border p-5" style={{ borderColor: aw.lineDark }}>
+            <div
+              className="relative border p-5"
+              style={{ borderColor: errors.goal ? semantic.error : aw.lineDark }}
+            >
               <PanelPins />
               <CornerBracket side="left" />
               <CornerBracket side="right" />
               <label className="aw-micro" style={{ color: aw.textSoft }}>
-                GOAL
+                GOAL <span style={{ color: semantic.error }}>*</span>
               </label>
               <textarea
                 value={goal}
-                onChange={(e) => setGoal(e.target.value)}
+                onChange={(e) => {
+                  setGoal(e.target.value);
+                  if (errors.goal) setErrors((prev) => ({ ...prev, goal: undefined }));
+                }}
                 rows={3}
                 className="aw-body aw-focus-ring mt-2 block w-full resize-y border px-3 py-2"
                 style={{
-                  borderColor: aw.lineDark,
+                  borderColor: errors.goal ? semantic.error : aw.lineDark,
                   backgroundColor: 'transparent',
                   color: aw.text,
                 }}
                 placeholder="Describe the mission goal"
               />
+              {errors.goal && (
+                <div className="aw-micro mt-1" style={{ color: semantic.error }}>
+                  {errors.goal}
+                </div>
+              )}
             </div>
 
             {/* Scope Boundary */}

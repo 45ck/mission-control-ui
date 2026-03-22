@@ -1,6 +1,6 @@
 import { CheckCircle, Loader, Circle, XCircle } from 'lucide-react';
 import type { AgentStep } from '../../data/agent-sessions';
-import { aw } from '../../theme/tokens';
+import { aw, semantic } from '../../theme/tokens';
 
 const statusIcons = {
   completed: CheckCircle,
@@ -10,7 +10,7 @@ const statusIcons = {
 };
 
 const statusColors = {
-  completed: '#5a8a5a',
+  completed: semantic.success,
   running: aw.accentStrong,
   pending: aw.textSoft,
   failed: aw.accent,
@@ -22,20 +22,20 @@ export function StepCard({ step }: { step: AgentStep }) {
 
   return (
     <div
-      className="flex items-start gap-2 border-l-2 py-1.5 pl-3"
+      className="flex items-start gap-2.5 border-l-[3px] py-2 pl-3"
       style={{
         borderColor: color,
       }}
     >
       <Icon
-        className={`mt-0.5 h-[10px] w-[10px] shrink-0 ${step.status === 'running' ? 'animate-spin' : ''}`}
+        className={`mt-0.5 h-3 w-3 shrink-0 ${step.status === 'running' ? 'animate-spin' : ''}`}
         style={{ color }}
       />
       <div className="min-w-0">
-        <div className="aw-section text-[9px]" style={{ color: aw.textStrong }}>
+        <div className="aw-section-sm" style={{ color: aw.textStrong }}>
           {step.action}
         </div>
-        <div className="aw-body text-[8px]" style={{ color: aw.text }}>
+        <div className="aw-body-sm" style={{ color: aw.text }}>
           {step.detail}
         </div>
       </div>

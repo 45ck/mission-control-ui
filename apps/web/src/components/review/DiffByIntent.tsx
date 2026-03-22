@@ -1,5 +1,5 @@
 import type { Mission } from '../../data/missions';
-import { aw } from '../../theme/tokens';
+import { aw, semantic } from '../../theme/tokens';
 import { CornerBracket } from '../primitives/CornerBracket';
 
 interface DiffGroup {
@@ -9,7 +9,6 @@ interface DiffGroup {
 }
 
 function buildDiffGroups(mission: Mission): DiffGroup[] {
-  // Stub diff groups based on acceptance criteria
   if (mission.id === 'MSN-001') {
     return [
       {
@@ -55,25 +54,27 @@ export function DiffByIntent({ mission }: { mission: Mission }) {
   const groups = buildDiffGroups(mission);
 
   return (
-    <div className="space-y-4">
-      <div className="aw-micro text-[8px]" style={{ color: aw.textSoft }}>
+    <div className="space-y-5">
+      <div className="aw-micro" style={{ color: aw.textSoft }}>
         DIFF BY INTENT — {groups.length} groups
       </div>
 
       {groups.map((group, i) => (
-        <div key={i} className="relative border p-4" style={{ borderColor: aw.lineDark }}>
+        <div key={i} className="relative border p-5" style={{ borderColor: aw.lineDark }}>
           <CornerBracket side="left" />
           <CornerBracket side="right" />
 
-          <div className="aw-section text-[10px]" style={{ color: aw.textStrong }}>
+          <div className="aw-section" style={{ color: aw.textStrong }}>
             {group.criterion}
           </div>
 
           <div className="mt-2 space-y-1">
             {group.files.map((file) => (
-              <div key={file.path} className="flex items-center gap-2 font-mono text-[8px]">
+              <div key={file.path} className="flex items-center gap-2 font-mono text-[10px]">
                 <span style={{ color: aw.text }}>{file.path}</span>
-                {file.additions > 0 && <span style={{ color: '#5a8a5a' }}>+{file.additions}</span>}
+                {file.additions > 0 && (
+                  <span style={{ color: semantic.success }}>+{file.additions}</span>
+                )}
                 {file.deletions > 0 && (
                   <span style={{ color: aw.accentStrong }}>-{file.deletions}</span>
                 )}
@@ -82,7 +83,7 @@ export function DiffByIntent({ mission }: { mission: Mission }) {
           </div>
 
           <div
-            className="aw-body mt-2 border-t pt-2 text-[9px]"
+            className="aw-body mt-3 border-t pt-3"
             style={{ borderColor: aw.lineFaint, color: aw.text }}
           >
             {group.summary}

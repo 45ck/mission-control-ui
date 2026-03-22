@@ -23,15 +23,32 @@ function Toggle({ enabled, onToggle }: { enabled: boolean; onToggle: () => void 
   );
 }
 
-function SelectControl({ value, options: _options }: { value: string; options: string[] }) {
+function SelectControl({
+  value,
+  options,
+  onChange,
+}: {
+  value: string;
+  options: string[];
+  onChange: (v: string) => void;
+}) {
   return (
-    <div
-      className="aw-micro inline-flex items-center gap-1 border px-2.5 py-1"
-      style={{ borderColor: aw.lineDark, color: aw.textStrong }}
+    <select
+      className="aw-micro aw-focus-ring border px-2.5 py-1"
+      style={{
+        borderColor: aw.lineDark,
+        color: aw.textStrong,
+        backgroundColor: aw.paperTop,
+      }}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
     >
-      {value}
-      <span style={{ color: aw.textSoft }}>&#9662;</span>
-    </div>
+      {options.map((opt) => (
+        <option key={opt} value={opt}>
+          {opt}
+        </option>
+      ))}
+    </select>
   );
 }
 
@@ -42,6 +59,17 @@ export function Settings() {
     { text: 'All missions must pass verification before merge', enabled: true },
     { text: 'Escalations timeout after 24h — auto-reject', enabled: false },
   ]);
+
+  const [notifPrefs, setNotifPrefs] = useState({
+    escalation: 'Immediate',
+    review: 'Batched (15 min)',
+    execution: 'On completion only',
+    workflow: 'Daily digest',
+  });
+
+  const updateNotifPref = (key: keyof typeof notifPrefs, value: string) => {
+    setNotifPrefs((prev) => ({ ...prev, [key]: value }));
+  };
 
   const togglePolicy = (index: number) => {
     setPolicies((prev) => prev.map((p, i) => (i === index ? { ...p, enabled: !p.enabled } : p)));
@@ -114,28 +142,30 @@ export function Settings() {
               Notification Preferences
             </div>
             <div className="mt-4 space-y-3">
-              {[
-                {
-                  label: 'Escalation alerts',
-                  value: 'Immediate',
-                  options: ['Immediate', 'Batched', 'Off'],
-                },
-                {
-                  label: 'Review ready notifications',
-                  value: 'Batched (15 min)',
-                  options: ['Immediate', 'Batched (15 min)', 'Batched (1 hr)', 'Off'],
-                },
-                {
-                  label: 'Execution status updates',
-                  value: 'On completion only',
-                  options: ['Real-time', 'On completion only', 'Off'],
-                },
-                {
-                  label: 'Workflow summaries',
-                  value: 'Daily digest',
-                  options: ['Daily digest', 'Weekly digest', 'Off'],
-                },
-              ].map((n) => (
+              {(
+                [
+                  {
+                    label: 'Escalation alerts',
+                    key: 'escalation' as const,
+                    options: ['Immediate', 'Batched', 'Off'],
+                  },
+                  {
+                    label: 'Review ready notifications',
+                    key: 'review' as const,
+                    options: ['Immediate', 'Batched (15 min)', 'Batched (1 hr)', 'Off'],
+                  },
+                  {
+                    label: 'Execution status updates',
+                    key: 'execution' as const,
+                    options: ['Real-time', 'On completion only', 'Off'],
+                  },
+                  {
+                    label: 'Workflow summaries',
+                    key: 'workflow' as const,
+                    options: ['Daily digest', 'Weekly digest', 'Off'],
+                  },
+                ] as const
+              ).map((n) => (
                 <div
                   key={n.label}
                   className="flex items-center justify-between border-b pb-3"
@@ -144,7 +174,11 @@ export function Settings() {
                   <span className="aw-body" style={{ color: aw.text }}>
                     {n.label}
                   </span>
-                  <SelectControl value={n.value} options={n.options} />
+                  <SelectControl
+                    value={notifPrefs[n.key]}
+                    options={n.options as unknown as string[]}
+                    onChange={(v) => updateNotifPref(n.key, v)}
+                  />
                 </div>
               ))}
             </div>

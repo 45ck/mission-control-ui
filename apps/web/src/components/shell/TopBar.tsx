@@ -2,6 +2,7 @@ import { Link } from 'react-router';
 import { Search } from 'lucide-react';
 import { aw } from '../../theme/tokens';
 import { NotificationCenter } from './NotificationCenter';
+import { useCommandPalette } from './AppShell';
 
 export interface Crumb {
   label: string;
@@ -17,6 +18,8 @@ export function TopBar({
   breadcrumbs?: Crumb[];
   onOpenCommandPalette?: () => void;
 }) {
+  const contextOpen = useCommandPalette();
+  const handleOpenCommandPalette = onOpenCommandPalette ?? contextOpen ?? undefined;
   return (
     <div
       className="flex h-[52px] items-center border-b px-5"
@@ -68,7 +71,7 @@ export function TopBar({
         <button
           className="aw-focus-ring flex items-center justify-center p-1"
           style={{ color: aw.textSoft }}
-          onClick={onOpenCommandPalette}
+          onClick={handleOpenCommandPalette}
         >
           <Search className="h-4 w-4" />
         </button>
