@@ -4,6 +4,7 @@ import { AnimatePresence } from 'framer-motion';
 import { LeftNav } from './LeftNav';
 import { CommandPalette } from './CommandPalette';
 import { AmbientDots } from '../primitives/AmbientDots';
+import { HelpModal } from '../primitives/HelpModal';
 import { ErrorBoundary } from '../primitives/ErrorBoundary';
 import { aw } from '../../theme/tokens';
 
@@ -78,6 +79,7 @@ export function AppShell() {
             })}
           </div>
         </div>
+        <HelpModal />
       </div>
     </CommandPaletteContext.Provider>
   );

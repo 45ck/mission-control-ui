@@ -16,6 +16,7 @@ import { HeatNode } from '../components/primitives/HeatNode';
 
 import { MissionTimeline } from '../components/mission/MissionTimeline';
 import { StageTabBar } from '../components/mission/StageTabBar';
+import { ActivityPreview } from '../components/mission/ActivityPreview';
 
 export function MissionDetail() {
   const { missionId, workflowId } = useParams<{ missionId: string; workflowId?: string }>();
@@ -176,7 +177,10 @@ export function MissionDetail() {
             </div>
           </div>
 
-          {/* 5. Agent Sessions */}
+          {/* 5. Activity Preview (execute/review/completed stages only) */}
+          {mission.stage !== 'plan' && <ActivityPreview mission={mission} />}
+
+          {/* 6. Agent Sessions */}
           <div className="relative border p-5" style={{ borderColor: aw.lineDark }}>
             <PanelPins />
             <div className="aw-micro" style={{ color: aw.textSoft }}>

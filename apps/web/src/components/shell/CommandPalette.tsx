@@ -52,15 +52,18 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
 
   const allItems = useMemo(() => {
     const items: { label: string; path: string; section: string }[] = [];
-    filteredMissions.forEach((m) =>
+    filteredMissions.forEach((m) => {
+      const base = m.workflowId
+        ? `/workflows/${m.workflowId}/missions/${m.id}`
+        : `/missions/${m.id}`;
+      // 'completed' has no dedicated sub-page; route to overview instead
+      const path = m.stage === 'completed' ? base : `${base}/${m.stage}`;
       items.push({
         label: `${m.id} — ${m.title}`,
-        path: m.workflowId
-          ? `/workflows/${m.workflowId}/missions/${m.id}/${m.stage}`
-          : `/missions/${m.id}/${m.stage}`,
+        path,
         section: 'missions',
-      }),
-    );
+      });
+    });
     filteredNav.forEach((p) => items.push({ label: p.label, path: p.path, section: 'nav' }));
     filteredActions.forEach((a) =>
       items.push({ label: a.label, path: a.path, section: 'actions' }),
@@ -158,13 +161,12 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                           color: aw.textStrong,
                           backgroundColor: selectedIndex === idx ? aw.lineFaint : 'transparent',
                         }}
-                        onClick={() =>
-                          navigateTo(
-                            m.workflowId
-                              ? `/workflows/${m.workflowId}/missions/${m.id}/${m.stage}`
-                              : `/missions/${m.id}/${m.stage}`,
-                          )
-                        }
+                        onClick={() => {
+                          const base = m.workflowId
+                            ? `/workflows/${m.workflowId}/missions/${m.id}`
+                            : `/missions/${m.id}`;
+                          navigateTo(m.stage === 'completed' ? base : `${base}/${m.stage}`);
+                        }}
                         onMouseEnter={() => setSelectedIndex(idx)}
                       >
                         <Target className="h-3 w-3 shrink-0" style={{ color: aw.textSoft }} />

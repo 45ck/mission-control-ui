@@ -397,7 +397,8 @@ export function AgentChatPanel({ sessions }: { sessions: AgentSession[] }) {
 
   useEffect(() => {
     if (sessions.length > 0 && !sessions.find((s) => s.id === activeSessionId)) {
-      setActiveSessionId(sessions[0].id);
+      const first = sessions[0];
+      if (first) setActiveSessionId(first.id);
     }
   }, [sessions, activeSessionId]);
 

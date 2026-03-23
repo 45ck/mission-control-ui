@@ -11,6 +11,8 @@ function stageRoute(mission: Mission): string {
   const base = mission.workflowId
     ? `/workflows/${mission.workflowId}/missions/${mission.id}`
     : `/missions/${mission.id}`;
+  // 'completed' has no dedicated sub-page; route to overview instead
+  if (mission.stage === 'completed') return base;
   return `${base}/${mission.stage}`;
 }
 

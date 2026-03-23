@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router';
+import { createBrowserRouter, RouterProvider, Navigate, Link } from 'react-router';
 import { AlertCircle } from 'lucide-react';
 import { AppShell } from './components/shell/AppShell';
 import { MissionHome } from './pages/MissionHome';
@@ -43,59 +43,54 @@ function NotFound() {
   );
 }
 
+const router = createBrowserRouter([
+  // Live View — fullscreen, outside AppShell
+  { path: 'missions/:missionId/live', element: <LiveView /> },
+  { path: 'workflows/:workflowId/missions/:missionId/live', element: <LiveView /> },
+
+  // Legacy workspace redirect → Live View
+  { path: 'workspace/:id', element: <WorkspaceRedirect /> },
+
+  {
+    element: <AppShell />,
+    children: [
+      { index: true, element: <Navigate to="/missions" replace /> },
+
+      // Missions
+      { path: 'missions', element: <MissionHome /> },
+      { path: 'missions/new', element: <MissionCreate /> },
+      { path: 'missions/:missionId', element: <MissionDetail /> },
+      { path: 'missions/:missionId/plan', element: <MissionPlan /> },
+      { path: 'missions/:missionId/execute', element: <MissionExecute /> },
+      { path: 'missions/:missionId/review', element: <MissionReview /> },
+      { path: 'missions/:missionId/escalation', element: <MissionEscalation /> },
+
+      // Workflows
+      { path: 'workflows', element: <Workflows /> },
+      { path: 'workflows/new', element: <WorkflowCreate /> },
+      { path: 'workflows/:workflowId', element: <WorkflowDetail /> },
+
+      // Workflow-contexted missions
+      { path: 'workflows/:workflowId/missions/:missionId', element: <MissionDetail /> },
+      { path: 'workflows/:workflowId/missions/:missionId/plan', element: <MissionPlan /> },
+      { path: 'workflows/:workflowId/missions/:missionId/execute', element: <MissionExecute /> },
+      { path: 'workflows/:workflowId/missions/:missionId/review', element: <MissionReview /> },
+      {
+        path: 'workflows/:workflowId/missions/:missionId/escalation',
+        element: <MissionEscalation />,
+      },
+
+      // Utilities
+      { path: 'costs', element: <CostDashboard /> },
+      { path: 'history', element: <History /> },
+      { path: 'settings', element: <Settings /> },
+
+      // 404 catch-all
+      { path: '*', element: <NotFound /> },
+    ],
+  },
+]);
+
 export function App() {
-  return (
-    <BrowserRouter>
-      <Routes>
-        {/* Live View — fullscreen, outside AppShell */}
-        <Route path="missions/:missionId/live" element={<LiveView />} />
-        <Route path="workflows/:workflowId/missions/:missionId/live" element={<LiveView />} />
-
-        {/* Legacy workspace redirect → Live View */}
-        <Route path="workspace/:id" element={<WorkspaceRedirect />} />
-
-        <Route element={<AppShell />}>
-          <Route index element={<Navigate to="/missions" replace />} />
-
-          {/* Missions */}
-          <Route path="missions" element={<MissionHome />} />
-          <Route path="missions/new" element={<MissionCreate />} />
-          <Route path="missions/:missionId" element={<MissionDetail />} />
-          <Route path="missions/:missionId/plan" element={<MissionPlan />} />
-          <Route path="missions/:missionId/execute" element={<MissionExecute />} />
-          <Route path="missions/:missionId/review" element={<MissionReview />} />
-          <Route path="missions/:missionId/escalation" element={<MissionEscalation />} />
-
-          {/* Workflows */}
-          <Route path="workflows" element={<Workflows />} />
-          <Route path="workflows/new" element={<WorkflowCreate />} />
-          <Route path="workflows/:workflowId" element={<WorkflowDetail />} />
-
-          {/* Workflow-contexted missions */}
-          <Route path="workflows/:workflowId/missions/:missionId" element={<MissionDetail />} />
-          <Route path="workflows/:workflowId/missions/:missionId/plan" element={<MissionPlan />} />
-          <Route
-            path="workflows/:workflowId/missions/:missionId/execute"
-            element={<MissionExecute />}
-          />
-          <Route
-            path="workflows/:workflowId/missions/:missionId/review"
-            element={<MissionReview />}
-          />
-          <Route
-            path="workflows/:workflowId/missions/:missionId/escalation"
-            element={<MissionEscalation />}
-          />
-
-          {/* Utilities */}
-          <Route path="costs" element={<CostDashboard />} />
-          <Route path="history" element={<History />} />
-          <Route path="settings" element={<Settings />} />
-
-          {/* 404 catch-all */}
-          <Route path="*" element={<NotFound />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
-  );
+  return <RouterProvider router={router} />;
 }
