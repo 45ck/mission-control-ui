@@ -205,3 +205,133 @@ test('@screenshot Escalation option selected', async ({ page }) => {
 
   await page.screenshot({ path: ssPath('escalation-option-selected'), fullPage: true });
 });
+
+// ---------------------------------------------------------------------------
+// Mission Quick-Switcher — opens on chip click
+// ---------------------------------------------------------------------------
+test('@screenshot Mission switcher opens on chip click', async ({ page }) => {
+  await page.goto('/missions/MSN-001/review', { waitUntil: 'networkidle' });
+  await page.waitForTimeout(400);
+
+  // The mission chip button in the TopBar shows the mission ID
+  const chip = page.locator('button', { hasText: 'MSN-001' }).filter({
+    has: page.locator('svg.lucide-chevron-down'),
+  });
+  await chip.click();
+
+  // The dropdown should show RECENT and ALL MISSIONS sections
+  await expect(page.getByText('ALL MISSIONS')).toBeVisible({ timeout: 3_000 });
+
+  await page.screenshot({ path: ssPath('mission-switcher-open'), fullPage: true });
+});
+
+// ---------------------------------------------------------------------------
+// Mission Quick-Switcher — keyboard shortcut
+// ---------------------------------------------------------------------------
+test('@screenshot Mission switcher keyboard shortcut', async ({ page }) => {
+  await page.goto('/missions/MSN-001/review', { waitUntil: 'networkidle' });
+  await page.waitForTimeout(400);
+
+  // Ctrl+Shift+M toggles the mission switcher
+  await page.keyboard.press('Control+Shift+M');
+
+  await expect(page.getByText('ALL MISSIONS')).toBeVisible({ timeout: 3_000 });
+
+  await page.screenshot({ path: ssPath('mission-switcher-keyboard'), fullPage: true });
+});
+
+// ---------------------------------------------------------------------------
+// Mission Quick-Switcher — stage-preserving navigation
+// ---------------------------------------------------------------------------
+test('@screenshot Mission switcher stage-preserving nav', async ({ page }) => {
+  // Start on the execute stage of MSN-002
+  await page.goto('/missions/MSN-002/execute', { waitUntil: 'networkidle' });
+  await page.waitForTimeout(400);
+
+  // Open switcher via chip
+  const chip = page.locator('button', { hasText: 'MSN-002' }).filter({
+    has: page.locator('svg.lucide-chevron-down'),
+  });
+  await chip.click();
+  await expect(page.getByText('ALL MISSIONS')).toBeVisible({ timeout: 3_000 });
+
+  // Click MSN-001 in the dropdown
+  await page.locator('button[data-idx]', { hasText: 'MSN-001' }).first().click();
+  await page.waitForTimeout(600);
+
+  // URL should still end in /execute (stage preserved)
+  await expect(page).toHaveURL(/\/MSN-001\/execute$/);
+
+  await page.screenshot({ path: ssPath('mission-switcher-stage-preserved'), fullPage: true });
+});
+
+// ---------------------------------------------------------------------------
+// Artifact panel visible on review page
+// ---------------------------------------------------------------------------
+test('@screenshot Artifact panel on review page', async ({ page }) => {
+  // MSN-001 is in review stage and has artifacts (ART-001, ART-002)
+  await page.goto('/missions/MSN-001/review', { waitUntil: 'networkidle' });
+  await page.waitForTimeout(400);
+
+  // Scroll down to ensure the ARTIFACTS section is in view
+  const artifactsLabel = page.getByText('ARTIFACTS');
+  await artifactsLabel.scrollIntoViewIfNeeded();
+  await expect(artifactsLabel).toBeVisible({ timeout: 3_000 });
+
+  // Verify artifact cards are present
+  await expect(page.getByText('Implementation Summary')).toBeVisible();
+  await expect(page.getByText('PKCE Flow Diagram')).toBeVisible();
+
+  await page.screenshot({ path: ssPath('artifact-panel-review'), fullPage: true });
+});
+
+// ---------------------------------------------------------------------------
+// Artifact viewer switches content on card click
+// ---------------------------------------------------------------------------
+test('@screenshot Artifact viewer switches content', async ({ page }) => {
+  await page.goto('/missions/MSN-001/review', { waitUntil: 'networkidle' });
+  await page.waitForTimeout(400);
+
+  // Scroll to artifacts section
+  const artifactsLabel = page.getByText('ARTIFACTS');
+  await artifactsLabel.scrollIntoViewIfNeeded();
+  await expect(artifactsLabel).toBeVisible({ timeout: 3_000 });
+
+  // Click the second artifact card (PKCE Flow Diagram — image type)
+  await page.getByText('PKCE Flow Diagram').click();
+  await page.waitForTimeout(400);
+
+  // The viewer should now show an image
+  await expect(page.locator('img[alt="PKCE Flow Diagram"]')).toBeVisible({ timeout: 3_000 });
+
+  await page.screenshot({ path: ssPath('artifact-viewer-switched'), fullPage: true });
+});
+
+// ---------------------------------------------------------------------------
+// Command palette preserves stage during navigation
+// ---------------------------------------------------------------------------
+test('@screenshot Command palette stage preservation', async ({ page }) => {
+  // Start on execute stage
+  await page.goto('/missions/MSN-002/execute', { waitUntil: 'networkidle' });
+  await page.waitForTimeout(400);
+
+  // Open command palette with search icon
+  const searchButton = page.locator('button').filter({ has: page.locator('svg.lucide-search') });
+  await searchButton.first().click();
+
+  const input = page.locator('input[placeholder="Search missions, pages..."]');
+  await expect(input).toBeVisible({ timeout: 3_000 });
+
+  // Type MSN-001 to filter
+  await input.fill('MSN-001');
+  await page.waitForTimeout(300);
+
+  // Press Enter to navigate to first result
+  await input.press('Enter');
+  await page.waitForTimeout(600);
+
+  // URL should preserve the /execute stage
+  await expect(page).toHaveURL(/\/MSN-001\/execute$/);
+
+  await page.screenshot({ path: ssPath('command-palette-stage-preserved'), fullPage: true });
+});

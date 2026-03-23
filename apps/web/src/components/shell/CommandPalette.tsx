@@ -113,8 +113,6 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
     }
   };
 
-  if (!open) return null;
-
   let itemIndex = 0;
 
   return (
