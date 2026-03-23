@@ -1,7 +1,4 @@
 {
   "files": [],
-  "references": [
-    { "path": "packages/shared/tsconfig.build.json" },
-    { "path": "apps/example/tsconfig.build.json" }
-  ]
+  "references": [{ "path": "packages/shared/tsconfig.build.json" }]
 }

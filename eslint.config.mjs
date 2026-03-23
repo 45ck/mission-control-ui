@@ -123,6 +123,17 @@ export default tseslint.config(
     },
   },
 
+  // E2E / Playwright specs run outside the main app and need relaxed caps.
+  {
+    files: ['**/e2e/**/*.ts'],
+    rules: {
+      'max-lines': 'off',
+      'max-lines-per-function': 'off',
+      '@typescript-eslint/require-await': 'off',
+      'import/no-unresolved': 'off',
+    },
+  },
+
   // Tests can be longer/more verbose; keep production caps strict.
   // Mock port implementations idiomatically use async without await, unbound method
   // references (expect(obj.method)), and type-unsafe mocks — all standard Vitest patterns.

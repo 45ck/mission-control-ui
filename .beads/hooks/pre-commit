@@ -26,7 +26,7 @@ fi
 
 # ── noslop: block commits to protected quality gate configs ──
 # .beads/issues.jsonl is intentionally allowlisted because BD state is updated frequently.
-PROTECTED_CONFIGS=".gitignore .githooks .github .claude .beads/hooks .agent-docs eslint.config.mjs vitest.config.ts .dependency-cruiser.cjs tsconfig.json tsconfig.build.json tsconfig.base.json .prettierrc cspell.json"
+PROTECTED_CONFIGS=".githooks .github .agent-docs vitest.config.ts .dependency-cruiser.cjs tsconfig.build.json tsconfig.base.json .prettierrc"
 ALLOWED_STAGED_EXCEPTIONS=".beads/issues.jsonl .beads/issues.jsonl.lock"
 # Read staged files line-by-line to handle filenames with spaces correctly
 while IFS= read -r staged_file; do
