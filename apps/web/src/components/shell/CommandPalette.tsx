@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useLocation } from 'react-router';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Search, Target, GitBranch, DollarSign, History, Settings, Plus } from 'lucide-react';
 import { aw } from '../../theme/tokens';
@@ -26,6 +26,15 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Extract current stage from URL for stage-preserving navigation
+  const currentUrlStage = useMemo(() => {
+    const parts = location.pathname.split('/');
+    const validStages = ['plan', 'execute', 'review'];
+    const last = parts[parts.length - 1];
+    return last && validStages.includes(last) ? last : null;
+  }, [location.pathname]);
 
   const filteredMissions = useMemo(() => {
     if (!query) return missions;
@@ -56,8 +65,9 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
       const base = m.workflowId
         ? `/workflows/${m.workflowId}/missions/${m.id}`
         : `/missions/${m.id}`;
-      // 'completed' has no dedicated sub-page; route to overview instead
-      const path = m.stage === 'completed' ? base : `${base}/${m.stage}`;
+      // Stage-preserving: use current URL stage if available, else mission's own stage
+      const stage = currentUrlStage ?? m.stage;
+      const path = stage === 'completed' ? base : `${base}/${stage}`;
       items.push({
         label: `${m.id} — ${m.title}`,
         path,
@@ -69,7 +79,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
       items.push({ label: a.label, path: a.path, section: 'actions' }),
     );
     return items;
-  }, [filteredMissions, filteredNav, filteredActions]);
+  }, [filteredMissions, filteredNav, filteredActions, currentUrlStage]);
 
   useEffect(() => {
     setSelectedIndex(0);
@@ -165,7 +175,8 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                           const base = m.workflowId
                             ? `/workflows/${m.workflowId}/missions/${m.id}`
                             : `/missions/${m.id}`;
-                          navigateTo(m.stage === 'completed' ? base : `${base}/${m.stage}`);
+                          const stage = currentUrlStage ?? m.stage;
+                          navigateTo(stage === 'completed' ? base : `${base}/${stage}`);
                         }}
                         onMouseEnter={() => setSelectedIndex(idx)}
                       >

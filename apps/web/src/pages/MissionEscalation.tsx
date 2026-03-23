@@ -59,6 +59,7 @@ export function MissionEscalation() {
       <PageTransition>
         <TopBar
           missionId={mission.id}
+          currentStage="escalation"
           breadcrumbs={
             workflow
               ? [
@@ -88,6 +89,7 @@ export function MissionEscalation() {
     <PageTransition>
       <TopBar
         missionId={mission.id}
+        currentStage="escalation"
         breadcrumbs={
           workflow
             ? [

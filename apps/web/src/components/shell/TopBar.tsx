@@ -1,8 +1,10 @@
+import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router';
-import { Search } from 'lucide-react';
+import { Search, ChevronDown } from 'lucide-react';
 import { aw } from '../../theme/tokens';
 import { NotificationCenter } from './NotificationCenter';
 import { useCommandPalette } from './AppShell';
+import { MissionSwitcherDropdown } from './MissionSwitcherDropdown';
 
 export interface Crumb {
   label: string;
@@ -11,15 +13,33 @@ export interface Crumb {
 
 export function TopBar({
   missionId,
+  currentStage,
   breadcrumbs,
   onOpenCommandPalette,
 }: {
   missionId?: string;
+  currentStage?: string;
   breadcrumbs?: Crumb[];
   onOpenCommandPalette?: () => void;
 }) {
   const contextOpen = useCommandPalette();
   const handleOpenCommandPalette = onOpenCommandPalette ?? contextOpen ?? undefined;
+
+  // Switcher state
+  const [switcherOpen, setSwitcherOpen] = useState(false);
+  const switcherButtonRef = useRef<HTMLButtonElement>(null);
+
+  const handleSwitcherToggle = () => setSwitcherOpen((prev) => !prev);
+
+  // Listen for keyboard shortcut (Cmd+Shift+M dispatched via AppShell)
+  useEffect(() => {
+    const handler = () => {
+      if (missionId) setSwitcherOpen((prev) => !prev);
+    };
+    window.addEventListener('mc:toggle-mission-switcher', handler);
+    return () => window.removeEventListener('mc:toggle-mission-switcher', handler);
+  }, [missionId]);
+
   return (
     <div
       className="flex h-[52px] items-center border-b px-5"
@@ -28,9 +48,32 @@ export function TopBar({
       <div className="flex items-center gap-3">
         {missionId && (
           <>
-            <div className="aw-micro text-[10px]" style={{ color: aw.textSoft }}>
+            <button
+              ref={switcherButtonRef}
+              className="aw-micro aw-focus-ring inline-flex items-center gap-1 rounded border px-2 py-1 text-[10px] transition-colors hover:bg-[var(--color-aw-haze)]"
+              style={{
+                color: aw.textSoft,
+                borderColor: switcherOpen ? aw.accent : aw.lineDark,
+                backgroundColor: switcherOpen ? aw.haze : 'transparent',
+              }}
+              onClick={handleSwitcherToggle}
+            >
               {missionId}
-            </div>
+              <ChevronDown
+                size={10}
+                style={{
+                  transform: switcherOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                  transition: 'transform 0.15s ease',
+                }}
+              />
+            </button>
+            <MissionSwitcherDropdown
+              currentMissionId={missionId}
+              currentStage={currentStage ?? ''}
+              open={switcherOpen}
+              onClose={() => setSwitcherOpen(false)}
+              anchorRef={switcherButtonRef}
+            />
             <div className="h-px w-[24px]" style={{ backgroundColor: aw.lineDark }} />
           </>
         )}

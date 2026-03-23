@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useParams, Link } from 'react-router';
 import { motion } from 'framer-motion';
 import { ArrowLeft } from 'lucide-react';
@@ -14,12 +15,18 @@ import { ToastContainer } from '../components/primitives/ToastContainer';
 import { PageTransition } from '../components/shell/PageTransition';
 import { StageTabBar } from '../components/mission/StageTabBar';
 import { useToast } from '../hooks/useToast';
+import { useRecentMissions } from '../hooks/useRecentMissions';
 
 export function MissionPlan() {
   const { missionId, workflowId } = useParams<{ missionId: string; workflowId?: string }>();
   const mission = missions.find((m) => m.id === missionId);
   const workflow = workflowId ? workflows.find((w) => w.id === workflowId) : undefined;
   const { toasts, show, dismiss } = useToast();
+
+  const { trackVisit } = useRecentMissions();
+  useEffect(() => {
+    if (missionId) trackVisit(missionId);
+  }, [missionId, trackVisit]);
 
   if (!mission) {
     return (
@@ -53,6 +60,7 @@ export function MissionPlan() {
     <PageTransition>
       <TopBar
         missionId={mission.id}
+        currentStage="plan"
         breadcrumbs={
           workflow
             ? [

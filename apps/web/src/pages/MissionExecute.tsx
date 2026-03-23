@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router';
 import { ArrowLeft, Settings, Eye } from 'lucide-react';
 import { missions } from '../data/missions';
@@ -19,6 +19,7 @@ import { EvidenceRail } from '../components/evidence/EvidenceRail';
 import { CodeViewer } from '../components/workspace/CodeViewer';
 import { PageTransition } from '../components/shell/PageTransition';
 import { StageTabBar } from '../components/mission/StageTabBar';
+import { useRecentMissions } from '../hooks/useRecentMissions';
 
 export function MissionExecute() {
   const { missionId, workflowId } = useParams<{ missionId: string; workflowId?: string }>();
@@ -26,6 +27,11 @@ export function MissionExecute() {
   const workflow = workflowId ? workflows.find((w) => w.id === workflowId) : undefined;
   const [viewMode, setViewMode] = useState<'overview' | 'chat'>('overview');
   const [showConfig, setShowConfig] = useState(false);
+
+  const { trackVisit } = useRecentMissions();
+  useEffect(() => {
+    if (missionId) trackVisit(missionId);
+  }, [missionId, trackVisit]);
 
   if (!mission) {
     return (
@@ -66,6 +72,7 @@ export function MissionExecute() {
     <PageTransition>
       <TopBar
         missionId={mission.id}
+        currentStage="execute"
         breadcrumbs={
           workflow
             ? [

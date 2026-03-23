@@ -31,6 +31,7 @@ export interface Mission {
   branch?: string;
   /** When true, an escalation overlay is active regardless of current stage */
   escalationActive?: boolean;
+  artifactIds?: string[];
 }
 
 export const missions: Mission[] = [
@@ -65,6 +66,7 @@ export const missions: Mission[] = [
     tags: ['security', 'auth', 'api'],
     workflowId: 'WF-001',
     branch: 'feature/auth-pkce',
+    artifactIds: ['ART-001', 'ART-002'],
   },
   {
     id: 'MSN-002',
@@ -155,6 +157,7 @@ export const missions: Mission[] = [
     workflowId: 'WF-002',
     branch: 'feature/multi-currency',
     escalationActive: true,
+    artifactIds: ['ART-003', 'ART-004'],
   },
   {
     id: 'MSN-005',
@@ -184,6 +187,7 @@ export const missions: Mission[] = [
     tags: ['observability', 'tracing', 'api-gateway'],
     workflowId: 'WF-003',
     branch: 'feature/otel-tracing',
+    artifactIds: ['ART-005', 'ART-006'],
   },
 ];
 

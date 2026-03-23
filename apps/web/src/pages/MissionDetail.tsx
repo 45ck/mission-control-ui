@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useParams, Link } from 'react-router';
 import { CheckCircle, AlertTriangle, Eye } from 'lucide-react';
 import { missions } from '../data/missions';
@@ -17,6 +18,7 @@ import { HeatNode } from '../components/primitives/HeatNode';
 import { MissionTimeline } from '../components/mission/MissionTimeline';
 import { StageTabBar } from '../components/mission/StageTabBar';
 import { ActivityPreview } from '../components/mission/ActivityPreview';
+import { useRecentMissions } from '../hooks/useRecentMissions';
 
 export function MissionDetail() {
   const { missionId, workflowId } = useParams<{ missionId: string; workflowId?: string }>();
@@ -25,6 +27,11 @@ export function MissionDetail() {
     (workflowId ?? mission?.workflowId)
       ? workflows.find((w) => w.id === (workflowId ?? mission?.workflowId))
       : undefined;
+
+  const { trackVisit } = useRecentMissions();
+  useEffect(() => {
+    if (missionId) trackVisit(missionId);
+  }, [missionId, trackVisit]);
 
   if (!mission) {
     return (
@@ -79,6 +86,7 @@ export function MissionDetail() {
     <PageTransition>
       <TopBar
         missionId={mission.id}
+        currentStage="overview"
         breadcrumbs={
           workflow
             ? [

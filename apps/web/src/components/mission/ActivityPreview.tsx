@@ -12,6 +12,8 @@ import { PanelPins } from '../primitives/PanelPins';
 import { BrowserSessionPane } from '../execute/SessionPane';
 import { TerminalSessionPane } from '../execute/SessionPane';
 import { CodeViewer } from '../workspace/CodeViewer';
+import { ArtifactPanel } from './ArtifactPanel';
+import { artifacts } from '../../data/artifacts';
 import { useState } from 'react';
 
 interface ActivityPreviewProps {
@@ -146,6 +148,15 @@ export function ActivityPreview({ mission }: ActivityPreviewProps) {
           )}
         </div>
       )}
+
+      {/* Artifacts (review/completed stages only) */}
+      {isCompleted &&
+        (() => {
+          const missionArtifacts = artifacts.filter((a) => a.missionId === mission.id);
+          return missionArtifacts.length > 0 ? (
+            <ArtifactPanel artifacts={missionArtifacts} />
+          ) : null;
+        })()}
 
       {/* Live View link (only for active stages) */}
       {isActive && (
