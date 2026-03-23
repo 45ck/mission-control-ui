@@ -41,6 +41,7 @@ export function NotificationCenter() {
   const unreadCount = notifications.filter((n) => !readIds.has(n.id)).length;
 
   useEffect(() => {
+    if (!isOpen) return;
     const handler = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setIsOpen(false);
@@ -48,7 +49,7 @@ export function NotificationCenter() {
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, []);
+  }, [isOpen]);
 
   const markRead = (id: string) => {
     setReadIds((prev) => new Set(prev).add(id));

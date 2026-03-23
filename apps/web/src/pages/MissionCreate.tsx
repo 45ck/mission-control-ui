@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useBlocker } from 'react-router';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Mission, Stage, RiskTier, VerificationState } from '../data/missions';
@@ -43,7 +43,7 @@ export function MissionCreate() {
         blocker.reset();
       }
     }
-  }, [blocker]);
+  }, [blocker.state]);
 
   useEffect(() => {
     if (!isDirty || submitted) return;
@@ -54,25 +54,36 @@ export function MissionCreate() {
     return () => window.removeEventListener('beforeunload', handler);
   }, [isDirty, submitted]);
 
-  const previewMission: Mission = {
-    id: 'MSN-NEW',
-    title: title || 'Untitled Mission',
-    goal: goal || 'No goal specified',
-    scopeBoundary: scopeBoundary || 'No scope defined',
-    risks: risks.filter((r) => r.trim() !== ''),
-    acceptanceCriteria: acceptanceCriteria.filter((c) => c.trim() !== ''),
-    owner: owner || 'Unassigned',
-    stage: 'plan' as Stage,
-    riskTier,
-    verificationState: 'pending' as VerificationState,
-    agentSessionIds: [],
-    browserSessionIds: [],
-    terminalSessionIds: [],
-    evidenceIds: [],
-    escalationIds: [],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
+  const navTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (navTimerRef.current) clearTimeout(navTimerRef.current);
+    };
+  }, []);
+
+  const previewMission = useMemo<Mission>(
+    () => ({
+      id: 'MSN-NEW',
+      title: title || 'Untitled Mission',
+      goal: goal || 'No goal specified',
+      scopeBoundary: scopeBoundary || 'No scope defined',
+      risks: risks.filter((r) => r.trim() !== ''),
+      acceptanceCriteria: acceptanceCriteria.filter((c) => c.trim() !== ''),
+      owner: owner || 'Unassigned',
+      stage: 'plan' as Stage,
+      riskTier,
+      verificationState: 'pending' as VerificationState,
+      agentSessionIds: [],
+      browserSessionIds: [],
+      terminalSessionIds: [],
+      evidenceIds: [],
+      escalationIds: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }),
+    [title, goal, scopeBoundary, risks, acceptanceCriteria, owner, riskTier],
+  );
 
   const addCriterion = useCallback(() => {
     const trimmed = criterionInput.trim();
@@ -108,7 +119,7 @@ export function MissionCreate() {
 
     setSubmitted(true);
     setShowToast(true);
-    setTimeout(() => {
+    navTimerRef.current = setTimeout(() => {
       void navigate('/missions');
     }, 1200);
   }
@@ -129,10 +140,11 @@ export function MissionCreate() {
               <PanelPins corners="all" />
               <CornerBracket side="left" />
               <CornerBracket side="right" />
-              <label className="aw-micro" style={{ color: aw.textSoft }}>
+              <label htmlFor="mission-title" className="aw-micro" style={{ color: aw.textSoft }}>
                 TITLE <span style={{ color: semantic.error }}>*</span>
               </label>
               <input
+                id="mission-title"
                 type="text"
                 value={title}
                 onChange={(e) => {
@@ -162,10 +174,11 @@ export function MissionCreate() {
               <PanelPins />
               <CornerBracket side="left" />
               <CornerBracket side="right" />
-              <label className="aw-micro" style={{ color: aw.textSoft }}>
+              <label htmlFor="mission-goal" className="aw-micro" style={{ color: aw.textSoft }}>
                 GOAL <span style={{ color: semantic.error }}>*</span>
               </label>
               <textarea
+                id="mission-goal"
                 value={goal}
                 onChange={(e) => {
                   setGoal(e.target.value);
@@ -192,10 +205,11 @@ export function MissionCreate() {
               <PanelPins />
               <CornerBracket side="left" />
               <CornerBracket side="right" />
-              <label className="aw-micro" style={{ color: aw.textSoft }}>
+              <label htmlFor="mission-scope" className="aw-micro" style={{ color: aw.textSoft }}>
                 SCOPE BOUNDARY
               </label>
               <textarea
+                id="mission-scope"
                 value={scopeBoundary}
                 onChange={(e) => setScopeBoundary(e.target.value)}
                 rows={3}
@@ -214,10 +228,15 @@ export function MissionCreate() {
               <PanelPins />
               <CornerBracket side="left" />
               <CornerBracket side="right" />
-              <label className="aw-micro" style={{ color: aw.textSoft }}>
+              <label
+                htmlFor="mission-risk-tier"
+                className="aw-micro"
+                style={{ color: aw.textSoft }}
+              >
                 RISK TIER
               </label>
               <select
+                id="mission-risk-tier"
                 value={riskTier}
                 onChange={(e) => setRiskTier(e.target.value as RiskTier)}
                 className="aw-section aw-focus-ring mt-2 block w-full border px-3 py-2"
@@ -238,10 +257,11 @@ export function MissionCreate() {
               <PanelPins />
               <CornerBracket side="left" />
               <CornerBracket side="right" />
-              <label className="aw-micro" style={{ color: aw.textSoft }}>
+              <label htmlFor="mission-owner" className="aw-micro" style={{ color: aw.textSoft }}>
                 OWNER
               </label>
               <input
+                id="mission-owner"
                 type="text"
                 value={owner}
                 onChange={(e) => setOwner(e.target.value)}
@@ -260,11 +280,16 @@ export function MissionCreate() {
               <PanelPins corners="all" />
               <CornerBracket side="left" />
               <CornerBracket side="right" />
-              <label className="aw-micro" style={{ color: aw.textSoft }}>
+              <label
+                htmlFor="mission-criterion"
+                className="aw-micro"
+                style={{ color: aw.textSoft }}
+              >
                 ACCEPTANCE CRITERIA
               </label>
               <div className="mt-2 flex items-center gap-2">
                 <input
+                  id="mission-criterion"
                   type="text"
                   value={criterionInput}
                   onChange={(e) => setCriterionInput(e.target.value)}
@@ -319,11 +344,12 @@ export function MissionCreate() {
               <PanelPins corners="all" />
               <CornerBracket side="left" />
               <CornerBracket side="right" />
-              <label className="aw-micro" style={{ color: aw.textSoft }}>
+              <label htmlFor="mission-risk" className="aw-micro" style={{ color: aw.textSoft }}>
                 IDENTIFIED RISKS
               </label>
               <div className="mt-2 flex items-center gap-2">
                 <input
+                  id="mission-risk"
                   type="text"
                   value={riskInput}
                   onChange={(e) => setRiskInput(e.target.value)}

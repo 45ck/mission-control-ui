@@ -172,7 +172,7 @@ export function WorkflowCreate() {
         blocker.reset();
       }
     }
-  }, [blocker]);
+  }, [blocker.state]);
 
   useEffect(() => {
     if (!isDirty || submitted) return;
@@ -327,10 +327,11 @@ function FormFieldTitle({
       <PanelPins corners="all" />
       <CornerBracket side="left" />
       <CornerBracket side="right" />
-      <label className="aw-micro" style={{ color: aw.textSoft }}>
+      <label htmlFor="workflow-title" className="aw-micro" style={{ color: aw.textSoft }}>
         TITLE <span style={{ color: semantic.error }}>*</span>
       </label>
       <input
+        id="workflow-title"
         type="text"
         value={value}
         onChange={(e) => {
@@ -366,10 +367,11 @@ function FormFieldDescription({
       <PanelPins />
       <CornerBracket side="left" />
       <CornerBracket side="right" />
-      <label className="aw-micro" style={{ color: aw.textSoft }}>
+      <label htmlFor="workflow-description" className="aw-micro" style={{ color: aw.textSoft }}>
         DESCRIPTION
       </label>
       <textarea
+        id="workflow-description"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         rows={3}
@@ -387,10 +389,11 @@ function FormFieldOwner({ value, onChange }: { value: string; onChange: (v: stri
       <PanelPins />
       <CornerBracket side="left" />
       <CornerBracket side="right" />
-      <label className="aw-micro" style={{ color: aw.textSoft }}>
+      <label htmlFor="workflow-owner" className="aw-micro" style={{ color: aw.textSoft }}>
         OWNER
       </label>
       <input
+        id="workflow-owner"
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}

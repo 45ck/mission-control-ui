@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 
 export interface Toast {
   id: string;
@@ -13,6 +13,13 @@ let nextId = 0;
 export function useToast(duration = 4000) {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const timers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+
+  useEffect(() => {
+    return () => {
+      timers.current.forEach((timer) => clearTimeout(timer));
+      timers.current.clear();
+    };
+  }, []);
 
   const dismiss = useCallback((id: string) => {
     const timer = timers.current.get(id);

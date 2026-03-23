@@ -21,6 +21,7 @@ const stageColumns: { key: Stage; label: string }[] = [
   { key: 'execute', label: 'EXECUTE' },
   { key: 'review', label: 'REVIEW' },
   { key: 'escalation', label: 'ESCALATION' },
+  { key: 'completed', label: 'COMPLETED' },
 ];
 
 function MissionBoardCard({ mission, workflowId }: { mission: Mission; workflowId: string }) {
@@ -143,7 +144,7 @@ export function WorkflowDetail() {
         </div>
 
         {/* Kanban board */}
-        <div className="mt-6 grid grid-cols-4 gap-4">
+        <div className="mt-6 grid grid-cols-5 gap-4">
           {stageColumns.map((col) => {
             const columnMissions = wfMissions.filter((m) => m.stage === col.key);
             return (

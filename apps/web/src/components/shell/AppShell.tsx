@@ -1,9 +1,10 @@
 import { useState, useEffect, createContext, useContext } from 'react';
-import { Outlet } from 'react-router';
+import { Outlet, useLocation } from 'react-router';
 import { AnimatePresence } from 'framer-motion';
 import { LeftNav } from './LeftNav';
 import { CommandPalette } from './CommandPalette';
 import { AmbientDots } from '../primitives/AmbientDots';
+import { ErrorBoundary } from '../primitives/ErrorBoundary';
 import { aw } from '../../theme/tokens';
 
 const CommandPaletteContext = createContext<(() => void) | null>(null);
@@ -15,6 +16,13 @@ export function useCommandPalette() {
 export function AppShell() {
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const openCommandPalette = () => setCommandPaletteOpen(true);
+  const location = useLocation();
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -47,7 +55,9 @@ export function AppShell() {
           />
           <div className="aw-scanlines relative flex flex-1 flex-col overflow-hidden">
             <AnimatePresence mode="wait">
-              <Outlet />
+              <ErrorBoundary resetKey={location.pathname}>
+                <Outlet />
+              </ErrorBoundary>
             </AnimatePresence>
           </div>
         </main>
@@ -60,7 +70,7 @@ export function AppShell() {
             MISSION.CTRL // OPERATING SURFACE v0.1.0
           </div>
           <div className="aw-timestamp text-[12px]" style={{ color: aw.lineDark }}>
-            {new Date().toLocaleTimeString([], {
+            {now.toLocaleTimeString([], {
               hour: '2-digit',
               minute: '2-digit',
               second: '2-digit',

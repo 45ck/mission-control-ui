@@ -52,7 +52,10 @@ export function MissionReview() {
   const warningCount = mEvidence.filter((e) => e.status === 'warning').length;
 
   const handleAction = (action: 'approve' | 'reject' | 're-plan') => {
-    const messages: Record<string, { text: string; type: 'success' | 'error' | 'info' }> = {
+    const messages: Record<
+      'approve' | 'reject' | 're-plan',
+      { text: string; type: 'success' | 'error' | 'info' }
+    > = {
       approve: { text: 'Review approved. Changes will be deployed.', type: 'success' },
       reject: { text: 'Review rejected. Author will be notified.', type: 'error' },
       're-plan': { text: 'Sent back for re-planning.', type: 'info' },

@@ -6,6 +6,7 @@ const stageConfig: Record<Stage, { label: string; bg: string }> = {
   execute: { label: 'EXECUTE', bg: aw.plateDark },
   review: { label: 'REVIEW', bg: aw.accentStrong },
   escalation: { label: 'ESCALATION', bg: aw.accent },
+  completed: { label: 'COMPLETED', bg: aw.lineInk },
 };
 
 export function StageBadge({ stage }: { stage: Stage }) {

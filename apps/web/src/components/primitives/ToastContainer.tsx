@@ -1,11 +1,11 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import type { Toast } from '../../hooks/useToast';
-import { aw, semantic } from '../../theme/tokens';
+import { semantic } from '../../theme/tokens';
 
 const typeStyles: Record<Toast['type'], { bg: string; border: string; text: string }> = {
   success: { bg: semantic.successSoft, border: semantic.success, text: semantic.successMuted },
-  error: { bg: semantic.errorSoft, border: semantic.error, text: aw.accentStrong },
+  error: { bg: semantic.errorSoft, border: semantic.error, text: semantic.error },
   info: { bg: semantic.infoSoft, border: semantic.info, text: semantic.info },
 };
 

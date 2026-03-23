@@ -15,6 +15,7 @@ const stageDotColor: Record<Stage, string> = {
   execute: aw.plateDark,
   review: aw.accentStrong,
   escalation: aw.accent,
+  completed: aw.lineInk,
 };
 
 export function History() {

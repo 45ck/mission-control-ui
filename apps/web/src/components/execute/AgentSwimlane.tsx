@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Pause, Play, RotateCcw } from 'lucide-react';
 import type { AgentSession } from '../../data/agent-sessions';
@@ -15,6 +15,10 @@ const statusDot: Record<string, string> = {
 
 export function AgentSwimlane({ session }: { session: AgentSession }) {
   const [displayStatus, setDisplayStatus] = useState(session.status);
+
+  useEffect(() => {
+    setDisplayStatus(session.status);
+  }, [session.status]);
 
   function handlePauseResume() {
     setDisplayStatus((s) => (s === 'active' ? 'paused' : 'active'));

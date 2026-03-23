@@ -9,6 +9,8 @@ function Toggle({ enabled, onToggle }: { enabled: boolean; onToggle: () => void 
   return (
     <button
       onClick={onToggle}
+      role="switch"
+      aria-checked={enabled}
       className="aw-focus-ring relative h-[20px] w-[36px] shrink-0 rounded-full transition-colors"
       style={{ backgroundColor: enabled ? semantic.success : aw.lineDark }}
     >

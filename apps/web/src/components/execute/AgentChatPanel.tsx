@@ -53,12 +53,6 @@ function TypingIndicator() {
             }}
           />
         ))}
-        <style>{`
-          @keyframes typing-dot {
-            0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
-            30% { opacity: 1; transform: translateY(-3px); }
-          }
-        `}</style>
       </div>
     </div>
   );
@@ -71,6 +65,7 @@ function TypingIndicator() {
 function StreamingMessage({ fullText, onComplete }: { fullText: string; onComplete: () => void }) {
   const { text, isStreaming, start } = useStreamingText(fullText, 3, 30);
   const startedRef = useRef(false);
+  const completedRef = useRef(false);
 
   useEffect(() => {
     if (!startedRef.current) {
@@ -80,7 +75,13 @@ function StreamingMessage({ fullText, onComplete }: { fullText: string; onComple
   }, [start]);
 
   useEffect(() => {
-    if (!isStreaming && text.length === fullText.length && text.length > 0) {
+    if (
+      !isStreaming &&
+      text.length === fullText.length &&
+      text.length > 0 &&
+      !completedRef.current
+    ) {
+      completedRef.current = true;
       onComplete();
     }
   }, [isStreaming, text.length, fullText.length, onComplete]);
@@ -105,12 +106,6 @@ function StreamingMessage({ fullText, onComplete }: { fullText: string; onComple
             }}
           />
         )}
-        <style>{`
-          @keyframes cursor-blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0; }
-          }
-        `}</style>
       </div>
     </div>
   );
@@ -400,6 +395,12 @@ export function AgentChatPanel({ sessions }: { sessions: AgentSession[] }) {
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const charCountIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  useEffect(() => {
+    if (sessions.length > 0 && !sessions.find((s) => s.id === activeSessionId)) {
+      setActiveSessionId(sessions[0].id);
+    }
+  }, [sessions, activeSessionId]);
+
   const activeSession = sessions.find((s) => s.id === activeSessionId);
   const sessionMessages = agentMessages.filter((m) => m.sessionId === activeSessionId);
   const allMessages: (AgentMessage | LocalMessage)[] = [
@@ -430,7 +431,7 @@ export function AgentChatPanel({ sessions }: { sessions: AgentSession[] }) {
     [activeSessionId],
   );
 
-  function handleSend() {
+  const handleSend = useCallback(() => {
     const trimmed = input.trim();
     if (!trimmed || isTyping || streamingResponse !== null) return;
 
@@ -462,7 +463,7 @@ export function AgentChatPanel({ sessions }: { sessions: AgentSession[] }) {
         setStreamedChars(count);
       }, 30);
     }, 1500);
-  }
+  }, [input, isTyping, streamingResponse, addLocalMessage]);
 
   const handleStreamComplete = useCallback(() => {
     if (streamingResponse === null) return;
@@ -475,12 +476,18 @@ export function AgentChatPanel({ sessions }: { sessions: AgentSession[] }) {
     }
   }, [streamingResponse, addLocalMessage]);
 
-  function handlePlanAction(approved: boolean) {
-    const msg = approved
-      ? 'Plan approved. Agent proceeding.'
-      : 'Plan rejected. Agent awaiting revision.';
-    addLocalMessage('system', msg);
-  }
+  const handlePlanAction = useCallback(
+    (approved: boolean) => {
+      const msg = approved
+        ? 'Plan approved. Agent proceeding.'
+        : 'Plan rejected. Agent awaiting revision.';
+      addLocalMessage('system', msg);
+    },
+    [addLocalMessage],
+  );
+
+  const handlePlanApprove = useCallback(() => handlePlanAction(true), [handlePlanAction]);
+  const handlePlanReject = useCallback(() => handlePlanAction(false), [handlePlanAction]);
 
   return (
     <div className="flex h-full flex-col">
@@ -514,8 +521,8 @@ export function AgentChatPanel({ sessions }: { sessions: AgentSession[] }) {
           <ChatMessage
             key={msg.id}
             message={msg}
-            onPlanApprove={() => handlePlanAction(true)}
-            onPlanReject={() => handlePlanAction(false)}
+            onPlanApprove={handlePlanApprove}
+            onPlanReject={handlePlanReject}
           />
         ))}
         {isTyping && <TypingIndicator />}

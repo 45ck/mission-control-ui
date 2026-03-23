@@ -5,6 +5,7 @@ import { aw, semantic } from '../../theme/tokens';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
+  resetKey?: string;
 }
 
 interface ErrorBoundaryState {
@@ -24,6 +25,12 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error('ErrorBoundary caught:', error, info.componentStack);
+  }
+
+  componentDidUpdate(prevProps: ErrorBoundaryProps) {
+    if (prevProps.resetKey !== this.props.resetKey && this.state.hasError) {
+      this.setState({ hasError: false, error: null });
+    }
   }
 
   render() {

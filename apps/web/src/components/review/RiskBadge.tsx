@@ -2,7 +2,7 @@ import type { RiskTier } from '../../data/missions';
 import { aw, semantic } from '../../theme/tokens';
 
 const riskConfig: Record<RiskTier, { label: string; bg: string; text: string }> = {
-  low: { label: 'LOW RISK', bg: aw.lineFaint, text: aw.textSoft },
+  low: { label: 'LOW RISK', bg: aw.lineFaint, text: aw.text },
   medium: { label: 'MEDIUM RISK', bg: semantic.warningSoft, text: semantic.warning },
   high: { label: 'HIGH RISK', bg: semantic.errorSoft, text: semantic.error },
 };

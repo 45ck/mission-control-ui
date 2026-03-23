@@ -22,6 +22,7 @@ export function MissionEscalation() {
   const mission = missions.find((m) => m.id === missionId);
   const workflow = workflowId ? workflows.find((w) => w.id === workflowId) : undefined;
   const { toasts, show, dismiss } = useToast(5000);
+  const [selectedEscIdx, setSelectedEscIdx] = useState(0);
 
   if (!mission) {
     return (
@@ -51,7 +52,6 @@ export function MissionEscalation() {
 
   const mEscalations = escalations.filter((e) => e.missionId === mission.id);
   const mSessions = agentSessions.filter((s) => s.missionId === mission.id);
-  const [selectedEscIdx, setSelectedEscIdx] = useState(0);
   const selectedEscalation = mEscalations[selectedEscIdx] ?? mEscalations[0];
 
   if (!selectedEscalation) {

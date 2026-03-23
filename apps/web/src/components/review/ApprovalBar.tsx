@@ -77,6 +77,7 @@ export function ApprovalBar({
             opacity: canApprove ? 1 : 0.5,
             cursor: canApprove ? 'pointer' : 'not-allowed',
           }}
+          disabled={!canApprove}
           whileTap={canApprove ? { scale: 0.96 } : undefined}
           transition={transitions.fast}
           onClick={() => canApprove && onAction?.('approve')}

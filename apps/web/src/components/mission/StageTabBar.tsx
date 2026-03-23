@@ -35,20 +35,10 @@ export function StageTabBar({
           <Link
             key={stage.key}
             to={`${prefix}${stage.suffix}`}
-            className="aw-micro aw-focus-ring relative px-4 py-2.5 text-[11px] transition-colors"
+            className={`aw-micro aw-focus-ring relative px-4 py-2.5 text-[11px] transition-colors${!isActive ? ' hover:text-[var(--color-aw-text-strong)]' : ''}`}
             style={{
               backgroundColor: isActive ? aw.plate : 'transparent',
               color: isActive ? aw.inverse : aw.textSoft,
-            }}
-            onMouseEnter={(e) => {
-              if (!isActive) {
-                e.currentTarget.style.color = aw.textStrong;
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!isActive) {
-                e.currentTarget.style.color = aw.textSoft;
-              }
             }}
           >
             {stage.label}

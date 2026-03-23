@@ -14,6 +14,15 @@ type FilterStage = Stage | 'all';
 type FilterRisk = RiskTier | 'all';
 type SortKey = 'stage' | 'title' | 'created' | 'risk';
 
+const riskOrder: Record<RiskTier, number> = { high: 0, medium: 1, low: 2 };
+const stageOrder: Record<Stage, number> = {
+  escalation: 0,
+  review: 1,
+  execute: 2,
+  plan: 3,
+  completed: 4,
+};
+
 export function MissionHome() {
   const [selectedId, setSelectedId] = useState<string | null>(missions[0]?.id ?? null);
   const [sortBy, setSortBy] = useState<SortKey>('stage');
@@ -55,14 +64,6 @@ export function MissionHome() {
     return true;
   });
 
-  const riskOrder: Record<RiskTier, number> = { high: 0, medium: 1, low: 2 };
-  const stageOrder: Record<Stage, number> = {
-    escalation: 0,
-    review: 1,
-    execute: 2,
-    plan: 3,
-    completed: 4,
-  };
   const sorted = [...filtered].sort((a, b) => {
     if (sortBy === 'title') return a.title.localeCompare(b.title);
     if (sortBy === 'created')
@@ -89,7 +90,7 @@ export function MissionHome() {
   const selected: Mission | null = missions.find((m) => m.id === selectedId) ?? null;
   const activeFilterCount = (filterStage !== 'all' ? 1 : 0) + (filterRisk !== 'all' ? 1 : 0);
 
-  const stages: FilterStage[] = ['all', 'plan', 'execute', 'review', 'escalation'];
+  const stages: FilterStage[] = ['all', 'plan', 'execute', 'review', 'escalation', 'completed'];
   const risks: FilterRisk[] = ['all', 'low', 'medium', 'high'];
 
   return (

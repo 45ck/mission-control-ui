@@ -1,3 +1,4 @@
+import React from 'react';
 import { CheckCircle, XCircle, AlertTriangle, Clock } from 'lucide-react';
 import type { Evidence, EvidenceStatus } from '../../data/evidence';
 import { aw, semantic } from '../../theme/tokens';
@@ -26,6 +27,18 @@ export function EvidenceCard({ item, onClick }: { item: Evidence; onClick?: () =
       className={`relative border p-4${onClick ? ' cursor-pointer' : ''}`}
       style={{ borderColor: aw.lineDark }}
       onClick={onClick}
+      {...(onClick
+        ? {
+            role: 'button' as const,
+            tabIndex: 0,
+            onKeyDown: (e: React.KeyboardEvent) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onClick();
+              }
+            },
+          }
+        : {})}
     >
       <PanelPins />
 

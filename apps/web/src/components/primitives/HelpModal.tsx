@@ -45,6 +45,7 @@ export function HelpModal() {
         {open && (
           <>
             <motion.div
+              role="presentation"
               className="fixed inset-0 z-50"
               style={{ backgroundColor: 'rgba(90,98,102,0.3)' }}
               initial={{ opacity: 0 }}
@@ -53,6 +54,9 @@ export function HelpModal() {
               onClick={() => setOpen(false)}
             />
             <motion.div
+              role="dialog"
+              aria-modal="true"
+              aria-label="Mission Control Guide"
               className="fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 border p-8"
               style={{ borderColor: aw.lineDark, backgroundColor: aw.paperTop }}
               initial={{ opacity: 0, scale: 0.95, y: 8 }}
