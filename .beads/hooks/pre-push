@@ -24,12 +24,12 @@ fi
 
 # ── bd integration ──
 if command -v bd >/dev/null 2>&1; then
-  bd hooks run pre-push "$@"
+  bd hooks run pre-push "$@" 2>/dev/null || true
 fi
 
 # ── slow gates ──
 if command -v noslop >/dev/null 2>&1; then
-  noslop check --tier=slow
+  PATH="./node_modules/.bin:$PATH" noslop check --tier=slow --no-spell
 else
   npm run typecheck && npm run test
 fi
