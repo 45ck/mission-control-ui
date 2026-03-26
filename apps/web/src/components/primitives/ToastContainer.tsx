@@ -17,7 +17,11 @@ export function ToastContainer({
   onDismiss: (id: string) => void;
 }) {
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-2">
+    <div
+      className="fixed bottom-6 right-6 z-50 flex flex-col gap-2"
+      aria-live="polite"
+      role="status"
+    >
       <AnimatePresence>
         {toasts.map((toast) => {
           const style = typeStyles[toast.type];

@@ -1,7 +1,8 @@
 import { Link } from 'react-router';
 import { aw } from '../../theme/tokens';
+import type { Stage } from '../../data/missions';
 
-const stages = [
+const baseStages = [
   { key: 'overview', label: 'OVERVIEW', suffix: '' },
   { key: 'plan', label: 'PLAN', suffix: '/plan' },
   { key: 'execute', label: 'EXECUTE', suffix: '/execute' },
@@ -9,20 +10,30 @@ const stages = [
   { key: 'escalation', label: 'ESCALATION', suffix: '/escalation' },
 ] as const;
 
-export type StageKey = (typeof stages)[number]['key'];
+const deliverablesTab = {
+  key: 'deliverables' as const,
+  label: 'DELIVERABLES',
+  suffix: '/deliverables',
+};
+
+export type StageKey = (typeof baseStages)[number]['key'] | 'deliverables';
 
 export function StageTabBar({
   missionId,
   workflowId,
   currentStage,
+  missionStage,
 }: {
   missionId: string;
   workflowId?: string;
   currentStage: StageKey;
+  missionStage?: Stage;
 }) {
   const prefix = workflowId
     ? `/workflows/${workflowId}/missions/${missionId}`
     : `/missions/${missionId}`;
+
+  const stages = missionStage === 'completed' ? [...baseStages, deliverablesTab] : [...baseStages];
 
   return (
     <div

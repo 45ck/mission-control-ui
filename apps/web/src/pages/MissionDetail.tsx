@@ -103,7 +103,12 @@ export function MissionDetail() {
         }
       />
 
-      <StageTabBar missionId={mission.id} workflowId={workflowId} currentStage="overview" />
+      <StageTabBar
+        missionId={mission.id}
+        workflowId={workflowId}
+        currentStage="overview"
+        missionStage={mission.stage}
+      />
 
       <div className="flex-1 overflow-y-auto p-6 pb-16">
         <div className="mx-auto max-w-3xl space-y-5">

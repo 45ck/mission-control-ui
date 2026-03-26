@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router';
 import { ArrowLeft } from 'lucide-react';
 import { missions } from '../data/missions';
@@ -13,6 +13,7 @@ import { ConsequencePanel } from '../components/escalation/ConsequencePanel';
 import { CornerBracket } from '../components/primitives/CornerBracket';
 import { PanelPins } from '../components/primitives/PanelPins';
 import { ToastContainer } from '../components/primitives/ToastContainer';
+import { ConfirmDialog } from '../components/primitives/ConfirmDialog';
 import { PageTransition } from '../components/shell/PageTransition';
 import { StageTabBar } from '../components/mission/StageTabBar';
 import { useToast } from '../hooks/useToast';
@@ -23,6 +24,20 @@ export function MissionEscalation() {
   const workflow = workflowId ? workflows.find((w) => w.id === workflowId) : undefined;
   const { toasts, show, dismiss } = useToast(5000);
   const [selectedEscIdx, setSelectedEscIdx] = useState(0);
+  const [pendingDecision, setPendingDecision] = useState<{
+    option: import('../data/escalations').EscalationOption;
+    undoFn: () => void;
+  } | null>(null);
+
+  const confirmDecision = useCallback(() => {
+    if (!pendingDecision) return;
+    const { option, undoFn } = pendingDecision;
+    show(`Decision recorded: ${option.label}`, 'success', () => {
+      undoFn();
+      show('Decision undone.', 'info');
+    });
+    setPendingDecision(null);
+  }, [pendingDecision, show]);
 
   if (!mission) {
     return (
@@ -186,20 +201,27 @@ export function MissionEscalation() {
 
         {/* Right: consequences */}
         <div
-          className="w-[300px] shrink-0 overflow-y-auto border-l p-4 pb-16"
+          className="w-[280px] shrink-0 overflow-y-auto border-l p-4 pb-16"
           style={{ borderColor: aw.line }}
         >
           <ConsequencePanel
             options={selectedEscalation.options}
             onDecision={(option, undoFn) => {
-              show(`Decision recorded: ${option.label}`, 'success', () => {
-                undoFn();
-                show('Decision undone.', 'info');
-              });
+              setPendingDecision({ option, undoFn });
             }}
           />
         </div>
       </div>
+
+      <ConfirmDialog
+        open={pendingDecision !== null}
+        title={`Confirm decision: ${pendingDecision?.option.label ?? ''}`}
+        description={pendingDecision?.option.description ?? ''}
+        confirmLabel="Confirm decision"
+        variant="danger"
+        onConfirm={confirmDecision}
+        onCancel={() => setPendingDecision(null)}
+      />
 
       <ToastContainer toasts={toasts} onDismiss={dismiss} />
     </PageTransition>

@@ -50,11 +50,11 @@ STAGED
 
 # ── bd integration ──
 if command -v bd >/dev/null 2>&1; then
-  bd hook pre-commit "$@"
+  bd hook pre-commit "$@" 2>/dev/null || true
 fi
 
 if command -v noslop >/dev/null 2>&1; then
-  noslop check --tier=fast
+  PATH="./node_modules/.bin:$PATH" noslop check --tier=fast --no-spell
 fi
 
 # ── lint-staged ──

@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Search, Target, GitBranch, DollarSign, History, Settings, Plus } from 'lucide-react';
-import { aw } from '../../theme/tokens';
+import { Search, Target, GitBranch, DollarSign, History, Settings, Plus, Eye } from 'lucide-react';
+import { aw, semantic } from '../../theme/tokens';
 import { missions } from '../../data/missions';
+import { agentSessions } from '../../data/agent-sessions';
 import { CornerBracket } from '../primitives/CornerBracket';
 
 interface CommandPaletteProps {
@@ -59,6 +60,26 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
     return actions.filter((a) => a.label.toLowerCase().includes(q));
   }, [query]);
 
+  // Missions with at least one active agent session — targets for Live View
+  const liveTargets = useMemo(() => {
+    const activeMissionIds = new Set(
+      agentSessions.filter((s) => s.status === 'active').map((s) => s.missionId),
+    );
+    return missions.filter((m) => activeMissionIds.has(m.id));
+  }, []);
+
+  const filteredLiveTargets = useMemo(() => {
+    if (!query) return liveTargets;
+    const q = query.toLowerCase();
+    return liveTargets.filter(
+      (m) =>
+        m.title.toLowerCase().includes(q) ||
+        m.id.toLowerCase().includes(q) ||
+        'live view'.includes(q) ||
+        'live'.includes(q),
+    );
+  }, [query, liveTargets]);
+
   const allItems = useMemo(() => {
     const items: { label: string; path: string; section: string }[] = [];
     filteredMissions.forEach((m) => {
@@ -74,12 +95,22 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
         section: 'missions',
       });
     });
+    filteredLiveTargets.forEach((m) => {
+      const base = m.workflowId
+        ? `/workflows/${m.workflowId}/missions/${m.id}`
+        : `/missions/${m.id}`;
+      items.push({
+        label: `${m.id} — ${m.title}`,
+        path: `${base}/live`,
+        section: 'live',
+      });
+    });
     filteredNav.forEach((p) => items.push({ label: p.label, path: p.path, section: 'nav' }));
     filteredActions.forEach((a) =>
       items.push({ label: a.label, path: a.path, section: 'actions' }),
     );
     return items;
-  }, [filteredMissions, filteredNav, filteredActions, currentUrlStage]);
+  }, [filteredMissions, filteredLiveTargets, filteredNav, filteredActions, currentUrlStage]);
 
   useEffect(() => {
     setSelectedIndex(0);
@@ -179,6 +210,37 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                         onMouseEnter={() => setSelectedIndex(idx)}
                       >
                         <Target className="h-3 w-3 shrink-0" style={{ color: aw.textSoft }} />
+                        <span className="truncate">
+                          <span style={{ color: aw.textSoft }}>{m.id}</span> — {m.title}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {filteredLiveTargets.length > 0 && (
+                <div className="mb-2">
+                  <div className="aw-micro px-2 py-1" style={{ color: aw.textSoft }}>
+                    LIVE VIEW
+                  </div>
+                  {filteredLiveTargets.map((m) => {
+                    const idx = itemIndex++;
+                    const base = m.workflowId
+                      ? `/workflows/${m.workflowId}/missions/${m.id}`
+                      : `/missions/${m.id}`;
+                    return (
+                      <button
+                        key={`live-${m.id}`}
+                        className="aw-body flex w-full items-center gap-2 rounded px-2 py-1.5 text-left"
+                        style={{
+                          color: aw.textStrong,
+                          backgroundColor: selectedIndex === idx ? aw.lineFaint : 'transparent',
+                        }}
+                        onClick={() => navigateTo(`${base}/live`)}
+                        onMouseEnter={() => setSelectedIndex(idx)}
+                      >
+                        <Eye className="h-3 w-3 shrink-0" style={{ color: semantic.success }} />
                         <span className="truncate">
                           <span style={{ color: aw.textSoft }}>{m.id}</span> — {m.title}
                         </span>

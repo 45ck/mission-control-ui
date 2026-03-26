@@ -44,10 +44,6 @@ function NotFound() {
 }
 
 const router = createBrowserRouter([
-  // Live View — fullscreen, outside AppShell
-  { path: 'missions/:missionId/live', element: <LiveView /> },
-  { path: 'workflows/:workflowId/missions/:missionId/live', element: <LiveView /> },
-
   // Legacy workspace redirect → Live View
   { path: 'workspace/:id', element: <WorkspaceRedirect /> },
 
@@ -55,6 +51,10 @@ const router = createBrowserRouter([
     element: <AppShell />,
     children: [
       { index: true, element: <Navigate to="/missions" replace /> },
+
+      // Live View — inside AppShell (collapsed LeftNav, no bottom bar)
+      { path: 'missions/:missionId/live', element: <LiveView /> },
+      { path: 'workflows/:workflowId/missions/:missionId/live', element: <LiveView /> },
 
       // Missions
       { path: 'missions', element: <MissionHome /> },

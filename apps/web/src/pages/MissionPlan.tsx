@@ -14,6 +14,7 @@ import { CornerBracket } from '../components/primitives/CornerBracket';
 import { ToastContainer } from '../components/primitives/ToastContainer';
 import { PageTransition } from '../components/shell/PageTransition';
 import { StageTabBar } from '../components/mission/StageTabBar';
+import { MarkdownViewer } from '../components/mission/MarkdownViewer';
 import { useToast } from '../hooks/useToast';
 import { useRecentMissions } from '../hooks/useRecentMissions';
 
@@ -77,7 +78,12 @@ export function MissionPlan() {
         }
       />
 
-      <StageTabBar missionId={mission.id} workflowId={workflowId} currentStage="plan" />
+      <StageTabBar
+        missionId={mission.id}
+        workflowId={workflowId}
+        currentStage="plan"
+        missionStage={mission.stage}
+      />
 
       <div className="flex flex-1 overflow-hidden">
         {/* Center: Plan content */}
@@ -104,8 +110,8 @@ export function MissionPlan() {
             <div className="aw-micro" style={{ color: aw.textSoft }}>
               MISSION GOAL
             </div>
-            <div className="aw-body mt-2" style={{ color: aw.text }}>
-              {mission.goal}
+            <div className="mt-2">
+              <MarkdownViewer content={mission.goal} />
             </div>
           </div>
 
@@ -115,8 +121,8 @@ export function MissionPlan() {
             <div className="aw-micro" style={{ color: aw.textSoft }}>
               SCOPE BOUNDARY
             </div>
-            <div className="aw-body mt-2" style={{ color: aw.text }}>
-              {mission.scopeBoundary}
+            <div className="mt-2">
+              <MarkdownViewer content={mission.scopeBoundary} />
             </div>
           </div>
 
@@ -133,7 +139,7 @@ export function MissionPlan() {
                     className="mt-[5px] inline-block h-[5px] w-[5px] shrink-0 rounded-full"
                     style={{ backgroundColor: aw.lineInk }}
                   />
-                  {c}
+                  <MarkdownViewer content={c} />
                 </li>
               ))}
             </ul>
@@ -154,7 +160,7 @@ export function MissionPlan() {
                     className="mt-[5px] inline-block h-[5px] w-[5px] shrink-0 rotate-45"
                     style={{ backgroundColor: aw.accent }}
                   />
-                  {r}
+                  <MarkdownViewer content={r} />
                 </li>
               ))}
             </ul>

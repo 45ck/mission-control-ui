@@ -51,7 +51,9 @@ describe('CommandPalette', () => {
     renderPalette();
     expect(screen.getByText('MISSIONS')).toBeInTheDocument();
     for (const m of missions) {
-      expect(screen.getByText(m.id)).toBeInTheDocument();
+      // Some mission IDs may appear in both MISSIONS and LIVE VIEW sections
+      const matches = screen.getAllByText(m.id);
+      expect(matches.length).toBeGreaterThanOrEqual(1);
     }
   });
 
@@ -171,5 +173,31 @@ describe('CommandPalette', () => {
     expect(screen.getByText('MSN-001')).toBeInTheDocument();
     expect(screen.getByText('MSN-003')).toBeInTheDocument();
     expect(screen.queryByText('MSN-002')).not.toBeInTheDocument();
+  });
+
+  describe('Live View section (bead-ced)', () => {
+    it('renders a LIVE VIEW section header when open', () => {
+      renderPalette();
+      expect(screen.getByText('LIVE VIEW')).toBeInTheDocument();
+    });
+
+    it('shows missions with active agent sessions as live view targets', () => {
+      renderPalette();
+      // MSN-002 has an active agent (AS-003), so it should appear in the LIVE VIEW section
+      const liveSection = screen.getByText('LIVE VIEW');
+      const sectionContainer = liveSection.parentElement;
+      expect(sectionContainer).toBeInTheDocument();
+      const buttons = sectionContainer!.querySelectorAll('button');
+      expect(buttons.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('navigates to /live route when clicking a live view target', () => {
+      renderPalette();
+      const liveSection = screen.getByText('LIVE VIEW');
+      const sectionContainer = liveSection.parentElement;
+      const buttons = sectionContainer!.querySelectorAll('button');
+      fireEvent.click(buttons[0]);
+      expect(mockNavigate).toHaveBeenCalledWith(expect.stringContaining('/live'));
+    });
   });
 });

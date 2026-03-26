@@ -61,14 +61,29 @@ export function AppShell() {
     return () => window.removeEventListener('mc:toggle-mission-switcher', handler);
   }, []);
 
+  // Detect whether the current route is a LiveView route
+  const isLiveRoute = /\/missions\/[^/]+\/live$/.test(location.pathname);
+
   return (
     <CommandPaletteContext.Provider value={openCommandPalette}>
       <MissionSwitcherContext.Provider value={openMissionSwitcher}>
         <div className="aw-paper relative flex h-screen overflow-hidden">
+          {/* Skip navigation link */}
+          <a
+            href="#main-content"
+            className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:rounded focus:border focus:bg-white focus:px-4 focus:py-2 focus:text-sm"
+          >
+            Skip to content
+          </a>
           <AmbientDots />
-          <LeftNav />
+          <nav aria-label="Main navigation">
+            <LeftNav collapsed={isLiveRoute} />
+          </nav>
           <CommandPalette open={commandPaletteOpen} onClose={() => setCommandPaletteOpen(false)} />
           <main
+            id="main-content"
+            role="main"
+            aria-label="Page content"
             className="relative flex flex-1 flex-col overflow-hidden"
             style={{ backgroundColor: 'transparent' }}
           >
@@ -88,23 +103,25 @@ export function AppShell() {
               </AnimatePresence>
             </div>
           </main>
-          {/* Bottom timestamp bar */}
-          <div
-            className="absolute bottom-0 left-0 right-0 z-10 flex items-center justify-between border-t px-5 py-1.5"
-            style={{ borderColor: aw.line, backgroundColor: aw.haze }}
-          >
-            <div className="aw-micro text-[9px]" style={{ color: aw.textSoft }}>
-              MISSION.CTRL // OPERATING SURFACE v0.1.0
+          {/* Bottom timestamp bar — hidden on live routes */}
+          {!isLiveRoute && (
+            <div
+              className="absolute bottom-0 left-0 right-0 z-10 flex items-center justify-between border-t px-5 py-1.5"
+              style={{ borderColor: aw.line, backgroundColor: aw.haze }}
+            >
+              <div className="aw-micro text-[9px]" style={{ color: aw.textSoft }}>
+                MISSION.CTRL // OPERATING SURFACE v0.1.0
+              </div>
+              <div className="aw-timestamp text-[12px]" style={{ color: aw.lineDark }}>
+                {now.toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  second: '2-digit',
+                  hour12: false,
+                })}
+              </div>
             </div>
-            <div className="aw-timestamp text-[12px]" style={{ color: aw.lineDark }}>
-              {now.toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                hour12: false,
-              })}
-            </div>
-          </div>
+          )}
           <HelpModal />
         </div>
       </MissionSwitcherContext.Provider>

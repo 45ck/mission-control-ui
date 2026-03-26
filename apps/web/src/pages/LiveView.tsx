@@ -147,7 +147,8 @@ export function LiveView() {
   if (!mission) {
     return (
       <div
-        className="flex h-screen flex-col items-center justify-center gap-4"
+        className="flex flex-1 flex-col items-center justify-center gap-4"
+        data-testid="liveview-root"
         style={{ backgroundColor: aw.paperTop }}
       >
         <span className="aw-section-lg" style={{ color: aw.textStrong }}>
@@ -168,7 +169,11 @@ export function LiveView() {
   }
 
   return (
-    <div className="flex h-screen flex-col" style={{ backgroundColor: aw.paperTop }}>
+    <div
+      className="flex flex-1 flex-col"
+      data-testid="liveview-root"
+      style={{ backgroundColor: aw.paperTop }}
+    >
       <div
         className="flex items-center gap-2 border-b px-4 py-1"
         style={{ backgroundColor: aw.accentStrong, color: aw.inverse }}

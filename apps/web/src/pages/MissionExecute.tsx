@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router';
-import { ArrowLeft, Settings, Eye } from 'lucide-react';
+import { ArrowLeft, Settings, Eye, Monitor } from 'lucide-react';
 import { missions } from '../data/missions';
 import { workflows } from '../data/workflows';
 import { agentSessions } from '../data/agent-sessions';
@@ -20,6 +20,7 @@ import { CodeViewer } from '../components/workspace/CodeViewer';
 import { PageTransition } from '../components/shell/PageTransition';
 import { StageTabBar } from '../components/mission/StageTabBar';
 import { useRecentMissions } from '../hooks/useRecentMissions';
+import { LivePreview } from '../components/execute/LivePreview';
 
 export function MissionExecute() {
   const { missionId, workflowId } = useParams<{ missionId: string; workflowId?: string }>();
@@ -27,11 +28,23 @@ export function MissionExecute() {
   const workflow = workflowId ? workflows.find((w) => w.id === workflowId) : undefined;
   const [viewMode, setViewMode] = useState<'overview' | 'chat'>('overview');
   const [showConfig, setShowConfig] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
 
   const { trackVisit } = useRecentMissions();
   useEffect(() => {
     if (missionId) trackVisit(missionId);
   }, [missionId, trackVisit]);
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'l') {
+        e.preventDefault();
+        setShowPreview((prev) => !prev);
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   if (!mission) {
     return (
@@ -192,6 +205,18 @@ export function MissionExecute() {
               ENTER LIVE VIEW
             </Link>
             <button
+              className="aw-focus-ring aw-section-sm inline-flex items-center gap-1.5 rounded border px-3 py-1.5 transition-colors hover:bg-[var(--color-aw-haze)]"
+              style={{
+                borderColor: showPreview ? aw.accentStrong : aw.lineDark,
+                color: showPreview ? aw.accentStrong : aw.textSoft,
+              }}
+              onClick={() => setShowPreview((prev) => !prev)}
+              aria-label="Toggle inline preview"
+            >
+              <Monitor className="h-3.5 w-3.5" />
+              INLINE PREVIEW
+            </button>
+            <button
               className="aw-focus-ring rounded p-1.5"
               onClick={() => setShowConfig(true)}
               title="Configure Agent"
@@ -332,6 +357,10 @@ export function MissionExecute() {
             <div className="mt-6" style={{ height: 'calc(100vh - 280px)' }}>
               <AgentChatPanel sessions={mAgentSessions} />
             </div>
+          )}
+
+          {showPreview && (
+            <LivePreview missionId={mission.id} onClose={() => setShowPreview(false)} />
           )}
 
           {showConfig && <AgentConfigPanel onClose={() => setShowConfig(false)} />}

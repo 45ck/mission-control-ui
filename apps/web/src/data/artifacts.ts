@@ -151,4 +151,94 @@ Ship as-is. Consider switching to async span export if P99 approaches 48 ms unde
 `,
     createdAt: '2026-03-22T09:45:00Z',
   },
+
+  // MSN-006 — Real-time notification service (completed)
+  {
+    id: 'ART-007',
+    missionId: 'MSN-006',
+    type: 'video',
+    title: 'Demo: Live Notifications',
+    content: 'https://placehold.co/800x450/f7f8f8/6e767a?text=WebSocket+Demo+Recording',
+    thumbnail: 'https://placehold.co/120x80/f7f8f8/6e767a?text=WS+Demo',
+    createdAt: '2026-03-20T15:00:00Z',
+  },
+  {
+    id: 'ART-008',
+    missionId: 'MSN-006',
+    type: 'markdown',
+    title: 'Implementation Summary',
+    content: `# Real-Time Notification Service
+
+## Architecture
+
+- **Transport**: WebSocket with long-polling fallback
+- **Fanout**: Redis Pub/Sub for multi-node delivery
+- **Auth**: JWT verified on connection upgrade
+
+## Performance
+
+| Metric | Target | Actual |
+|--------|--------|--------|
+| Delivery latency | <500 ms | 120 ms P95 |
+| Concurrent connections | 10k/node | 12k tested |
+| Reconnection time | <5 s | 2.1 s avg |
+
+## Test Results
+
+- **34/34** unit tests passing
+- **8/8** integration tests passing (WebSocket + Redis)
+- Load test: sustained 10k connections for 30 min with zero drops
+`,
+    createdAt: '2026-03-20T16:00:00Z',
+  },
+  {
+    id: 'ART-009',
+    missionId: 'MSN-006',
+    type: 'image',
+    title: 'Architecture Diagram',
+    content: 'https://placehold.co/800x500/f7f8f8/6e767a?text=Notification+Architecture+Diagram',
+    thumbnail: 'https://placehold.co/120x80/f7f8f8/6e767a?text=Arch',
+    createdAt: '2026-03-20T16:30:00Z',
+  },
+
+  // MSN-007 — CI/CD pipeline (completed)
+  {
+    id: 'ART-010',
+    missionId: 'MSN-007',
+    type: 'markdown',
+    title: 'Pipeline Configuration Summary',
+    content: `# CI/CD Pipeline Configuration
+
+## Workflow Structure
+
+\`\`\`yaml
+name: ci-cd
+on: [push, pull_request]
+jobs:
+  lint-and-typecheck:
+    strategy:
+      matrix:
+        service: [api, worker, gateway]
+  test:
+    needs: lint-and-typecheck
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main'
+\`\`\`
+
+## Key Decisions
+
+- **Matrix builds** for parallel service compilation
+- Coverage gate at **80%** — enforced via \`istanbul\` thresholds
+- Ephemeral \`docker-compose\` for integration tests (spun up/down per run)
+- Canary deploys use **10% traffic split** with 5 min bake time
+
+## Results
+
+- Average pipeline duration: **11 min 23 s** (target: <15 min)
+- Zero failed canary rollbacks in 14 deployments
+- Slack notifications delivered within 3 s of pipeline completion
+`,
+    createdAt: '2026-03-21T14:00:00Z',
+  },
 ];

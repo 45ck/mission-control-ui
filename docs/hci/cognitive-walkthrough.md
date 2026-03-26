@@ -1,638 +1,471 @@
 # Cognitive Walkthrough: Mission Control Prototype
 
-**Date:** 2026-03-23
-**Evaluator role:** HCI expert performing structured cognitive walkthrough
-**User persona:** First-time tech lead or senior developer managing AI coding agents. Familiar with IDEs, Kanban boards, and code review tools. NOT familiar with military metaphors or Mission Control's specific lifecycle model (plan/execute/review/escalation).
+**Date**: 2026-03-24
+**Evaluator role**: HCI expert performing structured cognitive walkthrough
+**User persona**: Tech lead or senior developer managing AI coding agents. Familiar with IDEs, Kanban boards, and code review tools. NOT familiar with Mission Control's specific lifecycle model (plan/execute/review/escalation) or the LiveView concept.
+**Method**: For each step in a task, evaluate four questions:
+
+1. Will the user try to achieve the right effect?
+2. Will the user notice that the correct action is available?
+3. Will the user associate the correct action with the effect they are trying to achieve?
+4. If the correct action is performed, will the user see that progress is being made?
+   **Pain points under evaluation**: A (Inline Agent Visibility), B (Mode Switching), C (Rich Plan Content), D (Demo/Deliverable Artifacts)
 
 ---
 
-## Journey 1: First Encounter
+## Table of Contents
 
-**Scenario:** User opens Mission Control for the first time. Goal: understand what this tool does and find their first task.
-
-### Step 1.1 --- Landing on the App
-
-- **User goal:** Understand what this application is and what I can do here.
-- **Visible cues:**
-  - Left nav with ShieldCheck icon, "Mission Control" title, "AGENT SUPERVISION" subtitle (9px, very small).
-  - Nav items: Workflows, Missions (with a numeric badge), a thin separator, Costs, History, Settings.
-  - Bottom of left nav: "X active missions", "Y need review" in 9px text.
-  - Main area: TopBar with breadcrumbs "Missions / Inbox". A list of MissionCards on the left (360px column). A FocusPanel on the right showing details for the first card (auto-selected).
-  - Bottom status bar: "MISSION.CTRL // OPERATING SURFACE v0.1.0" and a clock.
-  - Dark warm-gray aesthetic with corner brackets, scanlines, ambient dots.
-- **Likely action:** Scan left nav, read labels, look at the card list.
-- **Q1 -- Will the user form the right goal?** Partially. "AGENT SUPERVISION" communicates the supervisory role, but at 9px it may be missed. The user sees "Missions" and "Workflows" but has no context for what a "mission" means in this domain. There is no onboarding tooltip, welcome message, or quick-start guide. A developer used to Jira/Linear will map "Missions" to "tasks" -- close enough, but the lifecycle stages (plan/execute/review/escalation) are not explained anywhere on this screen.
-- **Q2 -- Will the user notice the correct action?** Yes. MissionCards are prominent, the first is auto-selected, and the FocusPanel is visible. The "X need review" text at the bottom of LeftNav is a useful attention cue, though its 9px size makes it easy to miss.
-- **Q3 -- Will the user understand the action leads toward the goal?** Yes. Clicking a card reveals preview information. The FocusPanel shows stage badges (PLAN, EXECUTE, REVIEW, ESCALATION), risk badges, and an "Open Mission" link. This gives the user enough to start exploring.
-- **Q4 -- After acting, will the feedback make sense?** Yes. Selecting a card highlights it and populates the FocusPanel immediately. Feedback is clear.
-
-**Breakdowns / confusion risks:**
-
-1. **"Mission" as a concept is unexplained.** The user does not know if a mission is a PR, a feature, a sprint, or something else. No contextual help or subtitle on the MissionHome page explains it.
-2. **"Inbox" breadcrumb is misleading.** The breadcrumb reads "Missions / Inbox" but this is the only missions view -- there is no inbox vs. archive distinction. "Inbox" implies there is a corresponding "Outbox" or "Sent" view, which does not exist.
-3. **Military/tactical aesthetic may confuse or alienate.** Corner brackets, uppercase labels, Orbitron font, scanlines, and terms like "OPERATING SURFACE" and "AGENT SUPERVISION" create a sci-fi/military feel that does not signal "development tool" to most engineers. The user may wonder if they are in the right application.
-4. **The "need review" count at 9px at the bottom of the left nav** is the most actionable piece of information on screen -- it tells the user something requires their attention right now -- but it is the least visible element due to its size and position.
-
-**Recommendation:**
-
-- Add a one-line subtitle under the "Missions / Inbox" breadcrumb area: "Active coding tasks managed by AI agents" or similar.
-- Remove or rename "Inbox" to avoid implying a counterpart view.
-- Increase the "X need review" counter to at least 11px and consider placing it inline with the Missions nav label (similar to the existing badge) using an accent color to draw attention.
-- Consider adding an empty-state or first-run banner: "Missions are units of work assigned to AI agents. Create one to get started."
+1. [Journey 1: Check What the Agent Is Doing on MSN-002](#journey-1-check-what-the-agent-is-doing-on-msn-002)
+2. [Journey 2: Review and Approve a Mission Plan](#journey-2-review-and-approve-a-mission-plan)
+3. [Journey 3: View Completed Mission Deliverables](#journey-3-view-completed-mission-deliverables)
+4. [Breakdown Severity Summary](#breakdown-severity-summary)
+5. [Remediation Recommendations](#remediation-recommendations)
 
 ---
 
-### Step 1.2 --- Understanding a Mission Card
+## Journey 1: Check What the Agent Is Doing on MSN-002
 
-- **User goal:** Figure out what one of these listed items is and whether it needs my attention.
-- **Visible cues:**
-  - MissionCard shows: mission ID (e.g., "MSN-001"), title, goal (2-line clamp), StageBadge, RiskBadge, VerificationBadge, workflow name (if assigned), owner, date.
-  - Badges use labels like "EXECUTE", "REVIEW", "HIGH", "PASSING", "FAILING".
-- **Likely action:** Read the card, look at badges, click it.
-- **Q1 -- Will the user form the right goal?** Yes, if the user maps "mission" to "task." The goal text helps.
-- **Q2 -- Will the user notice the correct action?** Yes. Cards have hover effects (scale, shadow) that signal clickability.
-- **Q3 -- Will the user understand the action leads toward the goal?** Yes. The card looks selectable, and selecting it reveals details in the FocusPanel.
-- **Q4 -- After acting, will the feedback make sense?** Yes. The card gets a highlighted border and background, and the FocusPanel updates immediately.
+**Goal**: The user wants to see what the AI agent is currently doing on the "Add rate limiting to ingestion pipeline" mission (MSN-002, stage: execute).
 
-**Breakdowns / confusion risks:**
+**Context**: MSN-002 has one active agent session (AS-003), one terminal session, and is in the execute stage with `verificationState: 'passing'`.
 
-1. **Badge semantics are unclear without a legend.** "EXECUTE" could mean "ready to execute" or "currently executing." "PASSING" vs "PENDING" verification states have no tooltip or explanation. A first-time user seeing "ESCALATION" and "HIGH" together does not know the urgency level.
-2. **The card is a button (semantically), not a link.** Clicking it only selects the card in the list -- it does not navigate to the mission. The user must then find and click "Open Mission" in the FocusPanel. This is a two-click path where a single click might be expected.
+### Step 1.1: Navigate to MissionHome and locate MSN-002
 
-**Recommendation:**
+| Question                              | Answer                                                                                                                                                                       |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Will the user try the right effect?   | **YES.** User knows they need to find MSN-002. Going to "Missions" in the LeftNav is the natural first step.                                                                 |
+| Will the user see the correct action? | **YES.** LeftNav item "Missions" with a badge count is visible at all times. `LeftNav.tsx:8` -- `{ to: '/missions', label: 'Missions', icon: Target, separatorAfter: true }` |
+| Will the user associate the action?   | **YES.** "Missions" clearly leads to a list of missions.                                                                                                                     |
+| Will the user see progress?           | **YES.** MissionHome loads with a card list. MSN-002 card is visible with stage badge "EXECUTE" and risk badge "MEDIUM".                                                     |
 
-- Add tooltips to badges (e.g., "Stage: currently being executed by agents").
-- Consider making the card a direct link to MissionDetail, or at minimum, make the card double-clickable to open the mission.
+**Verdict**: PASS. No issues.
 
----
+### Step 1.2: Click MSN-002 card to select it
 
-### Step 1.3 --- Using the FocusPanel to Open a Mission
+| Question                              | Answer                                                                                                                                                                                                                               |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Will the user try the right effect?   | **YES.** User sees the card and wants to learn more about MSN-002.                                                                                                                                                                   |
+| Will the user see the correct action? | **YES.** Cards are clickable, with hover state via `MissionCard` component.                                                                                                                                                          |
+| Will the user associate the action?   | **YES.** Card selection is a standard pattern from email clients and Kanban tools.                                                                                                                                                   |
+| Will the user see progress?           | **PARTIAL.** The FocusPanel on the right updates to show MSN-002 summary. But this shows mission metadata, not agent activity. The user's goal was to see what the agent is doing, and the FocusPanel does not show live agent work. |
 
-- **User goal:** Navigate to the full details of this mission.
-- **Visible cues:**
-  - FocusPanel shows: mission ID + "// PREVIEW", title, badges, goal text, scope boundary, acceptance criteria, evidence/escalation counts, owner, and an "Open Mission" button with a chevron.
-- **Likely action:** Click "Open Mission."
-- **Q1 -- Will the user form the right goal?** Yes. The preview is clearly a summary, and the button invites deeper exploration.
-- **Q2 -- Will the user notice the correct action?** Likely yes. "Open Mission" is styled as a bordered button at the bottom of the panel. However, it is below the fold if the mission has many acceptance criteria, requiring scrolling.
-- **Q3 -- Will the user understand the action leads toward the goal?** Yes. "Open Mission" is unambiguous.
-- **Q4 -- After acting, will the feedback make sense?** Yes. Navigation occurs to MissionDetail with a page transition.
+**Verdict**: PARTIAL PASS. Card selection works, but the result (FocusPanel) does not address the user's actual goal.
 
-**Breakdowns / confusion risks:**
+- File: `apps/web/src/pages/MissionHome.tsx:184-190` -- card selection updates `selectedId`
+- File: `apps/web/src/pages/MissionHome.tsx:203-206` -- FocusPanel renders with `mission={selected}`
 
-1. **"Open Mission" navigates to the stage-specific page (plan/execute/review/escalation), not to MissionDetail.** The `stageRoute()` function routes to `/missions/:id/:stage`. If the mission is in the "execute" stage, the user lands on MissionExecute, which is a complex three-column layout. This may be disorienting for a first visit -- the user expected a detail/overview page, not a live execution dashboard.
-2. **There is a MissionDetail page** (`/missions/:missionId` without a stage suffix) that serves as a proper overview, but the FocusPanel never links to it. The user has no obvious path to this overview page from MissionHome.
+### Step 1.3: Navigate to MissionDetail to find agent view
 
-**Recommendation:**
+| Question                              | Answer                                                                                                                                                                                                                                                                                                                                                   |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Will the user try the right effect?   | **YES.** User realizes FocusPanel is just a preview and clicks through to the full detail page (double-click or explicit link).                                                                                                                                                                                                                          |
+| Will the user see the correct action? | **YES.** FocusPanel likely has a link to the full detail page, or the user clicks the card link. MissionDetail loads at `/missions/MSN-002`.                                                                                                                                                                                                             |
+| Will the user associate the action?   | **YES.**                                                                                                                                                                                                                                                                                                                                                 |
+| Will the user see progress?           | **PARTIAL.** MissionDetail shows overview with goal, scope, criteria, risks, agent sessions summary ("1 session: 1 active"), evidence summary, and timeline. The `ActivityPreview` component appears (since stage is not 'plan'). But the ActivityPreview shows a static snapshot -- browser sessions, code viewer, terminal -- NOT live agent activity. |
 
-- Change the FocusPanel's "Open Mission" link to navigate to MissionDetail (overview) first. Let the user drill into stage-specific pages from there.
-- Alternatively, add two buttons: "Overview" and "Go to [stage]".
+**Verdict**: PARTIAL PASS. The user gets more information but still cannot see what the agent is actively doing.
 
----
+- File: `apps/web/src/pages/MissionDetail.tsx:189` -- `{mission.stage !== 'plan' && <ActivityPreview mission={mission} />}`
+- File: `apps/web/src/components/mission/ActivityPreview.tsx:46-49` -- `isActive = mission.stage === 'execute'`, shows "LIVE ACTIVITY" label but content is static
 
-## Journey 2: Create and Launch a Mission
+### Step 1.4: User looks for live agent view -- multiple paths diverge
 
-**Scenario:** User wants to create a new mission, fill in the details, optionally assign it to a workflow, and start agents working on it.
+At this point, the user has TWO options visible:
 
-### Step 2.1 --- Finding the Create Action
+**Path A: StageTabBar -> EXECUTE tab**
+**Path B: NAVIGATION section -> "ENTER LIVE VIEW" link**
 
-- **User goal:** Create a new mission.
-- **Visible cues:**
-  - MissionHome has a prominent "+ NEW MISSION" button at the top of the card list, styled with the accent background color.
-  - CommandPalette (Ctrl+K) includes a "Create Mission" action.
-- **Likely action:** Click "+ NEW MISSION."
-- **Q1 -- Will the user form the right goal?** Yes. The button label is clear.
-- **Q2 -- Will the user notice the correct action?** Yes. It is the first element in the left column, visually prominent with accent background.
-- **Q3 -- Will the user understand the action leads toward the goal?** Yes.
-- **Q4 -- After acting, will the feedback make sense?** Yes. Navigation to MissionCreate page with breadcrumb "Missions / Create."
+This is a **critical decision point** where the design creates confusion.
 
-**Breakdowns / confusion risks:**
+#### Path A: Click EXECUTE tab in StageTabBar
 
-- None significant. This is well designed.
+| Question                              | Answer                                                                                                                                                                                                                                                                                                                                                                        |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Will the user try the right effect?   | **LIKELY.** "EXECUTE" sounds like it would show execution activity.                                                                                                                                                                                                                                                                                                           |
+| Will the user see the correct action? | **YES.** StageTabBar is always visible: `StageTabBar.tsx:27-49`.                                                                                                                                                                                                                                                                                                              |
+| Will the user associate the action?   | **YES.** "Execute" maps to "what's being executed."                                                                                                                                                                                                                                                                                                                           |
+| Will the user see progress?           | **BREAKDOWN.** The Execute page shows a partial agent view: agent swimlanes with log entries and a 320px-tall "EXECUTE PREVIEW" grid with agent log + code viewer. But this is NOT the same as LiveView's full workspace. The user sees agent session names, recent log entries, and a code file -- but no live browser preview, no full terminal, no interactive chat panel. |
 
-**Recommendation:**
+- File: `apps/web/src/pages/MissionExecute.tsx:207-294` -- EXECUTE PREVIEW section
+- File: `apps/web/src/pages/MissionExecute.tsx:219-294` -- 320px-height grid, left half = agent log, right half = CodeViewer
 
-- No changes needed. The Ctrl+K palette also surfaces this action, which is good for keyboard-oriented users.
+**BREAKDOWN**: User thinks they are seeing what the agent is doing, but they are seeing a reduced, partial view. The full workspace (file tree, browser preview, terminal emulator, agent chat) is only available in LiveView. User may not realize they are missing information.
 
----
+**Severity**: HIGH. This is a comprehension failure -- the user believes they have achieved their goal when they have not.
 
-### Step 2.2 --- Filling the Create Form
+#### Path B: Click "ENTER LIVE VIEW" from MissionDetail
 
-- **User goal:** Provide enough information to define a mission.
-- **Visible cues:**
-  - Form fields in bordered panels with CornerBrackets: TITLE, GOAL, SCOPE BOUNDARY, RISK TIER (dropdown), OWNER, ACCEPTANCE CRITERIA (add items), IDENTIFIED RISKS (add items).
-  - Right side (40%): "PREVIEW" showing a MissionCard rendering in real time.
-  - Bottom: "CREATE MISSION" button with accent background.
-- **Likely action:** Fill in fields top-to-bottom, add criteria, then click CREATE MISSION.
-- **Q1 -- Will the user form the right goal?** Mostly. The fields are self-explanatory, but "SCOPE BOUNDARY" may be unclear to a user unfamiliar with the concept. There is placeholder text ("Define what is in and out of scope") which helps.
-- **Q2 -- Will the user notice the correct action?** Yes. Fields are sequential and clearly labeled.
-- **Q3 -- Will the user understand the action leads toward the goal?** Yes. The live preview on the right reinforces that inputs are being captured.
-- **Q4 -- After acting, will the feedback make sense?** Partially. See breakdowns.
+| Question                              | Answer                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Will the user try the right effect?   | **MAYBE.** The user must first scroll past overview content, agent sessions, evidence summary, escalation alerts, and timeline to reach the NAVIGATION section at the bottom.                                                                                                                                                                                                                                                                    |
+| Will the user see the correct action? | **UNCLEAR.** "ENTER LIVE VIEW" link is in a NAVIGATION section at the bottom of MissionDetail (line 284-295), styled with accent border. But it competes with four other navigation links (PLAN, EXECUTE, REVIEW, ESCALATION) and the StageTabBar above. The user must recognize that "ENTER LIVE VIEW" is different from "EXECUTE".                                                                                                             |
+| Will the user associate the action?   | **PARTIAL.** "Live View" suggests real-time monitoring, but the user may not know it is a fullscreen mode switch.                                                                                                                                                                                                                                                                                                                                |
+| Will the user see progress?           | **BREAKDOWN.** Clicking "ENTER LIVE VIEW" causes a full page transition to a standalone fullscreen page. ALL navigation context (LeftNav, TopBar breadcrumbs, StageTabBar) disappears. A banner reads "LIVE SUPERVISION MODE" with "Press Esc to exit." The user now sees the full WorkspaceLayout (file tree + code viewer + browser preview + terminal + agent chat), which IS what they wanted -- but the abrupt mode switch is disorienting. |
 
-**Breakdowns / confusion risks:**
+- File: `apps/web/src/pages/MissionDetail.tsx:283-295` -- "ENTER LIVE VIEW" link
+- File: `apps/web/src/pages/LiveView.tsx:170-204` -- fullscreen standalone page
 
-1. **Which fields are required?** No field has a required indicator (asterisk, red border, or validation message). The user can click "CREATE MISSION" with all fields empty. The form shows a success toast regardless.
-2. **No validation at all.** `handleCreate()` shows a toast "Mission created successfully" after 2 seconds regardless of input. There is no actual persistence (prototype limitation), but the lack of any validation means the user gets no signal about incomplete data.
-3. **The "+" button for acceptance criteria is cryptic.** It is a small bordered button with just "+" text. The Enter-to-add behavior is undiscoverable -- there is no hint text like "Press Enter to add."
-4. **No way to assign to a workflow from this form.** The user must create the mission first, then separately go to WorkflowCreate or an existing workflow to include it. This is a hidden prerequisite for the "assign to workflow" part of the journey.
-5. **No way to start agents.** After creating a mission, the toast appears and disappears. The user is left on the same form with no "View Mission" link, no redirect, and no indication of what to do next. The mission is in "plan" stage, but there is no prompt to proceed to execution.
+**BREAKDOWN**: The mode switch is jarring. Navigation context is lost. The user cannot simultaneously see mission metadata (criteria, evidence) and agent activity.
 
-**Recommendation:**
+**Severity**: HIGH. Disorienting context loss.
 
-- Add required field indicators and basic client-side validation (at minimum: title is not empty).
-- After successful creation, navigate to the new MissionDetail page or show a persistent banner with a "View Mission" link.
-- Add a "Workflow" dropdown or assignment field to the create form.
-- Add hint text to the criteria/risk input: "Type and press Enter or click +"
-- Consider a post-creation flow: "Mission created. Review the plan, then approve to begin execution."
+### Step 1.5: User wants to check acceptance criteria while watching agent
 
----
+| Question                              | Answer                                                                                                                                                                                                           |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Will the user try the right effect?   | **YES.** While monitoring agent work in LiveView, user wants to verify the agent is working toward the right goals.                                                                                              |
+| Will the user see the correct action? | **NO.** LiveView has no acceptance criteria display. The only way to see criteria is to leave LiveView entirely.                                                                                                 |
+| Will the user associate the action?   | **N/A.** There is no correct action available.                                                                                                                                                                   |
+| Will the user see progress?           | **BREAKDOWN.** User must press Esc to exit LiveView, navigate back to MissionDetail or Plan page, read the criteria, then navigate back to LiveView. This round-trip costs 4+ clicks and completely breaks flow. |
 
-### Step 2.3 --- Starting Agents (Hidden Prerequisite)
+- File: `apps/web/src/pages/LiveView.tsx:170-204` -- no criteria, no evidence, no plan content visible
+- File: `apps/web/src/pages/MissionDetail.tsx:148-168` -- criteria only on detail page
 
-- **User goal:** Get agents working on this mission.
-- **Visible cues:** After creation, the user is still on the create form. They must navigate away manually.
-- **Likely action:** Click "Missions" in LeftNav to go back to MissionHome, find the new mission, open it.
-- **Q1 -- Will the user form the right goal?** Unclear. The user does not know that missions follow a plan-then-execute lifecycle. There is no visible indication that "starting agents" requires plan approval first.
-- **Q2 -- Will the user notice the correct action?** No. There is no "Start" or "Launch" button anywhere on the create form or the immediate post-creation screen.
-- **Q3 -- Will the user understand the action leads toward the goal?** No. The entire plan-approval-then-execute flow is undiscoverable from the create form.
-- **Q4 -- After acting, will the feedback make sense?** N/A -- the user is stuck.
+**BREAKDOWN**: Fatal for the supervision use case. The supervisor cannot simultaneously monitor work and verify intent.
 
-**Breakdowns / confusion risks:**
+**Severity**: CRITICAL. Prevents core use case.
 
-1. **Dead end after creation.** The toast disappears after 2 seconds. The user has no clear next step.
-2. **Hidden lifecycle prerequisite.** To start agents, the user must: (a) find the mission in MissionHome, (b) open it, (c) navigate to the Plan page, (d) click "Approve Plan & Begin Execution." None of this is communicated.
-3. **MissionPlan's "Approve Plan & Begin Execution" button** only appears when `mission.stage === 'plan'`, which is correct, but the button has no click handler -- it is a non-functional prototype button that does nothing.
+### Journey 1 Summary
 
-**Recommendation:**
+| Step                              | Verdict   | Severity | Pain Point |
+| --------------------------------- | --------- | -------- | ---------- |
+| 1.1 Find MSN-002 on MissionHome   | PASS      | --       | --         |
+| 1.2 Select card in list           | PARTIAL   | Low      | --         |
+| 1.3 Open MissionDetail            | PARTIAL   | Low      | --         |
+| 1.4A Navigate to Execute page     | BREAKDOWN | High     | A          |
+| 1.4B Enter LiveView               | BREAKDOWN | High     | A, B       |
+| 1.5 Check criteria while watching | BREAKDOWN | Critical | A, B       |
 
-- After creation, redirect to MissionDetail or MissionPlan with a visible "Approve Plan & Begin Execution" call-to-action.
-- Add a lifecycle stepper or progress indicator to MissionDetail showing: Plan -> Execute -> Review -> Complete, with the current stage highlighted.
-- Make the "Approve Plan" button functional (or at minimum show a confirmation toast).
+**Total breakdowns**: 3 (1 Critical, 2 High)
+**Total clicks to achieve goal**: 4+ (MissionHome -> card -> detail -> LiveView)
+**Context switches**: 1 major (AppShell -> fullscreen LiveView)
 
 ---
 
-## Journey 3: Monitor and Intervene (Zoom Pattern)
+## Journey 2: Review and Approve a Mission Plan
 
-**Scenario:** User is monitoring active work. They want to check a workflow board, find an active mission, peek at execution, enter Live View, send a message to an agent, then exit.
+**Goal**: The user wants to find a mission in the plan stage, review its plan document, and approve it to begin execution.
 
-### Step 3.1 --- Navigating to the Workflow Board
+**Context**: Only MSN-003 ("Fix timezone handling in scheduler") is in the plan stage. The user may not know which mission ID to look for.
 
-- **User goal:** See the status of all missions in a workflow at a glance.
-- **Visible cues:**
-  - LeftNav: "Workflows" link with GitBranch icon.
-- **Likely action:** Click "Workflows" in LeftNav.
-- **Q1 -- Will the user form the right goal?** Yes, if they understand "workflow" as a grouping of missions. The term is standard enough.
-- **Q2 -- Will the user notice the correct action?** Yes.
-- **Q3 -- Will the user understand the action leads toward the goal?** Yes.
-- **Q4 -- After acting, will the feedback make sense?** Yes. Workflows page shows workflow cards with mission lists, active agent counts, and a "VIEW BOARD" link for workflows with executing missions.
+### Step 2.1: Navigate to MissionHome and filter by plan stage
 
-**Breakdowns / confusion risks:**
+| Question                              | Answer                                                                                    |
+| ------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Will the user try the right effect?   | **YES.** User knows they need to find a plan to review.                                   |
+| Will the user see the correct action? | **YES.** MissionHome filter controls include "FILTER BY STAGE" with a PLAN button.        |
+| Will the user associate the action?   | **YES.** Clicking "PLAN" filter is straightforward.                                       |
+| Will the user see progress?           | **YES.** Filter activates, showing only MSN-003. The filter state persists in URL params. |
 
-1. **Workflows page is a long vertical list, not a board.** The user sees workflow cards stacked vertically, each containing a mission list. This is not the "board" view promised by the "VIEW BOARD" link. The actual Kanban board is in WorkflowDetail, accessible by clicking the workflow title or "VIEW BOARD."
-2. **"VIEW BOARD" link only appears if the workflow has an executing mission.** If all missions are in "plan" stage, the link is absent. The user must click the workflow title instead, which is a text link styled as a heading -- not an obvious navigation affordance.
+**Verdict**: PASS.
 
-**Recommendation:**
+- File: `apps/web/src/pages/MissionHome.tsx:116-134` -- stage filter buttons including "plan"
 
-- Make the workflow title more obviously clickable (underline on hover, or make the entire card a link).
-- Always show the board entry point, not just when a mission is executing.
+### Step 2.2: Click MSN-003 card and navigate to plan page
 
----
+| Question                              | Answer                                                       |
+| ------------------------------------- | ------------------------------------------------------------ |
+| Will the user try the right effect?   | **YES.** User clicks card, then navigates to plan sub-page.  |
+| Will the user see the correct action? | **YES.** Either via StageTabBar PLAN tab or FocusPanel link. |
+| Will the user associate the action?   | **YES.**                                                     |
+| Will the user see progress?           | **YES.** MissionPlan page loads with plan content.           |
 
-### Step 3.2 --- Finding an Active Mission on the Kanban Board
+**Verdict**: PASS.
 
-- **User goal:** Find which mission is currently being worked on by agents.
-- **Visible cues:**
-  - WorkflowDetail: Header card with workflow info, then a 4-column Kanban grid: PLAN | EXECUTE | REVIEW | ESCALATION.
-  - MissionBoardCards in the EXECUTE column show the mission title, RiskBadge, active agent count ("2 active"), owner, and an "ENTER LIVE VIEW" button (only in execute column).
-- **Likely action:** Scan the EXECUTE column for cards with active agents.
-- **Q1 -- Will the user form the right goal?** Yes. The Kanban layout is familiar.
-- **Q2 -- Will the user notice the correct action?** Yes. The EXECUTE column with green "active" counts draws attention.
-- **Q3 -- Will the user understand the action leads toward the goal?** Yes.
-- **Q4 -- After acting, will the feedback make sense?** Yes.
+- File: `apps/web/src/components/mission/StageTabBar.tsx:6` -- `{ key: 'plan', label: 'PLAN', suffix: '/plan' }`
 
-**Breakdowns / confusion risks:**
+### Step 2.3: Read and evaluate plan content
 
-1. **No column counts for non-mission items.** Each column header shows "(N)" count which is clear. However, empty columns show "No missions" in a dashed border -- this is good feedback.
-2. **Mission title in the board card is a link to MissionDetail, not MissionExecute.** Clicking the title takes the user to the overview, not the execution view. The user must use the separate "ENTER LIVE VIEW" button to go directly to the active work. This is actually correct behavior for a zoom pattern (overview first, then drill in), but the two entry points (title vs. Live View) are not distinguished by visual weight -- the title is more prominent, but the Live View button is the action the user probably wants.
+| Question                              | Answer                                                                                                                                                                                                                                                                                |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Will the user try the right effect?   | **YES.** User reads the plan.                                                                                                                                                                                                                                                         |
+| Will the user see the correct action? | **YES.** Plan content is displayed in the center column.                                                                                                                                                                                                                              |
+| Will the user associate the action?   | **YES.**                                                                                                                                                                                                                                                                              |
+| Will the user see progress?           | **BREAKDOWN.** The plan content renders as plain text blocks with `aw-body` styling. There is no visual hierarchy beyond `aw-micro` uppercase section labels (MISSION GOAL, SCOPE BOUNDARY, ACCEPTANCE CRITERIA, IDENTIFIED RISKS). For longer plans, this becomes difficult to scan. |
 
-**Recommendation:**
+- File: `apps/web/src/pages/MissionPlan.tsx:100-161`
+- Specifically: `MissionPlan.tsx:107-109` -- `<div className="aw-body mt-2" style={{ color: aw.text }}>{mission.goal}</div>` -- raw text rendering, no markdown
 
-- Consider adding a subtle "View details" link alongside the title, and making "ENTER LIVE VIEW" more prominent (larger, possibly full-width) on cards in the EXECUTE column.
+**BREAKDOWN**: Plan content lacks visual hierarchy. No headings, no code blocks, no tables, no embedded media. The `MarkdownViewer` component (`apps/web/src/components/mission/MarkdownViewer.tsx`) exists and supports headings, bold, italic, inline code, code blocks, lists, and tables -- but it is only used inside `ArtifactPanel` for artifact type 'markdown'. If plan content were markdown-formatted and rendered through `MarkdownViewer`, users could scan for key information much faster.
 
----
+**Severity**: MEDIUM. Slows down plan review significantly for complex plans.
 
-### Step 3.3 --- Peeking at Execution Before Going Live
+### Step 2.4: Review acceptance criteria
 
-- **User goal:** Get a quick read on what the agent is doing without fully committing to the Live View.
-- **Visible cues:**
-  - Clicking the mission title navigates to MissionDetail, which has a NAVIGATION section with links to PLAN, EXECUTE, REVIEW, ESCALATION, and "ENTER LIVE VIEW."
-  - Alternatively, clicking the mission title on the board card navigates to MissionDetail.
-  - From MissionDetail, clicking EXECUTE goes to MissionExecute, which has a three-column layout: left sidebar (mission context), center (overview or chat), right rail (evidence).
-  - Center area has OVERVIEW/CHAT toggle, agent swimlanes, EXECUTE PREVIEW (split: agent log + code viewer), and an "ENTER LIVE VIEW" button.
-- **Likely action:** Click on the mission, then navigate to the Execute page.
-- **Q1 -- Will the user form the right goal?** Yes. The execute preview provides a summary of agent activity.
-- **Q2 -- Will the user notice the correct action?** Partially. From MissionDetail, the NAVIGATION section with PLAN/EXECUTE/REVIEW/ESCALATION links is at the bottom of a long page. The user must scroll past Header, Goal + Scope, Acceptance Criteria, Risk Assessment, Agent Sessions, Evidence Summary, Escalation Alerts, and Timeline before reaching these navigation links. This is a significant discovery problem.
-- **Q3 -- Will the user understand the action leads toward the goal?** Yes, once found. "EXECUTE" as a label maps to "see what's being executed."
-- **Q4 -- After acting, will the feedback make sense?** Yes. MissionExecute shows rich agent activity information.
+| Question                              | Answer                                                                       |
+| ------------------------------------- | ---------------------------------------------------------------------------- |
+| Will the user try the right effect?   | **YES.** User scrolls to acceptance criteria section.                        |
+| Will the user see the correct action? | **YES.** ACCEPTANCE CRITERIA section with bullet points is visible.          |
+| Will the user associate the action?   | **YES.**                                                                     |
+| Will the user see progress?           | **YES.** Criteria are listed as a bulleted list with dot markers. Scannable. |
 
-**Breakdowns / confusion risks:**
+**Verdict**: PASS.
 
-1. **NAVIGATION links buried at the bottom of MissionDetail.** The primary navigation to sub-pages (plan/execute/review/escalation) is in a panel at the very bottom of MissionDetail. There are no tabs, no sidebar navigation, and no top-of-page links to these sub-views. A user who opens MissionDetail may never scroll far enough to find them.
-2. **No tab bar or horizontal nav between mission sub-pages.** Once on MissionExecute, the user can go back to MissionHome or the workflow via breadcrumbs/back links, but there is no horizontal tab strip to switch between Plan/Execute/Review/Escalation for the same mission. Navigation between sub-pages requires going back to MissionDetail and scrolling to the bottom each time.
+- File: `apps/web/src/pages/MissionPlan.tsx:123-139` -- acceptance criteria as `<ul>` with bullet items
 
-**Recommendation:**
+### Step 2.5: Click "Approve Plan & Begin Execution"
 
-- Add a horizontal tab bar or sub-navigation strip at the top of all mission sub-pages (Plan, Execute, Review, Escalation) so the user can switch between views without going back to MissionDetail.
-- Move or duplicate the stage navigation links to the top of MissionDetail, directly below the header badges.
+| Question                              | Answer                                                                                                                                                                                                                                                                                                                                   |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Will the user try the right effect?   | **YES.** User is ready to approve.                                                                                                                                                                                                                                                                                                       |
+| Will the user see the correct action? | **YES.** "Approve Plan & Begin Execution" button is visible below the plan content, with `plateDark` background and `inverse` text.                                                                                                                                                                                                      |
+| Will the user associate the action?   | **YES.** Button label is clear and specific.                                                                                                                                                                                                                                                                                             |
+| Will the user see progress?           | **PARTIAL.** A success toast appears: "Plan approved. Execution will begin shortly." This is clear feedback. However: (1) there is no confirmation dialog before the action, (2) the toast auto-dismisses after ~3 seconds, (3) since data is static, the mission stage does not actually change, so the page remains in the same state. |
 
----
+- File: `apps/web/src/pages/MissionPlan.tsx:164-177` -- conditional render (only if `mission.stage === 'plan'`), onClick triggers toast
+- File: `apps/web/src/pages/MissionPlan.tsx:174` -- `show('Plan approved. Execution will begin shortly.', 'success')`
 
-### Step 3.4 --- Entering Live View
+**PARTIAL BREAKDOWN**: Missing confirmation dialog for an irreversible state transition. The toast is good feedback, but auto-dismissal means the user might miss it. No undo mechanism.
 
-- **User goal:** Enter the full workspace to interact directly with agents and code.
-- **Visible cues:**
-  - MissionExecute: "ENTER LIVE VIEW" button in the top toolbar, styled with accent border and Eye icon.
-  - MissionDetail: "ENTER LIVE VIEW" link in the NAVIGATION section (bottom of page).
-  - WorkflowDetail board cards: "ENTER LIVE VIEW" button on execute-stage cards.
-- **Likely action:** Click "ENTER LIVE VIEW" from MissionExecute toolbar.
-- **Q1 -- Will the user form the right goal?** Yes. The button label is clear.
-- **Q2 -- Will the user notice the correct action?** Yes on MissionExecute (it is in the top toolbar with accent color). Less certain from MissionDetail (bottom of page) or WorkflowDetail (small button on card).
-- **Q3 -- Will the user understand the action leads toward the goal?** Yes. "Live View" implies real-time, hands-on interaction.
-- **Q4 -- After acting, will the feedback make sense?** Yes. The screen transitions to a fullscreen layout with a prominent orange/accent "LIVE SUPERVISION MODE" banner at the top and "Press Esc to exit" hint.
+**Severity**: LOW-MEDIUM. Toast provides adequate feedback for the prototype stage, but production would need a confirmation dialog.
 
-**Breakdowns / confusion risks:**
+### Step 2.6: User checks evidence rail
 
-1. **Live View exits the AppShell entirely.** The LeftNav disappears. The user has only the "Back" link and Esc to exit. This is correct for a fullscreen workspace, but the abrupt loss of all navigation (no LeftNav, no TopBar, no notifications) may feel disorienting. The user cannot check notifications or switch to another mission without exiting first.
-2. **"Press Esc to exit" is the only exit hint.** The "Back" link in the LiveViewHeader is small (micro text). A user who does not read the banner may not know how to leave.
+| Question                              | Answer                                                                                                                                                                               |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Will the user try the right effect?   | **YES.** Before approving, user might check the evidence rail on the right.                                                                                                          |
+| Will the user see the correct action? | **YES.** Evidence rail is visible at 280px width on the right side.                                                                                                                  |
+| Will the user associate the action?   | **YES.** "RISK & EVIDENCE SUMMARY" label is clear.                                                                                                                                   |
+| Will the user see progress?           | **YES.** For MSN-003 (plan stage), the rail shows "No evidence gathered yet. Evidence will appear once execution begins." This is informative and expected for a plan-stage mission. |
 
-**Recommendation:**
+**Verdict**: PASS.
 
-- Make the "Back" link more prominent (e.g., a proper button with border, not just micro text with an arrow).
-- Consider keeping a minimal nav strip or at least the notification bell in Live View.
+- File: `apps/web/src/pages/MissionPlan.tsx:192-210` -- evidence rail with empty state handling
 
----
+### Journey 2 Summary
 
-### Step 3.5 --- Sending a Message to an Agent in Live View
+| Step                           | Verdict   | Severity   | Pain Point |
+| ------------------------------ | --------- | ---------- | ---------- |
+| 2.1 Filter to plan stage       | PASS      | --         | --         |
+| 2.2 Navigate to plan page      | PASS      | --         | --         |
+| 2.3 Read plan content          | BREAKDOWN | Medium     | C          |
+| 2.4 Review acceptance criteria | PASS      | --         | --         |
+| 2.5 Approve plan               | PARTIAL   | Low-Medium | --         |
+| 2.6 Check evidence rail        | PASS      | --         | --         |
 
-- **User goal:** Communicate with the AI agent working on this mission.
-- **Visible cues:**
-  - WorkspaceLayout is a 5-pane grid: file tree (left), code editor (center-top), browser preview (right-top), terminal (center-bottom), agent chat (right-bottom).
-  - Agent chat panel (AgentChatPanel) in the bottom-right: session tabs, agent controls (pause/stop/restart), status bar, message list, and input area with textarea and "SEND" button.
-  - Input placeholder: "Message agent..."
-- **Likely action:** Click the textarea in the chat panel, type a message, press Enter or click SEND.
-- **Q1 -- Will the user form the right goal?** Yes. The chat interface is recognizable.
-- **Q2 -- Will the user notice the correct action?** Likely, but the chat panel is in the bottom-right corner of a 5-pane grid. It shares space with the browser preview above it, and the panes are not resizable. If the user's screen is smaller, the chat panel may be cramped.
-- **Q3 -- Will the user understand the action leads toward the goal?** Yes. "Message agent..." placeholder is clear.
-- **Q4 -- After acting, will the feedback make sense?** Yes. The message appears immediately (right-aligned as a user message). After 1.5 seconds, a typing indicator appears, then a streaming response from the agent.
-
-**Breakdowns / confusion risks:**
-
-1. **The 5-pane layout has no resize handles.** The grid template is fixed: `200px 1fr 380px` columns, `1fr 280px` rows. On smaller screens, the chat panel may be too small to read comfortably.
-2. **Session tabs may confuse.** If there are multiple agent sessions, the user sees tabs by role (e.g., "coder", "reviewer"). It is unclear which agent they are talking to and whether messages go to all agents or just the selected one.
-3. **Agent lifecycle controls (Pause/Stop/Restart) are above the chat.** These are icon-only buttons (Pause icon, Square icon, RotateCcw icon) with title-attribute tooltips only. A first-time user may not understand what these do. The "Stop" button requires a confirmation click (text changes to "Confirm?"), which is good safety design, but the initial icon gives no hint of the confirmation pattern.
-4. **Canned responses.** The prototype returns canned responses in a round-robin. This is fine for a prototype but should be clearly marked if used in user testing.
-
-**Recommendation:**
-
-- Add visible labels or a legend to the agent control buttons (at least on first use).
-- Consider making the chat panel resizable or togglable to full-width for focused conversation.
-- Add a label near the session tabs: "Talking to: [agent role]" to clarify which agent receives messages.
+**Total breakdowns**: 1 (Medium)
+**Total clicks to achieve goal**: 3-4 (MissionHome -> filter -> card -> plan tab)
+**Context switches**: 0
 
 ---
 
-### Step 3.6 --- Exiting Live View
+## Journey 3: View Completed Mission Deliverables
 
-- **User goal:** Return to the previous view.
-- **Visible cues:**
-  - Top banner: "LIVE SUPERVISION MODE ... Press Esc to exit"
-  - LiveViewHeader: "Back" link (micro text with left arrow).
-- **Likely action:** Press Esc or click "Back."
-- **Q1 -- Will the user form the right goal?** Yes.
-- **Q2 -- Will the user notice the correct action?** Yes. The Esc hint is in the top banner.
-- **Q3 -- Will the user understand the action leads toward the goal?** Yes.
-- **Q4 -- After acting, will the feedback make sense?** Yes. Navigation returns to MissionExecute page (the page the user entered from). The AppShell, LeftNav, and TopBar reappear.
+**Goal**: The user wants to find a completed mission and review its deliverables (implementation summary, test reports, demo videos, diagrams).
 
-**Breakdowns / confusion risks:**
+**Context**: The data layer defines 5 missions with stages: review (MSN-001, MSN-004, MSN-005), execute (MSN-002), plan (MSN-003). There are ZERO completed missions. 6 artifacts exist, all tied to review-stage missions.
 
-1. **Esc is overloaded.** If the user has a modal open (e.g., an agent config panel), Esc might close the modal AND navigate away, or the behaviors might conflict. In the current code, the Esc listener is on `document.addEventListener('keydown')` and does not check for open modals or focused inputs.
+### Step 3.1: Navigate to MissionHome and filter by completed stage
 
-**Recommendation:**
+| Question                              | Answer                                                                                                                                                                                |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Will the user try the right effect?   | **YES.** User wants to see completed work.                                                                                                                                            |
+| Will the user see the correct action? | **YES.** MissionHome stage filter includes "COMPLETED" button.                                                                                                                        |
+| Will the user associate the action?   | **YES.**                                                                                                                                                                              |
+| Will the user see progress?           | **BREAKDOWN.** Filtering to "completed" yields 0 results. The empty state shows "No missions match filters" with text "Try adjusting your stage or risk filters to see more results." |
 
-- Guard the Esc-to-exit handler: only trigger navigation if no modal is open and no input element is focused.
+- File: `apps/web/src/pages/MissionHome.tsx:93` -- `stages` array includes `'completed'`
+- File: `apps/web/src/pages/MissionHome.tsx:192-198` -- empty state with `SearchX` icon
+- File: `apps/web/src/data/missions.ts:37-192` -- all 5 missions, none with `stage: 'completed'`
 
----
+**BREAKDOWN**: The terminal state of the mission lifecycle -- "completed" -- has zero instances in the data. This means the entire completed-stage UX is unexercised. The empty state text is misleading because the problem is not the filters; it is that no missions have ever been completed.
 
-## Journey 4: Handle Escalation
+**Severity**: HIGH. The deliverable review workflow is completely untestable.
 
-**Scenario:** An agent has flagged an issue that requires human judgment. The user sees a notification, navigates to the escalation, understands the problem, reviews options, and makes a decision.
+### Step 3.2: User broadens search -- looks for artifacts on review-stage missions
 
-### Step 4.1 --- Seeing the Notification
+| Question                              | Answer                                                                                                                |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Will the user try the right effect?   | **MAYBE.** User might try switching to "REVIEW" filter, reasoning that review-stage missions might have deliverables. |
+| Will the user see the correct action? | **YES.** Clicking "REVIEW" filter shows MSN-001, MSN-004, MSN-005.                                                    |
+| Will the user associate the action?   | **PARTIAL.** It is not obvious that review-stage missions would have viewable artifacts.                              |
+| Will the user see progress?           | **YES.** Three missions appear in the filtered list.                                                                  |
 
-- **User goal:** Notice that something requires my attention.
-- **Visible cues:**
-  - TopBar: Bell icon with a red badge showing unread count.
-  - LeftNav bottom: "X need review" in accent color (9px text).
-- **Likely action:** Click the bell icon.
-- **Q1 -- Will the user form the right goal?** Yes. The red badge is a standard attention signal.
-- **Q2 -- Will the user notice the correct action?** Yes. Bell icon with red badge is a universal pattern.
-- **Q3 -- Will the user understand the action leads toward the goal?** Yes.
-- **Q4 -- After acting, will the feedback make sense?** Yes. A dropdown panel appears with a list of notifications.
+**Verdict**: PARTIAL PASS. User can find review missions, but the connection to "deliverables" is not clear.
 
-**Breakdowns / confusion risks:**
+### Step 3.3: Navigate to a review-stage mission and find artifacts
 
-1. **No sound, no browser notification, no toast for escalations.** The notification badge is passive. If the user is focused on code in Live View, they will not see the badge (Live View has no TopBar or notification bell). Escalations -- which may be time-sensitive -- have no way to interrupt the user's attention.
-2. **The LeftNav counter says "X need review" but does not distinguish between reviews and escalations.** Both review-stage and escalation-stage missions are counted together. An escalation (which may be urgent) looks the same as a routine review.
+| Question                              | Answer                                                                                                                                                                                                                                                             |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Will the user try the right effect?   | **YES.** User clicks MSN-001 card, navigates to MissionDetail.                                                                                                                                                                                                     |
+| Will the user see the correct action? | **PARTIAL.** MissionDetail shows the `ActivityPreview` component, which includes an artifact section -- but only when `isCompleted` is true (`mission.stage === 'completed'                                                                                        |     | mission.stage === 'review'`). For MSN-001 (review stage), this condition is true, so `ArtifactPanel` renders with 2 artifacts (ART-001: Implementation Summary, ART-002: PKCE Flow Diagram). |
+| Will the user associate the action?   | **PARTIAL.** The ARTIFACTS section is nested inside ActivityPreview at the bottom of the panel. It is not a top-level section with its own label in the page structure. The user must scroll past browser sessions, code viewer, and terminal sessions to find it. |
+| Will the user see progress?           | **YES.** Once found, the ArtifactPanel renders a gallery with clickable thumbnail cards and a viewer area that renders markdown (via MarkdownViewer), images, videos, and HTML.                                                                                    |
 
-**Recommendation:**
+- File: `apps/web/src/components/mission/ActivityPreview.tsx:47` -- `const isCompleted = mission.stage === 'completed' || mission.stage === 'review';`
+- File: `apps/web/src/components/mission/ActivityPreview.tsx:153-159` -- conditional ArtifactPanel render
+- File: `apps/web/src/components/mission/ArtifactPanel.tsx:19-69` -- gallery + viewer
 
-- Add an in-app toast notification for escalations that appears even in Live View.
-- Consider distinguishing escalations from reviews in the LeftNav counter (e.g., "1 escalation" in red, "2 need review" in accent).
-- Add sound or browser notification support for escalation events.
+**PARTIAL BREAKDOWN**: Artifacts exist but are buried inside ActivityPreview. No dedicated "Deliverables" section, tab, or route. No way to navigate directly to artifacts.
 
----
+**Severity**: MEDIUM.
 
-### Step 4.2 --- Navigating from Notification to Escalation
+### Step 3.4: View individual artifacts
 
-- **User goal:** Go to the escalation and understand the problem.
-- **Visible cues:**
-  - Notification list item shows: type icon (AlertTriangle for escalation), title, detail text, relative time, "Mark read" link.
-  - Clicking the notification item navigates to `/missions/:missionId`.
-- **Likely action:** Click the notification item.
-- **Q1 -- Will the user form the right goal?** Yes. The notification title describes the issue.
-- **Q2 -- Will the user notice the correct action?** Yes. Items are clickable (cursor: pointer).
-- **Q3 -- Will the user understand the action leads toward the goal?** Mostly. The user expects to go directly to the escalation. However...
-- **Q4 -- After acting, will the feedback make sense?** Partially.
+| Question                              | Answer                                                                                                                                                          |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Will the user try the right effect?   | **YES.** User clicks an artifact thumbnail in the gallery row.                                                                                                  |
+| Will the user see the correct action? | **YES.** Gallery buttons are clearly clickable with active state highlighting.                                                                                  |
+| Will the user associate the action?   | **YES.** Clicking a thumbnail shows the content below.                                                                                                          |
+| Will the user see progress?           | **YES.** ArtifactViewer dispatches to the correct renderer: MarkdownViewer for markdown content, img tag for images, video element for videos, iframe for HTML. |
 
-**Breakdowns / confusion risks:**
+- File: `apps/web/src/components/mission/ArtifactPanel.tsx:73-122` -- ArtifactViewer dispatcher
+- File: `apps/web/src/components/mission/ArtifactPanel.tsx:104-109` -- MarkdownViewer for markdown artifacts
 
-1. **Notification click navigates to MissionDetail, NOT to MissionEscalation.** The `handleClick` function in NotificationCenter navigates to `/missions/${n.missionId}` -- the overview page. To reach the actual escalation page, the user must then scroll to the bottom of MissionDetail, find the NAVIGATION section, and click "ESCALATION." This is a major indirection for an urgent action.
-2. **No notification type-aware routing.** An escalation notification should navigate to the escalation page (`/missions/:id/escalation`). A review notification should navigate to the review page. Currently, all notifications go to the same overview page.
+**Verdict**: PASS -- once the user finds the artifact panel, viewing works well.
 
-**Recommendation:**
+### Step 3.5: Hypothetical -- viewing a completed mission's deliverables
 
-- Route escalation notifications directly to `/missions/:missionId/escalation`.
-- Route stage-change and approval notifications to the relevant stage page.
-- At minimum, route to `/missions/:missionId/:stage` based on the current mission stage.
+Even if a completed mission existed, the user would face these issues:
 
----
+| Issue                          | Detail                                                                                                                                 |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| No dedicated deliverables page | Artifacts are embedded in ActivityPreview on MissionDetail. No `/missions/:id/deliverables` route. No deliverables tab in StageTabBar. |
+| No demo video player           | `ArtifactPanel` has a `<video>` element with `controls`, but no theater mode, no fullscreen, no playback speed control.                |
+| No embedded demo machine       | No iframe for live application demo. The `html` artifact type uses `sandbox="allow-same-origin"` but no interactive demo capability.   |
+| No deliverable download        | No download button on any artifact. No "export as PDF" for markdown summaries.                                                         |
+| No sign-off workflow           | No "accept deliverable" or "request revision" action on the completed stage.                                                           |
 
-### Step 4.3 --- Understanding the Escalation
+- File: `apps/web/src/components/mission/ArtifactPanel.tsx:88-100` -- video element, basic controls only
+- File: `apps/web/src/components/mission/ArtifactPanel.tsx:112-121` -- html iframe, sandboxed
 
-- **User goal:** Understand what went wrong and what decision is needed.
-- **Visible cues:**
-  - EscalationHeader: escalation type label (e.g., "SECURITY SENSITIVE"), title in accent-colored banner, summary text, checkpoint reference, timestamp.
-  - Center content: "ISSUE DETAIL" panel with detailed text, ReplayTimeline showing agent session history, and related escalations if any.
-  - Right sidebar (300px): ConsequencePanel with "DECISION OPTIONS."
-- **Likely action:** Read the header, then the issue detail, then review the decision options.
-- **Q1 -- Will the user form the right goal?** Yes. The EscalationHeader with AlertTriangle icon and accent coloring clearly signals "problem requiring attention."
-- **Q2 -- Will the user notice the correct action?** Yes. The layout guides top-to-bottom reading, with decision options clearly positioned in the right sidebar.
-- **Q3 -- Will the user understand the action leads toward the goal?** Yes. The flow from "understand problem" to "choose option" is logical.
-- **Q4 -- After acting, will the feedback make sense?** Yes.
+**BREAKDOWN**: The completed stage is the terminal state of the mission lifecycle, but it has no dedicated UX. No completion summary, no deliverable sign-off, no stakeholder notification. The "completed" stage exists as a type (`data/missions.ts:2`) but has no instances and no specialized page.
 
-**Breakdowns / confusion risks:**
+**Severity**: HIGH.
 
-1. **"DECISION OPTIONS" label does not indicate urgency or deadline.** The Settings page mentions "Escalations timeout after 24h -- auto-reject" as a configurable policy, but the escalation page itself shows no timer or deadline. The user does not know how long they have to decide.
-2. **ReplayTimeline is below the issue detail.** For complex escalations, the user may need to understand the agent's reasoning chain before deciding. If the replay is long, the decision options in the right sidebar may be visible before the user has scrolled through the full context. This is a layout concern on smaller viewports.
+### Journey 3 Summary
 
-**Recommendation:**
+| Step                                 | Verdict   | Severity | Pain Point |
+| ------------------------------------ | --------- | -------- | ---------- |
+| 3.1 Filter to completed stage        | BREAKDOWN | High     | D          |
+| 3.2 Broaden search to review stage   | PARTIAL   | Low      | D          |
+| 3.3 Find artifacts on review mission | PARTIAL   | Medium   | D          |
+| 3.4 View individual artifacts        | PASS      | --       | --         |
+| 3.5 Hypothetical completed mission   | BREAKDOWN | High     | D          |
 
-- Add a visible countdown or deadline indicator if escalation timeouts are configured.
-- Consider making the ReplayTimeline collapsible or summarized by default, with a "Show full replay" expansion.
-
----
-
-### Step 4.4 --- Making a Decision
-
-- **User goal:** Select an option and confirm the decision.
-- **Visible cues:**
-  - ConsequencePanel: List of options, each as a bordered card with label, description, risk indicator (HeatNode + AlertTriangle + "Risk: [level]" text).
-  - Clicking an option: expands an inline confirmation panel with "Are you sure? This will: [description]" and CONFIRM/CANCEL buttons.
-  - After confirmation: the option card transforms to show a CheckCircle, the label in green, and "Decision recorded at [time]." Other options fade to 40% opacity and become non-interactive.
-- **Likely action:** Click an option, read the confirmation, click CONFIRM.
-- **Q1 -- Will the user form the right goal?** Yes.
-- **Q2 -- Will the user notice the correct action?** Yes. Options are clearly laid out as cards.
-- **Q3 -- Will the user understand the action leads toward the goal?** Yes. The two-step click-then-confirm pattern is clear.
-- **Q4 -- After acting, will the feedback make sense?** Yes. The confirmed state is visually distinct (green check, disabled alternatives, timestamp). This is well designed.
-
-**Breakdowns / confusion risks:**
-
-1. **No undo.** Once confirmed, the decision is recorded with no undo or "change decision" button. The faded alternatives are non-interactive (`pointerEvents: 'none'`). The user sees "Decision recorded at [time]" but has no way to reverse it. For a high-stakes escalation, this could be stressful.
-2. **CONFIRM button uses the accent color.** In this design system, the accent color (warm orange/amber) is also used for warnings and escalation headers. Using it for a confirmation button may feel inconsistent -- the user might interpret the accent color as "danger" rather than "confirm." A distinct green or the semantic.success color would be clearer.
-3. **Risk labels are plain text strings** (e.g., "Risk: Medium -- service restart required"). The meaning depends on reading the full text. A color coding based on risk level is present via HeatNode, but the HeatNode is a small SVG element that may not be immediately interpretable.
-
-**Recommendation:**
-
-- Add an "Undo decision" or "Change decision" option, at least within a short time window.
-- Use semantic.success color for the CONFIRM button instead of the accent color.
-- Add a brief "What happens next?" note after confirmation (e.g., "Agent will resume with the selected approach.").
+**Total breakdowns**: 2 (both High)
+**Total clicks to achieve goal**: Impossible (no completed missions exist)
+**Context switches**: 0
 
 ---
 
-## Journey 5: Review Agent Work
+## Breakdown Severity Summary
 
-**Scenario:** A mission has completed execution and is ready for human review. The user finds it, understands what changed, checks evidence, and approves or rejects.
+```mermaid
+graph TD
+    subgraph Journey1["Journey 1: Check Agent Work"]
+        J1S1["1.1 Find mission"] --> J1S2["1.2 Select card"]
+        J1S2 --> J1S3["1.3 Open detail"]
+        J1S3 --> J1S4A["1.4A Execute tab<br/>BREAKDOWN: partial view"]
+        J1S3 --> J1S4B["1.4B Enter LiveView<br/>BREAKDOWN: context loss"]
+        J1S4A --> J1S5["1.5 Check criteria<br/>BREAKDOWN: impossible"]
+        J1S4B --> J1S5
+    end
 
-### Step 5.1 --- Finding Missions Ready for Review
+    subgraph Journey2["Journey 2: Approve Plan"]
+        J2S1["2.1 Filter to plan"] --> J2S2["2.2 Navigate to plan"]
+        J2S2 --> J2S3["2.3 Read plan<br/>BREAKDOWN: plain text"]
+        J2S3 --> J2S4["2.4 Review criteria"]
+        J2S4 --> J2S5["2.5 Approve<br/>PARTIAL: no confirm"]
+    end
 
-- **User goal:** Find missions that need my review.
-- **Visible cues:**
-  - MissionHome: "FILTER BY STAGE" buttons including "REVIEW."
-  - LeftNav bottom: "X need review" counter.
-  - Workflow Kanban board: REVIEW column.
-- **Likely action:** Click the "REVIEW" filter button on MissionHome, or navigate to a workflow board and look at the REVIEW column.
-- **Q1 -- Will the user form the right goal?** Yes. The filter is clear.
-- **Q2 -- Will the user notice the correct action?** Likely. The filter buttons are visible at the top of the card list. The LeftNav counter is small but present.
-- **Q3 -- Will the user understand the action leads toward the goal?** Yes.
-- **Q4 -- After acting, will the feedback make sense?** Yes. The card list filters to show only review-stage missions.
+    subgraph Journey3["Journey 3: View Deliverables"]
+        J3S1["3.1 Filter completed<br/>BREAKDOWN: 0 results"] --> J3S2["3.2 Broaden search"]
+        J3S2 --> J3S3["3.3 Find artifacts<br/>PARTIAL: buried"]
+        J3S3 --> J3S4["3.4 View artifact"]
+    end
 
-**Breakdowns / confusion risks:**
+    style J1S4A fill:#c85f49,color:#f8f8f8
+    style J1S4B fill:#c85f49,color:#f8f8f8
+    style J1S5 fill:#c85f49,color:#f8f8f8
+    style J2S3 fill:#d56f5f,color:#f8f8f8
+    style J3S1 fill:#c85f49,color:#f8f8f8
+```
 
-1. **The filter button for "REVIEW" is identical in visual weight to all other stage filters.** There is no special highlighting or badging on the "REVIEW" filter to indicate that items are waiting. The user must already know to filter by review.
-2. **No default sorting by "needs attention."** The sort order is: escalation first, then review, then execute, then plan. This is good -- review items naturally appear near the top. But within a stage, sorting is by risk tier only, not by age or urgency.
+### All Breakdowns by Severity
 
-**Recommendation:**
-
-- Consider adding a count badge to the "REVIEW" filter button (e.g., "REVIEW (2)") to match the LeftNav counter.
-- Add a "waiting since" indicator to review-stage MissionCards to help the user prioritize.
-
----
-
-### Step 5.2 --- Understanding What Changed (DiffByIntent)
-
-- **User goal:** Understand what the agent changed and whether it matches the acceptance criteria.
-- **Visible cues:**
-  - MissionReview page: ApprovalBar (sticky at top), DiffByIntent component in the center, EvidenceRail in the right sidebar, RollbackPreview at the bottom.
-  - DiffByIntent groups changes by acceptance criterion. Each group shows: criterion text, file paths with +/- line counts, and a summary paragraph.
-- **Likely action:** Read the ApprovalBar status, then review each diff group.
-- **Q1 -- Will the user form the right goal?** Yes. "DIFF BY INTENT -- N groups" is a clear heading.
-- **Q2 -- Will the user notice the correct action?** Yes. The DiffByIntent groups are prominently laid out.
-- **Q3 -- Will the user understand the action leads toward the goal?** Yes. Grouping diffs by acceptance criterion directly answers "did the agent accomplish what was asked?"
-- **Q4 -- After acting, will the feedback make sense?** Mostly.
-
-**Breakdowns / confusion risks:**
-
-1. **No actual diff view.** The DiffByIntent component shows file paths and line-count summaries, but there is no inline diff, expandable code view, or link to a file-level diff. The user sees "+42 / -8" for `src/middleware/auth.ts` but cannot inspect the actual changes. For a review workflow, this is a significant gap -- the user must trust the agent's summary without being able to verify the code.
-2. **Summary text is agent-generated.** The summary paragraph under each group is authored by the agent. There is no human-written or independently-verified description. The user must trust this summary, which undermines the purpose of human review.
-3. **No "view in IDE" or "open file" link.** Even in a prototype, the absence of a link to view the actual code is notable.
-
-**Recommendation:**
-
-- Add expandable inline diffs for each file in the DiffByIntent groups.
-- Add a "View in Live View" link to open the workspace with the relevant file focused.
-- Clearly label agent-generated summaries as such, and consider adding automated verification notes (e.g., "Tests passing: yes/no").
+| ID  | Step | Severity       | Description                                                                   | Pain Point |
+| --- | ---- | -------------- | ----------------------------------------------------------------------------- | ---------- |
+| B1  | 1.5  | **Critical**   | Cannot view acceptance criteria while monitoring agent in LiveView            | A, B       |
+| B2  | 1.4A | **High**       | Execute page shows partial agent view; user may think this is the full view   | A          |
+| B3  | 1.4B | **High**       | LiveView context loss -- all navigation disappears on fullscreen switch       | A, B       |
+| B4  | 3.1  | **High**       | Zero completed missions -- terminal stage UX is untestable                    | D          |
+| B5  | 3.5  | **High**       | Completed stage has no dedicated page, no sign-off, no deliverable management | D          |
+| B6  | 2.3  | **Medium**     | Plan content renders as plain text with no visual hierarchy                   | C          |
+| B7  | 3.3  | **Medium**     | Artifacts buried inside ActivityPreview, not a first-class navigation target  | D          |
+| B8  | 2.5  | **Low-Medium** | No confirmation dialog before irreversible plan approval                      | --         |
 
 ---
 
-### Step 5.3 --- Checking Evidence
+## Remediation Recommendations
 
-- **User goal:** Verify that tests pass and quality criteria are met.
-- **Visible cues:**
-  - Right sidebar: EvidenceRail showing evidence items with pass/fail/warning status.
-- **Likely action:** Scan the evidence rail for failures or warnings.
-- **Q1 -- Will the user form the right goal?** Yes. Evidence items are color-coded by status.
-- **Q2 -- Will the user notice the correct action?** Yes. The right rail is visible alongside the diff.
-- **Q3 -- Will the user understand the action leads toward the goal?** Yes.
-- **Q4 -- After acting, will the feedback make sense?** Yes.
+### Priority 1: Fix Critical Breakdown (B1)
 
-**Breakdowns / confusion risks:**
+**Problem**: Cannot view mission context while monitoring agent work.
+**Recommendation**: Add a collapsible side panel in LiveView that displays acceptance criteria, evidence summary, and risk assessment. Alternatively, add an inline agent preview panel within AppShell pages that does not require leaving the navigation context.
 
-1. **Evidence rail is a separate column from the diff.** On wide screens this is fine. On narrower screens, the 280px rail may be partially obscured. There is no responsive behavior defined.
-2. **No drill-down into evidence items.** The evidence rail shows status and likely summary text, but there is no click-to-expand or navigation to detailed evidence artifacts (test reports, screenshots, logs). The user must trust the badge.
+**Implementation sketch**:
 
-**Recommendation:**
+- Add a `MissionContextPanel` to `LiveView.tsx` that renders criteria, evidence, and plan summary
+- Or: introduce a `LivePreview` component that can be embedded in `MissionDetail` and `MissionExecute` without leaving AppShell
 
-- Add click-to-expand behavior on evidence items to show full detail (log output, test results, screenshots).
+**Affected files**:
 
----
+- `apps/web/src/pages/LiveView.tsx` -- add context panel
+- `apps/web/src/pages/MissionExecute.tsx` -- upgrade partial view to full inline preview
+- `apps/web/src/components/workspace/WorkspaceLayout.tsx` -- make embeddable within AppShell
 
-### Step 5.4 --- Approving or Rejecting
+### Priority 2: Fix High Breakdowns (B2, B3)
 
-- **User goal:** Make the approve/reject decision.
-- **Visible cues:**
-  - ApprovalBar (sticky at top): status message ("Ready for approval" or "N blockers remaining"), and three buttons: "Re-plan" (with RotateCcw icon), "Reject" (with XCircle icon, accent/red color), "Approve" (with CheckCircle icon, green or gray).
-  - If blockers remain, the Approve button has 50% opacity and `cursor: not-allowed`.
-  - RollbackPreview at the bottom of the page explains what happens on rejection.
-- **Likely action:** Read the ApprovalBar, then click Approve, Reject, or Re-plan.
-- **Q1 -- Will the user form the right goal?** Yes. The ApprovalBar makes the decision point explicit.
-- **Q2 -- Will the user notice the correct action?** Yes. The sticky bar is always visible at the top.
-- **Q3 -- Will the user understand the action leads toward the goal?** Yes. Button labels are clear. The green/gray styling on Approve communicates readiness.
-- **Q4 -- After acting, will the feedback make sense?** No -- no buttons have click handlers.
+**Problem**: Two different agent views confuse users; LiveView loses navigation context.
+**Recommendation**:
 
-**Breakdowns / confusion risks:**
+1. Unify the agent view: use `WorkspaceLayout` (or a configurable subset) as the single agent view component, usable both inline and fullscreen.
+2. Add a "dock/undock" toggle: keep a minimized agent view in the Execute page that can expand to fullscreen and back without losing AppShell context.
+3. Add a keyboard shortcut (e.g., Cmd+Shift+L) to toggle between inline and fullscreen.
 
-1. **All three buttons are non-functional.** None of the buttons (Re-plan, Reject, Approve) have `onClick` handlers. Clicking them does nothing. There is no feedback at all -- no toast, no confirmation dialog, no state change. This is a significant prototype gap.
-2. **The disabled Approve button uses opacity and cursor changes but not `disabled` attribute.** The button can still be clicked (it just does nothing). Screen readers and keyboard users will not know it is disabled.
-3. **"Re-plan" is ambiguous.** Does it send the mission back to the plan stage? Does it create a new plan? Does it allow editing? The label alone is insufficient.
-4. **No confirmation dialog before Reject.** Rejection presumably triggers a rollback (as described in RollbackPreview), but there is no confirmation step to prevent accidental rejection.
+**Affected files**:
 
-**Recommendation:**
+- `apps/web/src/App.tsx:48-49` -- consider rendering LiveView inside AppShell with a fullscreen toggle
+- `apps/web/src/components/shell/AppShell.tsx` -- add keyboard shortcut registration
 
-- Add click handlers with confirmation dialogs for Reject and Approve.
-- Add proper `disabled` attribute to the Approve button when blockers exist.
-- Add tooltip or subtitle to "Re-plan": "Send back to planning stage for revision."
-- Show a confirmation dialog before Reject that quotes the RollbackPreview content.
+### Priority 3: Fix High Breakdowns (B4, B5)
 
----
+**Problem**: Completed stage is unexercised; no deliverable management UX.
+**Recommendation**:
 
-## Extra Checks
+1. Add at least one completed mission to the static data.
+2. Create a `MissionCompleted` page (or a completed-specific view in `MissionDetail`) with deliverable gallery, sign-off controls, and completion summary.
+3. Make artifacts a first-class navigation target with their own route segment.
 
-### Hidden Prerequisites
+**Affected files**:
 
-| Issue                                                        | Location                       | Impact                                                                                                                                                                                                                                                                                     |
-| ------------------------------------------------------------ | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Mission must be created before it can be added to a workflow | MissionCreate / WorkflowCreate | User cannot create a mission-within-a-workflow in one flow; must create mission first, then workflow.                                                                                                                                                                                      |
-| Plan must be approved before agents start executing          | MissionPlan                    | No visible lifecycle guidance tells the user this.                                                                                                                                                                                                                                         |
-| Ctrl+K for CommandPalette is undiscoverable                  | AppShell                       | No visible hint anywhere in the UI. The Search icon in TopBar has `onOpenCommandPalette` prop, but it is rendered in TopBar without being wired to AppShell's state (TopBar receives `onOpenCommandPalette` as a prop but AppShell does not pass it). The Search icon button does nothing. |
+- `apps/web/src/data/missions.ts` -- add a completed mission
+- New page: `apps/web/src/pages/MissionCompleted.tsx` or extend `MissionDetail.tsx`
+- `apps/web/src/App.tsx` -- add route for completed view
 
-### Unclear Affordances
+### Priority 4: Fix Medium Breakdowns (B6, B7)
 
-| Element                                  | Location        | Problem                                                                                                                                                                          |
-| ---------------------------------------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Search icon in TopBar                    | TopBar.tsx      | `onClick={onOpenCommandPalette}` but AppShell never passes this prop to TopBar (TopBar is rendered inside page components, not AppShell). Clicking the Search icon does nothing. |
-| Workflow title as navigation link        | Workflows.tsx   | Styled as a heading, not an obvious link. No underline, no hover underline. Only cursor and color-change on hover signal clickability.                                           |
-| Settings "Save Changes" button           | Settings.tsx    | No click handler. Does nothing.                                                                                                                                                  |
-| Settings dropdown (SelectControl)        | Settings.tsx    | Renders as a static `<div>`, not an actual `<select>`. The dropdown arrow is decorative. The notification preferences are not changeable.                                        |
-| MissionCard as select-only, not navigate | MissionHome.tsx | Cards look like they should navigate but only select.                                                                                                                            |
+**Problem**: Plan content is plain text; artifacts are buried.
+**Recommendation**:
 
-### Weak or Missing Feedback
+1. Render plan content using `MarkdownViewer`. Store plan content as markdown strings. The component already exists and handles headings, code blocks, lists, bold, italic, and tables.
+2. Add an ARTIFACTS tab or section to StageTabBar or MissionDetail that is always visible for missions with artifacts, regardless of stage.
 
-| Action                                   | Expected Feedback                    | Actual Feedback          |
-| ---------------------------------------- | ------------------------------------ | ------------------------ |
-| Click "CREATE MISSION" with empty fields | Validation errors                    | Success toast regardless |
-| Click "Approve Plan & Begin Execution"   | Mission transitions to execute stage | Nothing (no handler)     |
-| Click "Approve" in ApprovalBar           | Mission approved, transitions state  | Nothing (no handler)     |
-| Click "Reject" in ApprovalBar            | Confirmation dialog, then rollback   | Nothing (no handler)     |
-| Click "Re-plan" in ApprovalBar           | Mission transitions to plan stage    | Nothing (no handler)     |
-| Click "Save Changes" in Settings         | Settings saved confirmation          | Nothing (no handler)     |
-| Notification navigation for escalation   | Goes to escalation page              | Goes to overview page    |
+**Affected files**:
 
-### Misleading Labels
-
-| Label                            | Location            | Why Misleading                                                                               |
-| -------------------------------- | ------------------- | -------------------------------------------------------------------------------------------- |
-| "Inbox" in breadcrumb            | MissionHome TopBar  | Implies inbox/outbox dichotomy that does not exist                                           |
-| "OPERATING SURFACE v0.1.0"       | AppShell bottom bar | Jargon; no meaning to users                                                                  |
-| "AGENT SUPERVISION"              | LeftNav subtitle    | Accurate but too small to read (9px); if read, may confuse users unfamiliar with the concept |
-| "Approve Plan & Begin Execution" | MissionPlan         | Suggests clicking will immediately start agents, but the button does nothing                 |
-
-### Dead Ends
-
-| Dead End                                          | Location       | Path Out                                                                                                      |
-| ------------------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------- |
-| After creating a mission                          | MissionCreate  | No navigation to new mission, no "View Mission" link. User must manually navigate back.                       |
-| After creating a workflow                         | WorkflowCreate | Same as above -- toast then nothing.                                                                          |
-| MissionDetail NAVIGATION section buried at bottom | MissionDetail  | User may not scroll far enough to find stage links.                                                           |
-| Clicking Search icon in TopBar                    | TopBar         | Does nothing (prop not wired).                                                                                |
-| "Not found" pages                                 | Various        | Have "Back to missions" link but inconsistent layout (some are centered text, some have full page structure). |
-
-### Unclear Recovery Paths
-
-| Situation                                              | Recovery Path                   | Problem                                                                |
-| ------------------------------------------------------ | ------------------------------- | ---------------------------------------------------------------------- |
-| Accidentally confirming an escalation decision         | None                            | No undo, no "change decision" option. Confirmed decision is permanent. |
-| Accidentally entering Live View                        | Esc or Back link                | Esc may conflict with modals. Back link is very small.                 |
-| Filtered MissionHome shows "No missions match filters" | Click "ALL" filter              | Message is clear but does not suggest clicking ALL to reset.           |
-| Agent stops responding in chat                         | Restart button (RotateCcw icon) | Icon-only, no label, no tooltip visible without hover.                 |
+- `apps/web/src/pages/MissionPlan.tsx:107-109` -- replace `{mission.goal}` with `<MarkdownViewer content={mission.goal} />`
+- `apps/web/src/components/mission/StageTabBar.tsx:4-10` -- consider adding ARTIFACTS or DELIVERABLES tab
 
 ---
 
-## Synthesis
+## Cross-References
 
-### Steps Most Likely to Fail
-
-1. **Step 2.3 (Starting agents after creation):** Dead end after creation. No navigation to the new mission, no lifecycle guidance explaining that plan approval is required before execution begins. User is stranded on the create form.
-
-2. **Step 4.2 (Navigating from notification to escalation):** All notifications route to MissionDetail overview, not to the relevant stage page. For an urgent escalation, the user must then find and click through to the escalation page -- navigating past 8+ content sections to reach the buried NAVIGATION links at the bottom of MissionDetail.
-
-3. **Step 3.3 (Peeking at execution -- finding sub-page navigation):** The NAVIGATION links in MissionDetail are at the bottom of a long scrollable page. There is no tab bar, no sidebar nav, and no top-of-page links to plan/execute/review/escalation. First-time users will likely miss these entirely.
-
-4. **Step 5.4 (Approving or rejecting):** All action buttons are non-functional. Even accounting for prototype status, the absence of any feedback (no toast, no error, no state change) means user testing would produce misleading results.
-
-5. **Step 5.2 (Understanding what changed):** No actual code diffs are available. The user cannot verify agent work at the code level, which undermines the entire review journey.
-
-### Reasons First-Time Users May Hesitate
-
-1. **Military/tactical aesthetic creates uncertainty about the tool's purpose.** Corner brackets, scanlines, Orbitron font, uppercase labels, and terms like "OPERATING SURFACE" and "MISSION" do not signal "developer tool" to most engineers. Users may spend time wondering if they are in the right application.
-
-2. **No onboarding or contextual help.** There is no welcome screen, no tooltip tour, no empty-state guidance, and no help button. The user must infer the meaning of "missions," the lifecycle stages, and the relationship between missions and workflows entirely from the UI.
-
-3. **Lifecycle model is never explicitly taught.** The plan-execute-review-escalation lifecycle is central to the tool but never diagrammed, explained, or even listed in a visible sequence. Users familiar with Kanban boards will partially infer it from the WorkflowDetail columns, but this requires navigating to Workflows first.
-
-4. **Unclear which items need attention.** The LeftNav counter is the only proactive attention signal, and it is 9px text at the bottom of the sidebar. There is no dashboard, no priority inbox, no "your action needed" filter preset.
-
-5. **Buttons that do nothing.** Multiple critical action buttons (Approve, Reject, Re-plan, Approve Plan, Save Settings) have no handlers. Users clicking these buttons will receive no feedback and may conclude the tool is broken.
-
-### Design Changes Most Likely to Improve Task Completion
-
-1. **Add a horizontal tab bar to all mission sub-pages.** Place Plan | Execute | Review | Escalation tabs at the top of MissionDetail, MissionPlan, MissionExecute, MissionReview, and MissionEscalation. This eliminates the buried-navigation problem (affects Journeys 3, 4, and 5).
-
-2. **Route notifications to stage-specific pages.** Change `handleClick` in NotificationCenter to navigate to `/missions/:missionId/:stage` based on notification type or current mission stage. This fixes the escalation navigation gap (Journey 4).
-
-3. **Add post-creation navigation.** After clicking "CREATE MISSION," navigate to MissionDetail or MissionPlan with a clear "Approve Plan to Begin Execution" call to action. This fixes the dead end (Journey 2).
-
-4. **Wire the Search icon to CommandPalette.** Pass the `onOpenCommandPalette` handler from AppShell to the TopBar component (or have TopBar trigger the palette directly). Add a visible "Ctrl+K" hint next to the Search icon. This fixes the undiscoverable CommandPalette.
-
-5. **Add a "needs attention" default view.** On MissionHome, default to showing escalation and review-stage missions first, with a visual indicator (colored left-border or badge) distinguishing items that require human action from items that are executing autonomously.
-
-6. **Add inline code diffs to the review page.** Even a basic expandable diff view per file in DiffByIntent would dramatically improve the review journey, allowing the user to verify agent work at the code level.
-
-7. **Add basic form validation and button handlers.** At minimum: required field indicators on MissionCreate, confirmation dialogs on Approve/Reject, and toast feedback on all action buttons. Without these, the prototype cannot produce valid usability test data.
+- **heuristic-evaluation.md**: H1 (Visibility) maps to Breakdowns B1-B3. H6 (Recognition) maps to B6. H9 (Error Recovery) relates to B4-B5.
+- **user-journeys.md**: Journey 3 "Monitor Active Agents" directly corresponds to Journey 1 here. Journey 5 "Review and Approve Agent Work" corresponds to Journey 2.
+- **information-architecture.md**: LiveView's orphan status is the architectural root cause of B3 (context loss).
+- **consistency-audit.md**: Two different agent views (Execute partial vs LiveView full) documented as an inconsistency, manifest here as B2.
+- **failure-path-audit.md**: Completed stage never exercised -- corresponds to B4 and B5.
+- **state-model.md**: No "viewing" substate means no framework for inline preview (B1).
+- **conceptual-model.md**: "Monitor agent work" as a primary action hidden behind fullscreen mode switch -- the core finding validated by Journey 1.
+- **glossary.md**: "Plan" conflating stage and content -- contributes to B6 (plan content format).

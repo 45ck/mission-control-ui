@@ -100,7 +100,11 @@ export const missions: Mission[] = [
   {
     id: 'MSN-003',
     title: 'Fix timezone handling in scheduler',
-    goal: 'Resolve DST transition bugs causing missed and duplicate job executions in the cron scheduler.',
+    goal: `Resolve **DST transition** bugs causing missed and duplicate job executions in the \`cron scheduler\`.
+
+### Root Cause
+- Spring-forward: \`2:00 AM\` to \`3:00 AM\` skip causes missed window
+- Fall-back: \`1:00 AM\` to \`2:00 AM\` repeat causes double execution`,
     scopeBoundary: 'Scheduler package only. Jobs table schema unchanged.',
     risks: ['Regression in non-DST timezones if UTC normalization is incomplete'],
     acceptanceCriteria: [
@@ -188,6 +192,79 @@ export const missions: Mission[] = [
     workflowId: 'WF-003',
     branch: 'feature/otel-tracing',
     artifactIds: ['ART-005', 'ART-006'],
+  },
+  {
+    id: 'MSN-006',
+    title: 'Deploy real-time notification service',
+    goal: `Ship **WebSocket-based** notification delivery for all user-facing events.
+
+### Scope
+- \`/ws/notifications\` endpoint with JWT-authenticated upgrade
+- Fanout via **Redis Pub/Sub** for horizontal scaling
+- Graceful degradation to long-polling when WebSocket is unavailable`,
+    scopeBoundary:
+      'Notification service only. Does not modify existing REST API or email delivery.',
+    risks: [
+      'WebSocket connections may exhaust server file descriptors under load',
+      'Redis Pub/Sub message ordering not guaranteed across shards',
+    ],
+    acceptanceCriteria: [
+      'Notifications delivered within 500ms of event trigger',
+      'Supports 10k concurrent WebSocket connections per node',
+      'Automatic reconnection with exponential backoff',
+      'All events include idempotency key for de-duplication',
+    ],
+    owner: 'Sarah Chen',
+    stage: 'completed',
+    riskTier: 'medium',
+    verificationState: 'passing',
+    agentSessionIds: ['AS-007'],
+    browserSessionIds: ['BS-003'],
+    terminalSessionIds: ['TS-006'],
+    evidenceIds: [],
+    escalationIds: [],
+    createdAt: '2026-03-15T10:00:00Z',
+    updatedAt: '2026-03-20T16:45:00Z',
+    priority: 'high',
+    tags: ['websocket', 'notifications', 'real-time'],
+    workflowId: 'WF-001',
+    branch: 'feature/realtime-notifications',
+    artifactIds: ['ART-007', 'ART-008', 'ART-009'],
+  },
+  {
+    id: 'MSN-007',
+    title: 'Implement CI/CD pipeline for microservices',
+    goal: `Set up **GitHub Actions** CI/CD pipeline with multi-service build matrix.
+
+### Pipeline Stages
+- Lint + type-check (parallel per service)
+- Unit tests with coverage gate (**>80%**)
+- Integration tests against ephemeral \`docker-compose\` environment
+- Canary deploy to staging with automated smoke tests`,
+    scopeBoundary:
+      'CI/CD configuration and deployment scripts only. Does not modify application code.',
+    risks: ['Flaky integration tests may block deployments'],
+    acceptanceCriteria: [
+      'All services build and deploy independently',
+      'Pipeline completes in under 15 minutes',
+      'Failed canary automatically rolls back',
+      'Deployment notifications posted to Slack',
+    ],
+    owner: 'Marcus Rivera',
+    stage: 'completed',
+    riskTier: 'low',
+    verificationState: 'passing',
+    agentSessionIds: ['AS-008'],
+    browserSessionIds: [],
+    terminalSessionIds: ['TS-007'],
+    evidenceIds: [],
+    escalationIds: [],
+    createdAt: '2026-03-16T09:00:00Z',
+    updatedAt: '2026-03-21T14:30:00Z',
+    priority: 'medium',
+    tags: ['ci-cd', 'github-actions', 'devops'],
+    branch: 'feature/cicd-pipeline',
+    artifactIds: ['ART-010'],
   },
 ];
 

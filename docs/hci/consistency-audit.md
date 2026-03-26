@@ -1,214 +1,429 @@
 # Consistency Audit -- Mission Control Prototype
 
-**Date**: 2026-03-23
-**Auditor**: HCI Review (automated)
-**Scope**: Full interface system -- all 14 pages, 8 component directories, shell, design tokens
+> Document 6 of 10 | Date: 2026-03-24
+> Cross-references: [information-architecture.md](./information-architecture.md), [glossary.md](./glossary.md)
 
 ---
 
-## Screen Inventory
+## Overview
 
-| Screen / Route                                   | Primary Purpose                               | Main Action                                                 | State Coverage                                                      | Notes                                                 |
-| ------------------------------------------------ | --------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------- | ----------------------------------------------------- |
-| `MissionHome` (`/missions`)                      | Browse & triage missions                      | Select mission, apply filters, open mission                 | Empty filter results (inline text), selected/unselected card states | Master-detail layout: 360px sidebar + focus panel     |
-| `MissionCreate` (`/missions/new`)                | Create new mission                            | Submit form, preview card                                   | Toast on success (2s auto-dismiss), live preview                    | 60/40 form-preview split                              |
-| `MissionDetail` (`/missions/:id`)                | Mission overview dashboard                    | Navigate to sub-pages (plan/execute/review/escalation/live) | Not-found state (centered text), full data state                    | Single-column centered (max-w-3xl)                    |
-| `MissionPlan` (`/missions/:id/plan`)             | Review plan before execution                  | Approve plan / request changes                              | Not-found (inline, no TopBar wrapping), evidence empty state        | Two-column: content + 280px evidence rail             |
-| `MissionExecute` (`/missions/:id/execute`)       | Monitor live agent work                       | Toggle overview/chat, launch agent, enter live view         | Not-found (inline), empty agent log, no code files                  | Three-column: 260px context + center + 260px evidence |
-| `MissionReview` (`/missions/:id/review`)         | Review diffs against acceptance criteria      | Approve / reject / re-plan                                  | Not-found (inline), blocker count display                           | Two-column: content + 280px evidence rail             |
-| `MissionEscalation` (`/missions/:id/escalation`) | Handle escalation decisions                   | Select and confirm decision option                          | Not-found (inline), no-escalations empty, confirmation flow         | Two-column: content + 300px consequence panel         |
-| `LiveView` (`/missions/:id/live`)                | Full-screen agent workspace                   | Code, terminal, browser, chat simultaneously                | Not-found (full-screen centered with return link), Escape to exit   | No AppShell; standalone fullscreen                    |
-| `Workflows` (`/workflows`)                       | Browse all workflows                          | Navigate to workflow detail or mission                      | Unassigned missions section, dependency graph empty state           | Single-column scrollable                              |
-| `WorkflowDetail` (`/workflows/:id`)              | Kanban board for workflow missions            | Navigate to mission detail or live view                     | Not-found (centered, with back link), empty column (dashed border)  | Full-width 4-column grid                              |
-| `WorkflowCreate` (`/workflows/new`)              | Create new workflow                           | Submit form, select & order missions                        | Toast on success (2s auto-dismiss), live preview                    | 60/40 form-preview split (mirrors MissionCreate)      |
-| `CostDashboard` (`/costs`)                       | Token usage and cost analytics                | View data (read-only)                                       | Always shows data (no empty state)                                  | Single-column centered (max-w-3xl), SVG bar charts    |
-| `History` (`/history`)                           | Timeline of all mission events                | View data (read-only)                                       | Always shows data (no empty state)                                  | Single-column with vertical timeline                  |
-| `Settings` (`/settings`)                         | Configure risk tiers, notifications, policies | Toggle policies, save                                       | No save confirmation feedback                                       | Single-column (max-w-700px)                           |
+This document is a cross-screen consistency audit of the Mission Control prototype. It evaluates whether UI patterns are applied uniformly across all pages and identifies accidental inconsistencies that erode user trust and learnability.
 
 ---
 
-## Invariant Analysis
+## 1. Invariant Table
 
-| #   | Area                                 | Expected Invariant                                                                                                                       | Observed Variants                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | Risk                   | Recommendation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| --- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1   | **Navigation placement**             | LeftNav always present at 200px; TopBar renders on every page                                                                            | LiveView drops both LeftNav and TopBar, replacing them with a custom `LiveViewHeader` + accent banner. All other pages use `AppShell` > `TopBar` > content.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | **Low (deliberate)**   | Deliberate: LiveView is a full-screen supervision mode with explicit exit affordance (Esc, back link). Document this as a sanctioned shell override.                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| 2   | **TopBar breadcrumb structure**      | Every page renders `<TopBar breadcrumbs={[...]}/>` with consistent crumb depth                                                           | Breadcrumb depth varies: top-level pages use 1 crumb (`[{label:'Costs'}]`), mission sub-pages use 3-4 crumbs. MissionHome uses `[{label:'Missions'},{label:'Inbox'}]` -- unique "Inbox" suffix not used elsewhere.                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | **Low**                | "Inbox" is a semantic label for the mission triage view. Consistent in form (array of Crumb objects). No change needed, but consider whether "Inbox" should appear in LeftNav label for alignment.                                                                                                                                                                                                                                                                                                                                                                                         |
-| 3   | **TopBar `missionId` prop**          | Mission sub-pages pass `missionId`; top-level pages do not                                                                               | Correct. MissionDetail, MissionPlan, MissionExecute, MissionReview, MissionEscalation all pass `missionId`. MissionHome, Workflows, WorkflowDetail, CostDashboard, History, Settings do not. MissionCreate does not (correct -- no ID yet).                                                                                                                                                                                                                                                                                                                                                                                                                                          | **None**               | Consistent.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| 4   | **Page title heading level**         | `<h1>` used for the primary entity name on each page                                                                                     | MissionDetail uses `<h1 className="aw-section-lg">`. MissionHeader (used by MissionPlan, MissionExecute) uses `<h1 className="aw-subdisplay text-[24px]">`. WorkflowDetail uses `<h1 className="aw-section-lg">`. FocusPanel uses `<h2 className="aw-section-lg">`. History, Settings, Workflows, CostDashboard have **no `<h1>` at all** -- they use `aw-micro` section labels as page headers.                                                                                                                                                                                                                                                                                     | **Medium**             | Pages without `<h1>` elements hurt accessibility (screen reader landmark navigation) and violate heading hierarchy. Add `<h1>` to History, Settings, Workflows, CostDashboard. Standardize: `aw-section-lg` for `<h1>` on detail pages, `aw-subdisplay` reserved for MissionHeader inline context.                                                                                                                                                                                                                                                                                         |
-| 5   | **Content area padding**             | Consistent padding around main content                                                                                                   | MissionHome: sidebar `p-4`, focus panel `p-6`. MissionDetail: `p-6 pb-16`. MissionPlan: `p-8 pb-16`. MissionExecute: left `p-5 pb-16`, center `p-6 pb-16`, right `p-4 pb-16`. MissionReview: `p-8 pb-16`. History: `p-8 pb-16`. Settings: `p-8 pb-16`. CostDashboard: `p-6 pb-16`. Workflows: `p-8 pb-16`.                                                                                                                                                                                                                                                                                                                                                                           | **Medium**             | Three padding regimes exist: `p-4` (sidebars/rails), `p-6` (detail pages, cost dashboard), `p-8` (plan, review, escalation, history, settings, workflows). This is **mostly consistent** within categories but the CostDashboard uses `p-6` while similar single-column pages (History, Settings) use `p-8`. Standardize: `p-8 pb-16` for all full-width single-column pages.                                                                                                                                                                                                              |
-| 6   | **Right rail widths**                | Evidence/context rails have consistent width                                                                                             | MissionPlan right rail: `w-[280px]`. MissionExecute right rail: `w-[260px]`. MissionReview right rail: `w-[280px]`. MissionEscalation right rail: `w-[300px]`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | **Medium**             | Three different widths (260, 280, 300) for functionally equivalent side panels. The Escalation panel is wider because ConsequencePanel has more content, which is defensible, but the 260 vs 280 gap between Execute and Plan/Review is not justified. Standardize on `w-[280px]` for all evidence rails.                                                                                                                                                                                                                                                                                  |
-| 7   | **Primary action button style**      | Primary CTAs use `backgroundColor: aw.accent, color: aw.inverse`                                                                         | MissionCreate "CREATE MISSION": `bg:aw.accent, color:aw.inverse` via `aw-section`. WorkflowCreate "CREATE WORKFLOW": identical. MissionHome "+ NEW MISSION": identical. Settings "Save Changes": identical style, adds `hover:opacity-90`. MissionPlan "Approve Plan & Begin Execution": **`bg:aw.plateDark, color:aw.inverse`** -- different color. ApprovalBar "Approve": `bg:semantic.success` when enabled, `bg:aw.lineDark` when disabled. AgentConfigPanel "LAUNCH AGENT": `bg:aw.accent`, switches to `bg:aw.haze` when launched.                                                                                                                                             | **High**               | The "Approve Plan" button on MissionPlan uses `plateDark` instead of `accent`, making it visually indistinguishable from a secondary/neutral action. The ApprovalBar Approve button uses `semantic.success` -- a third primary color. Three different colors for "primary action" breaks the user's mental model of what the accent color means. **Fix**: Primary CTAs should use `aw.accent`. Approval-specific actions can use `semantic.success` but this should be documented as a semantic override. The MissionPlan approve button must switch to `aw.accent` or `semantic.success`. |
-| 8   | **Secondary action button style**    | Secondary actions use `border:aw.lineDark, bg:transparent, color:aw.textStrong` with `hover:bg:aw.haze`                                  | MissionPlan "Request Changes": `border:aw.lineDark, color:aw.text`. MissionDetail navigation links: `border:aw.lineDark, color:aw.textStrong, hover:bg:aw.haze`. ApprovalBar "Re-plan": `border:aw.lineDark`. FocusPanel "Open Mission": `border:aw.lineDark`. ConsequencePanel "CANCEL": `border:aw.lineDark, color:aw.text`. WorkflowDetail not-found "View all workflows": `border:aw.lineDark, color:aw.textStrong`.                                                                                                                                                                                                                                                             | **Low**                | Minor inconsistency: some secondary buttons use `color:aw.text`, others `color:aw.textStrong`. Standardize on `color:aw.textStrong` for all secondary bordered buttons.                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| 9   | **Destructive action style**         | Destructive actions use `accentStrong` with clear warning affordance                                                                     | ApprovalBar "Reject": `border:aw.accentStrong, color:aw.accentStrong` (icon + text). ConsequencePanel "CONFIRM" (for a destructive escalation choice): `bg:aw.accent, color:aw.inverse`. AgentChatPanel "Stop" confirm: text-only `color:aw.accentStrong`.                                                                                                                                                                                                                                                                                                                                                                                                                           | **Medium**             | The ConsequencePanel CONFIRM button for potentially high-risk decisions uses the same `aw.accent` as create/launch buttons. A destructive confirmation should be visually distinct from a creative action. Consider using `semantic.error` or `aw.accentStrong` background for destructive confirms.                                                                                                                                                                                                                                                                                       |
-| 10  | **Form field structure**             | Labels use `aw-micro` with `color:aw.textSoft`, inputs have `border:aw.lineDark, bg:transparent`, spacing `mt-2` between label and input | MissionCreate: consistent across all 7 fields -- `<label className="aw-micro">` + `mt-2` + input with `border:aw.lineDark, bg:transparent`. WorkflowCreate: identical pattern (extracted into FormField\* components). AgentConfigPanel: uses `<label className="aw-section">` (not `aw-micro`) for field labels, and `border:aw.line` (not `aw.lineDark`). Settings: section headings use `aw-section` not `aw-micro`.                                                                                                                                                                                                                                                              | **Medium**             | AgentConfigPanel uses `aw-section` for labels while all other forms use `aw-micro`. This is arguably deliberate (the config panel is a slide-in tool panel, not a form page), but the border color difference (`aw.line` vs `aw.lineDark`) is inconsistent. Standardize: form labels in page-level forms use `aw-micro`; panel/tool labels can use `aw-section` (document as variant). Border on inputs should always be `aw.lineDark`.                                                                                                                                                    |
-| 11  | **Form validation & error handling** | Required fields show validation errors; forms prevent empty submission                                                                   | **No validation exists anywhere.** MissionCreate allows submission with all fields empty. WorkflowCreate allows submission with no title and no missions selected. Settings "Save Changes" has no confirmation or validation.                                                                                                                                                                                                                                                                                                                                                                                                                                                        | **High**               | No form in the prototype performs any client-side validation. The "CREATE MISSION" button fires a success toast regardless of input state. This is acceptable for a prototype but must be the first item addressed before user testing. Add: required field indicators, inline validation messages, disabled submit when required fields empty.                                                                                                                                                                                                                                            |
-| 12  | **Success feedback (toast)**         | Consistent toast pattern for successful actions                                                                                          | MissionCreate: inline animated toast below button (`motion.div`, auto-dismiss 2s, `border:aw.lineDark, bg:aw.haze`). WorkflowCreate: identical toast implementation. Settings: **no feedback at all** on "Save Changes". MissionPlan approve: **no feedback**. ApprovalBar approve: **no feedback**. ConsequencePanel confirm: inline state change (decision recorded text). AgentConfigPanel launch: button text changes to "AGENT LAUNCHED".                                                                                                                                                                                                                                       | **High**               | Five different feedback patterns for successful actions: (1) inline toast, (2) no feedback, (3) inline state text, (4) button label change, (5) nothing. Users cannot build a consistent expectation of what happens after clicking. Standardize: all mutating actions should produce a toast or inline confirmation. Adopt the MissionCreate/WorkflowCreate toast pattern system-wide.                                                                                                                                                                                                    |
-| 13  | **StageBadge usage**                 | `StageBadge` component used wherever mission stage is displayed                                                                          | Used in: MissionCard, MissionHeader, FocusPanel, MissionDetail, History, Workflows (mission rows), WorkflowDetail Kanban (notably **absent** from `MissionBoardCard`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | **Medium**             | WorkflowDetail's `MissionBoardCard` shows `RiskBadge` but not `StageBadge`. Since the card is already inside a stage column (Kanban), this is **deliberate** -- the stage is communicated by column position. However, it means the badge set in Kanban cards (`RiskBadge` only) differs from the badge set in list cards (`StageBadge + RiskBadge + VerificationBadge`). Document this as intentional: Kanban columns make StageBadge redundant.                                                                                                                                          |
-| 14  | **RiskBadge usage**                  | `RiskBadge` used wherever mission risk is displayed                                                                                      | Used in: MissionCard, MissionHeader, FocusPanel, MissionDetail, Workflows (mission rows), WorkflowDetail MissionBoardCard. **Not used** in History page -- History shows `StageBadge` and `VerificationBadge` but no `RiskBadge`.                                                                                                                                                                                                                                                                                                                                                                                                                                                    | **Medium**             | History timeline entries omit RiskBadge. Since History is a timeline view focused on temporal events rather than risk triage, this may be deliberate, but it means clicking through from History to a mission detail will reveal risk information that was not previewed. Add RiskBadge to History entries for consistency with all other mission displays.                                                                                                                                                                                                                                |
-| 15  | **VerificationBadge usage**          | `VerificationBadge` used wherever verification state matters                                                                             | Used in: MissionCard, MissionHeader, FocusPanel, MissionDetail, History. **Not used** in Workflows page (mission row items) or WorkflowDetail MissionBoardCard.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | **Medium**             | Workflows and WorkflowDetail mission lists show `StageBadge + RiskBadge` but omit `VerificationBadge`. This creates an inconsistency where the same mission shows 3 badges in MissionHome but only 2 in Workflows. Since verification state is critical to understanding whether a mission is healthy, it should appear in Workflows mission rows. Kanban cards (WorkflowDetail) can omit it for space.                                                                                                                                                                                    |
-| 16  | **Empty state handling**             | EmptyState primitive component used for empty data states                                                                                | `EmptyState` component exists in `primitives/EmptyState.tsx` but is **never imported or used anywhere**. Instead, empty states are handled ad-hoc: MissionHome uses inline `aw-body` text ("No missions match filters"). MissionPlan evidence rail: inline `aw-body` text. WorkflowDetail Kanban empty column: `aw-micro border-dashed` div. DependencyGraph: `aw-body-sm` centered text. CommandPalette: `aw-body` centered text.                                                                                                                                                                                                                                                   | **High**               | The `EmptyState` primitive was built but never adopted. Every empty state in the app uses a different ad-hoc pattern with different typography classes, different padding, no icon. This is the most visible consistency failure. **Fix**: Replace all inline empty state text with the `EmptyState` component. It provides icon + title + description structure that gives users a consistent signal for "nothing here yet."                                                                                                                                                              |
-| 17  | **Loading states**                   | Consistent loading indicator across async operations                                                                                     | **No loading states exist anywhere.** The `aw-skeleton` CSS class is defined in `index.css` but never used. All data is static mock data rendered synchronously.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | **Medium (prototype)** | Acceptable for a static prototype, but the skeleton class should be used in loading state demos before user testing. When real data fetching is added, every data-dependent panel needs a skeleton or spinner.                                                                                                                                                                                                                                                                                                                                                                             |
-| 18  | **Error states**                     | Consistent error display for failed data fetching                                                                                        | Only "not found" states exist (mission not found, workflow not found). No network error, permission error, or timeout error states. Not-found states are **inconsistent**: MissionDetail wraps in `<PageTransition>` + `<TopBar>`. MissionPlan/Execute/Review/Escalation show bare centered text without TopBar. LiveView shows full-screen centered with styled return link. WorkflowDetail wraps in `<PageTransition>` + `<TopBar>` but places the back link **next to** the error text (flex layout), not below it.                                                                                                                                                               | **High**               | Not-found states render differently across 4 pages. Some show the TopBar (preserving navigation context), others leave the user stranded with no nav. **Fix**: All not-found states must render inside `<PageTransition>` with `<TopBar>` and breadcrumbs. Use a shared NotFoundPanel component.                                                                                                                                                                                                                                                                                           |
-| 19  | **Filter/sort behavior**             | Consistent filter UI pattern                                                                                                             | MissionHome: chip-style toggle buttons (`aw-micro` with `bg:aw.plate` when active, `border:aw.lineDark` when inactive), filters stored in URL search params. EvidenceRail: smaller chip-style buttons (`aw-micro` with `bg:aw.plate` when active), filter state in local component state. WorkflowDetail Kanban: no filtering (columns are implicit stage filters).                                                                                                                                                                                                                                                                                                                  | **Low**                | Two filter implementations exist but they use the same visual pattern (active = `bg:aw.plate, color:aw.inverse`; inactive = `bg:transparent, color:aw.textSoft`). MissionHome persists filters to URL; EvidenceRail does not. This is acceptable: URL persistence makes sense for page-level filters but not for panel-level filters.                                                                                                                                                                                                                                                      |
-| 20  | **Modal / drawer / popover / toast** | Each overlay type has a distinct, consistent interaction model                                                                           | CommandPalette: centered overlay at `mt-[20vh]`, `max-w-[480px]`, `z-50`, backdrop click + Escape to close. EvidenceDetailModal: centered at `mt-[15vh]`, `max-w-[520px]`, `z-50`, backdrop click + Escape to close. AgentConfigPanel: right-anchored slide-in, `w-[340px]`, `z-30`, X button to close (no Escape handler, no backdrop click). NotificationCenter: dropdown anchored to bell icon, `z-40`, click-outside to close (no Escape handler). Success toasts: inline below trigger button (not a traditional toast overlay).                                                                                                                                                | **Medium**             | Overlay z-index values: CommandPalette=50, EvidenceDetailModal=50, AgentConfigPanel=30, NotificationCenter=40. If AgentConfigPanel is open and user opens CommandPalette, z-index stacking is correct (50 > 30). But AgentConfigPanel lacks Escape-to-close, which breaks the expectation set by CommandPalette and EvidenceDetailModal. **Fix**: Add Escape-to-close to AgentConfigPanel and NotificationCenter. Standardize: all overlays should close on Escape.                                                                                                                        |
-| 21  | **Back / cancel / close behavior**   | Consistent back navigation pattern                                                                                                       | Mission sub-pages (Plan, Execute, Review, Escalation): `<ArrowLeft>` + `aw-micro` "Back to missions" / "Back to workflow" link at top of content area. LiveView: `<ArrowLeft>` + "Back" in header bar, plus Escape key to exit. MissionDetail: no back link (relies on breadcrumb navigation and LeftNav). WorkflowDetail: no back link (relies on breadcrumb "Workflows" crumb). MissionCreate/WorkflowCreate: no back link or cancel button.                                                                                                                                                                                                                                       | **Medium**             | No cancel button on either create form. Users must use browser back or LeftNav to abandon creation. The back-link pattern is consistent across mission sub-pages but missing from MissionDetail, WorkflowDetail, and create pages. **Fix**: Add explicit back/cancel affordances to all create forms.                                                                                                                                                                                                                                                                                      |
-| 22  | **Escape key behavior**              | Escape consistently closes the topmost overlay                                                                                           | CommandPalette: Escape closes. EvidenceDetailModal: Escape closes. LiveView: Escape navigates back to execute page. AgentConfigPanel: **no Escape handler**. NotificationCenter: **no Escape handler** (closes on click-outside only).                                                                                                                                                                                                                                                                                                                                                                                                                                               | **Medium**             | Escape key behavior is inconsistent. Standardize: Escape should close any open overlay. In LiveView, Escape exits the mode (documented with "Press Esc to exit" banner -- deliberate and correct).                                                                                                                                                                                                                                                                                                                                                                                         |
-| 23  | **Icon usage consistency**           | Same icon = same meaning                                                                                                                 | `Eye` (lucide): "Enter Live View" across MissionDetail, MissionExecute, Workflows, WorkflowDetail -- **consistent**. `ArrowLeft`: back navigation -- **consistent**. `Settings` (gear): opens AgentConfigPanel in MissionExecute; LeftNav links to Settings page -- **consistent** (different contexts). `AlertTriangle`: escalation warnings, high-risk indicators, blocker warnings -- **consistent semantic** (danger/warning). `CheckCircle`: acceptance criteria (MissionDetail), approval states (ApprovalBar, AgentConfigPanel post-launch, ConsequencePanel post-confirm) -- **consistent** (success/done). `Search`: CommandPalette trigger (TopBar) -- single usage, fine. | **None**               | Icon usage is clean. No icon collisions or semantic conflicts.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| 24  | **Terminology**                      | Same concept = same word everywhere                                                                                                      | "Mission" consistently used (never "task" or "project"). "Workflow" consistently used (never "pipeline" or "flow"). "Evidence" consistently used. "Escalation" consistently used. **One variance**: FocusPanel says "Scope boundary" (sentence case); MissionPlan, MissionCreate, MissionExecute all say "SCOPE BOUNDARY" (uppercase via `aw-micro`). MissionDetail says "SCOPE BOUNDARY". FocusPanel is the outlier.                                                                                                                                                                                                                                                                | **Low**                | FocusPanel uses sentence-case "Scope boundary" for its section label while all other instances use uppercase via `aw-micro` class. Since `aw-micro` applies `text-transform: uppercase`, the fix is to ensure FocusPanel's scope label also uses the `aw-micro` class. Currently it does: `<div className="aw-micro">Scope boundary</div>` -- the CSS `text-transform:uppercase` will render it as "SCOPE BOUNDARY" regardless of source casing. No actual visual inconsistency.                                                                                                           |
-| 25  | **Panel decoration primitives**      | PanelPins and CornerBracket used consistently on bordered panels                                                                         | PanelPins usage varies: MissionCreate form fields use `PanelPins` on every field (some with `corners="all"`, others with default `corners="top"`). MissionDetail sections use `PanelPins` (top only). MissionPlan sections: mixed -- Goal section has CornerBracket but **no PanelPins**; Scope section has PanelPins but **no CornerBracket**; Risks section has **both**. CostDashboard: CornerBracket only, no PanelPins. WorkflowDetail: CornerBracket only, no PanelPins. Settings: both CornerBracket and PanelPins on every section.                                                                                                                                          | **Medium**             | The combination of PanelPins and CornerBracket is not governed by a rule. Some panels have both, some have one, some have neither. This creates visual noise variation across pages. **Fix**: Define a rule: bordered content panels (`border p-5, borderColor:aw.lineDark`) always get CornerBracket on both sides. PanelPins (`corners="top"`) are added to panels with data content. PanelPins (`corners="all"`) are reserved for interactive/form panels.                                                                                                                              |
-| 26  | **PageTransition wrapper**           | All pages wrapped in PageTransition for consistent entry animation                                                                       | All pages inside AppShell use `<PageTransition>` **except** some not-found states in MissionPlan, MissionExecute, MissionReview, MissionEscalation which return bare JSX without PageTransition. LiveView does not use PageTransition (deliberate -- it is fullscreen).                                                                                                                                                                                                                                                                                                                                                                                                              | **Medium**             | Not-found returns in Plan/Execute/Review/Escalation skip PageTransition, causing a jarring lack of animation when navigating to a missing mission. Wrap all returns in PageTransition.                                                                                                                                                                                                                                                                                                                                                                                                     |
-| 27  | **Acceptance criteria display**      | Criteria lists rendered the same way                                                                                                     | MissionDetail: `<ul>` with `CheckCircle` icon (14px, green) + `aw-body` text. MissionPlan: `<ul>` with colored dot bullet (5px circle, `aw.lineInk`) + `aw-body` text. MissionExecute left context: plain `&bull;` character + `aw-body-sm` text. FocusPanel: plain `&bull;` character + `aw-body` text.                                                                                                                                                                                                                                                                                                                                                                             | **High**               | Four different visual treatments for the same data (acceptance criteria). MissionDetail implies criteria are "checked" with green checkmarks. MissionPlan uses neutral dots. MissionExecute uses text bullets. This inconsistency sends conflicting signals about criteria status. **Fix**: Use a single AcceptanceCriterionItem component. If criteria can be passed/failed, use CheckCircle/XCircle with status color. If not, use the neutral dot consistently.                                                                                                                         |
-| 28  | **Date/time formatting**             | Consistent date/time format across the app                                                                                               | TopBar: `toLocaleDateString()` (date only). AppShell bottom bar: `toLocaleTimeString()` with `hour12:false` (24hr time). MissionCard: `toLocaleDateString()` (date only). History: `toLocaleString()` (date + time). MissionHeader: `toLocaleString()` (date + time). MissionTimeline: `toLocaleString()` (date + time). EvidenceDetailModal: `toLocaleString()` (date + time). NotificationCenter: custom relative time ("5m ago", "2h ago"). LiveView header: no timestamp.                                                                                                                                                                                                        | **Low**                | Date formatting is contextually appropriate: summaries show date only, detail views show date + time, notifications use relative time. The `aw-timestamp` CSS class (Orbitron font, letter-spacing 0.18em) is only used in the AppShell bottom bar; other timestamps use `aw-micro`. This is consistent within the design intent (the bottom bar timestamp is a decorative element, not data).                                                                                                                                                                                             |
+The following table tracks each UI pattern across all mission-related screens. Marks:
 
----
+- **Y** = pattern present and consistent
+- **~** = pattern present but deviates from standard
+- **N** = pattern absent
+- **N/A** = not applicable to this screen
 
-## Detailed Findings
+### 1.1 Action Button Placement
 
-### 1. The EmptyState Component Is Dead Code (HIGH)
+| Pattern               | MissionHome       | MissionDetail | MissionPlan                   | MissionExecute             | MissionReview                       | MissionEscalation             | LiveView |
+| --------------------- | ----------------- | ------------- | ----------------------------- | -------------------------- | ----------------------------------- | ----------------------------- | -------- |
+| Primary CTA present   | Y (+ NEW MISSION) | N             | Y (Approve Plan)              | Y (ENTER LIVE VIEW)        | Y (Approve)                         | Y (CONFIRM)                   | N        |
+| CTA position          | Top of sidebar    | N/A           | Center bottom (after content) | Top center (toolbar row)   | Sticky top bar                      | Right rail (ConsequencePanel) | N/A      |
+| CTA background color  | `aw.accent`       | N/A           | `aw.plateDark`                | `aw.accent` (border style) | `semantic.success` or `aw.lineDark` | `aw.accent`                   | N/A      |
+| Secondary CTA present | N                 | Y (nav links) | Y (Request Changes)           | Y (toggle, config gear)    | Y (Reject, Re-plan)                 | Y (CANCEL)                    | N        |
+| Two-step confirmation | N                 | N             | N                             | N                          | N                                   | Y (select then confirm)       | N        |
 
-**File**: `apps/web/src/components/primitives/EmptyState.tsx`
+**Inconsistency found**: Three different placement patterns for primary approval/decision actions:
 
-The `EmptyState` component accepts `icon`, `title`, and `description` props and renders a centered, structured empty state with icon, heading, and body text. It is well-designed. It is imported by **nothing**.
+1. **MissionPlan**: "Approve Plan & Begin Execution" at `MissionPlan.tsx:165-188` -- center bottom, below all content, inline with "Request Changes". User must scroll past goal, scope, criteria, and risks to reach it.
+2. **MissionReview**: `ApprovalBar` at `MissionReview.tsx:97-102` -- sticky top bar (`sticky top-0 z-20`, `ApprovalBar.tsx:21`), always visible. Approve/Reject/Re-plan buttons on the right side.
+3. **MissionEscalation**: `ConsequencePanel` at `MissionEscalation.tsx:188-201` -- right rail, 300px wide. Decision options are vertically stacked cards with inline confirmation.
 
-Instead, every screen handles empty states differently:
+**Inconsistency found**: Three different primary CTA colors:
 
-- `MissionHome` line 139: `<div className="aw-body py-8 text-center">No missions match filters</div>`
-- `MissionPlan` line 169: `<div className="aw-body py-4 text-center">No evidence gathered yet.</div>`
-- `WorkflowDetail` line 156: `<div className="aw-micro border border-dashed p-4 text-center">No missions</div>`
-- `DependencyGraph` line 75: `<div className="aw-body-sm py-4 text-center">No dependencies</div>`
-- `CommandPalette` line 233: `<div className="aw-body px-2 py-4 text-center">No results found</div>`
-- `AgentChatPanel` (MissionExecute overview) line 243: `<div className="aw-body-sm">No agent activity yet</div>`
-- `FocusPanel` line 22: `<div className="aw-micro">Select a mission to preview</div>`
+1. `aw.accent` (#d56f5f) -- used for: + NEW MISSION, ENTER LIVE VIEW link, CONFIRM (escalation)
+2. `aw.plateDark` (#4f5559) -- used for: "Approve Plan & Begin Execution" (`MissionPlan.tsx:169`)
+3. `semantic.success` -- used for: Approve button in ApprovalBar when `canApprove` is true (`ApprovalBar.tsx:75`)
 
-Seven different empty-state implementations, zero uses of the component designed for this purpose.
+### 1.2 Navigation Patterns
 
-### 2. Not-Found States Are Structurally Inconsistent (HIGH)
+| Pattern                 | MissionHome | MissionDetail    | MissionPlan    | MissionExecute   | MissionReview    | MissionEscalation | LiveView                  |
+| ----------------------- | ----------- | ---------------- | -------------- | ---------------- | ---------------- | ----------------- | ------------------------- |
+| TopBar with breadcrumbs | Y           | Y                | Y              | Y                | Y                | Y                 | N (custom header)         |
+| StageTabBar             | N           | Y (line 106)     | Y (line 80)    | Y (line 92)      | Y (line 95)      | Y (line 109)      | N                         |
+| Back link (ArrowLeft)   | N           | N                | Y (line 85-96) | Y (line 100-111) | Y (line 107-118) | Y (line 116-127)  | Y (in header, line 43-50) |
+| Inline navigation links | N           | Y (line 260-296) | N              | N                | N                | N                 | N                         |
+| Escape key to exit      | N           | N                | N              | N                | N                | N                 | Y (line 106-108)          |
+| Close button (X)        | N           | N                | N              | N                | N                | N                 | Y (line 178-184)          |
 
-Four patterns exist for "entity not found":
+**Inconsistency found**: MissionDetail (line 260-296) has BOTH StageTabBar (line 106) AND a NAVIGATION section with link buttons that navigate to the same destinations. The StageTabBar provides: OVERVIEW | PLAN | EXECUTE | REVIEW | ESCALATION. The NAVIGATION section provides: PLAN | EXECUTE | REVIEW | ESCALATION + ENTER LIVE VIEW. This is redundant -- the only additional affordance in the NAVIGATION section is the LiveView link, which is not in the StageTabBar.
 
-**Pattern A** (MissionDetail, WorkflowDetail): Wrapped in `<PageTransition>` with `<TopBar>` showing breadcrumbs. User retains full navigation context.
+**Inconsistency found**: Back navigation has three different patterns:
 
-**Pattern B** (MissionPlan, MissionExecute, MissionReview, MissionEscalation): Returns bare centered text + "Back to missions" link with **no TopBar, no PageTransition, no breadcrumbs**. User loses navigation shell context.
+1. **Mission sub-pages** (Plan, Execute, Review, Escalation): `<ArrowLeft>` icon + "Back to mission" text link (`MissionPlan.tsx:85-96`, `MissionExecute.tsx:100-111`, `MissionReview.tsx:107-118`, `MissionEscalation.tsx:116-127`)
+2. **LiveView**: Three exit mechanisms coexist -- ArrowLeft "Back" link in header (`LiveView.tsx:43-50`), Esc key handler (`LiveView.tsx:106-108`), X close button (`LiveView.tsx:178-184`)
+3. **MissionHome and MissionDetail**: No back link at all. Relies on LeftNav and breadcrumbs.
 
-**Pattern C** (LiveView): Full-screen centered with `aw-section-lg` title, `aw-body` subtitle showing the missing ID, and a styled "Return to Missions" button. No shell at all (deliberate for fullscreen mode).
+### 1.3 Information Density and Layout Patterns
 
-**Pattern D** (MissionEscalation no-escalations): Wrapped in `<PageTransition>` with `<TopBar>`, but the body just says "No escalations for this mission." in `aw-body`. This is actually a valid data state (mission exists but has no escalations), not a not-found error.
+| Pattern           | MissionHome                              | MissionDetail     | MissionPlan                           | MissionExecute                                             | MissionReview                         | MissionEscalation                     | LiveView                            |
+| ----------------- | ---------------------------------------- | ----------------- | ------------------------------------- | ---------------------------------------------------------- | ------------------------------------- | ------------------------------------- | ----------------------------------- |
+| Column layout     | 2-col (360px sidebar + focus)            | 1-col (max-w-3xl) | 2-col (content + 280px rail)          | 3-col (260px + center + 260px)                             | 2-col (content + 280px rail)          | 2-col (content + 300px rail)          | Grid (200px + auto + 380px, 2 rows) |
+| Content padding   | Sidebar: `p-4`, Focus: `p-6`             | `p-6 pb-16`       | `p-8 pb-16`                           | Left: `p-5 pb-16`, Center: `p-6 pb-16`, Right: `p-4 pb-16` | `p-8 pb-16`                           | `p-8 pb-16`                           | None (grid fills)                   |
+| Max content width | N/A (fixed sidebar)                      | `max-w-3xl`       | N/A (fluid)                           | N/A (fluid)                                                | N/A (fluid)                           | N/A (fluid)                           | N/A (grid)                          |
+| Scroll behavior   | Sidebar + focus independently scrollable | Full page scroll  | Left + right independently scrollable | All 3 columns independently scrollable                     | Left + right independently scrollable | Left + right independently scrollable | Grid cells independently scrollable |
 
-Pattern B is the most damaging: when a user navigates to `/missions/BAD-ID/plan`, they see a bare page with no nav, no shell, no breadcrumbs. They must know to click "Back to missions" or use the browser back button.
+### 1.4 Panel Structure (Left/Center/Right Columns)
 
-### 3. Primary Action Colors Are Inconsistent (HIGH)
+| Screen            | Left Column                                      | Center Column                                               | Right Column                                          |
+| ----------------- | ------------------------------------------------ | ----------------------------------------------------------- | ----------------------------------------------------- |
+| MissionHome       | Mission list (360px, `MissionHome.tsx:102`)      | FocusPanel (flex-1)                                         | N/A                                                   |
+| MissionDetail     | N/A                                              | Content (max-w-3xl, `MissionDetail.tsx:109`)                | N/A                                                   |
+| MissionPlan       | N/A                                              | Plan content (flex-1, `MissionPlan.tsx:84`)                 | Evidence rail (280px, `MissionPlan.tsx:193`)          |
+| MissionExecute    | Mission context (260px, `MissionExecute.tsx:97`) | Live work surface (flex-1, `MissionExecute.tsx:158`)        | Evidence rail (260px, `MissionExecute.tsx:342`)       |
+| MissionReview     | N/A                                              | DiffByIntent + rollback (flex-1, `MissionReview.tsx:106`)   | Evidence rail (280px, `MissionReview.tsx:140`)        |
+| MissionEscalation | N/A                                              | Issue detail + replay (flex-1, `MissionEscalation.tsx:115`) | ConsequencePanel (300px, `MissionEscalation.tsx:189`) |
+| LiveView          | FileTree (200px, `WorkspaceLayout.tsx:55`)       | Code/Browser (grid, `WorkspaceLayout.tsx:58-69`)            | AgentChat (380px, `WorkspaceLayout.tsx:51`)           |
 
-Three different background colors are used for "primary" actions:
+### 1.5 Evidence Display
 
-| Color                        | Where Used                                                                                                                         | Semantic Intent         |
-| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
-| `aw.accent` (#d56f5f)        | CREATE MISSION, CREATE WORKFLOW, + NEW MISSION, Save Changes, LAUNCH AGENT, SEND (chat), CONFIRM (escalation), APPROVE (chat plan) | Create, launch, confirm |
-| `aw.plateDark` (#4f5559)     | Approve Plan & Begin Execution (MissionPlan)                                                                                       | Approve                 |
-| `semantic.success` (#5a8a5a) | Approve (ApprovalBar when enabled)                                                                                                 | Approve                 |
+| Screen            | Evidence Component                     | Width                            | Has Filters                | Empty State                                                    |
+| ----------------- | -------------------------------------- | -------------------------------- | -------------------------- | -------------------------------------------------------------- |
+| MissionPlan       | `EvidenceRail`                         | 280px (`MissionPlan.tsx:193`)    | Inherits from EvidenceRail | "No evidence gathered yet." (`MissionPlan.tsx:203-206`)        |
+| MissionExecute    | `EvidenceRail`                         | 260px (`MissionExecute.tsx:342`) | Inherits from EvidenceRail | No explicit empty state (renders rail even if empty)           |
+| MissionReview     | `EvidenceRail`                         | 280px (`MissionReview.tsx:140`)  | Inherits from EvidenceRail | No explicit empty state                                        |
+| MissionDetail     | Inline summary (pass/fail/warn counts) | N/A                              | No                         | Shows "0 PASS / 0 FAIL / 0 WARN" (`MissionDetail.tsx:210-218`) |
+| MissionEscalation | Not present                            | N/A                              | N/A                        | N/A                                                            |
 
-The MissionPlan approval button (`plateDark`) looks like a neutral/secondary action, not a primary one. It should use either `aw.accent` (to match the system's primary action color) or `semantic.success` (to match the ApprovalBar's approval color). Using `plateDark` creates a visual dead zone where the most important action on the page does not look like an action.
+**Inconsistency found**: Evidence rail widths differ -- 280px on Plan and Review, 260px on Execute. The EvidenceRail component itself is identical across uses; only the container width varies.
 
-### 4. Acceptance Criteria Rendered Four Different Ways (HIGH)
+### 1.6 Mission Header Display
 
-The same `mission.acceptanceCriteria` array is displayed using four different component patterns:
+| Screen            | Header Component                                         | Shows ID          | Shows Title       | Shows Badges                  | Shows Owner |
+| ----------------- | -------------------------------------------------------- | ----------------- | ----------------- | ----------------------------- | ----------- |
+| MissionDetail     | Inline (`MissionDetail.tsx:111-127`)                     | Y                 | Y (h1)            | Y (Stage, Risk, Verification) | Y           |
+| MissionPlan       | `MissionHeader` (`MissionPlan.tsx:98`)                   | Y                 | Y                 | Y                             | Y           |
+| MissionExecute    | `MissionHeader` (`MissionExecute.tsx:203`)               | Y                 | Y                 | Y                             | Y           |
+| MissionReview     | Not present                                              | N                 | N                 | N                             | N           |
+| MissionEscalation | `EscalationHeader` instead (`MissionEscalation.tsx:111`) | N                 | N                 | N                             | N           |
+| LiveView          | Custom header bar (`LiveView.tsx:20-93`)                 | Y (in breadcrumb) | Y (in breadcrumb) | N                             | N           |
 
-| Location       | Icon/Bullet                              | Typography   | File                         |
-| -------------- | ---------------------------------------- | ------------ | ---------------------------- |
-| MissionDetail  | `CheckCircle` (14px, semantic.success)   | `aw-body`    | `MissionDetail.tsx:143-155`  |
-| MissionPlan    | Colored dot (5px, `aw.lineInk`, rounded) | `aw-body`    | `MissionPlan.tsx:101-111`    |
-| MissionExecute | `&bull;` character                       | `aw-body-sm` | `MissionExecute.tsx:124-131` |
-| FocusPanel     | `&bull;` character                       | `aw-body`    | `FocusPanel.tsx:63-69`       |
+**Inconsistency found**: MissionReview has no MissionHeader or mission identity section. The page goes directly from StageTabBar (line 95) to ApprovalBar (line 97-102) to DiffByIntent content. The user cannot see which mission they are reviewing without reading the breadcrumbs in the TopBar. Every other mission sub-page either has a MissionHeader component or inline header section.
 
-The MissionDetail version implies criteria are passing (green checkmark) when in reality it is just displaying the list. This is a semantic error: the CheckCircle icon communicates "verified/passed" but the criteria have not necessarily been verified.
+### 1.7 LiveView Access Points
 
-### 5. No Form Validation Exists (HIGH)
+| Screen            | Access Mechanism                              | Component                     | Style                                                                   |
+| ----------------- | --------------------------------------------- | ----------------------------- | ----------------------------------------------------------------------- |
+| MissionDetail     | "ENTER LIVE VIEW" link in NAVIGATION section  | `MissionDetail.tsx:284-295`   | Button with Eye icon, `borderColor: aw.accent, color: aw.accent`        |
+| MissionExecute    | "ENTER LIVE VIEW" link in toolbar row         | `MissionExecute.tsx:182-193`  | Border button with Eye icon, `borderColor: aw.accent, color: aw.accent` |
+| ActivityPreview   | "ENTER LIVE VIEW" link (only when `isActive`) | `ActivityPreview.tsx:162-171` | Same style as MissionDetail                                             |
+| MissionHome       | **Not present**                               | N/A                           | N/A                                                                     |
+| MissionPlan       | **Not present**                               | N/A                           | N/A                                                                     |
+| MissionReview     | **Not present**                               | N/A                           | N/A                                                                     |
+| MissionEscalation | **Not present**                               | N/A                           | N/A                                                                     |
+| LeftNav           | **Not present**                               | N/A                           | N/A                                                                     |
 
-Both create forms (MissionCreate, WorkflowCreate) will "succeed" with completely empty fields. The toast says "Mission created successfully." / "Workflow created successfully." even when no data was entered. The Settings "Save Changes" button produces no feedback of any kind.
+**Note**: LiveView access is consistent where it appears (same Eye icon, same accent color border styling). But it is only accessible from screens associated with the execute/active context. No shortcut from MissionHome or LeftNav.
 
----
+### 1.8 Artifact Display
 
-## Overlay Interaction Matrix
+| Screen                              | Component                                           | Condition                                                                                                                                                                                                                       | Rendering                                                                      |
+| ----------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| MissionDetail (via ActivityPreview) | `ArtifactPanel`                                     | `isCompleted = mission.stage === 'completed' \|\| mission.stage === 'review'` (`ActivityPreview.tsx:47`) AND `mission.stage !== 'plan'` (`MissionDetail.tsx:189`) AND `missionArtifacts.length > 0` (`ActivityPreview.tsx:156`) | Gallery of thumbnail buttons + ArtifactViewer (markdown, video, image, html)   |
+| ArtifactPanel empty                 | Returns `null` (`ArtifactPanel.tsx:23`)             | `artifacts.length === 0`                                                                                                                                                                                                        | Nothing rendered -- no empty state message                                     |
+| MarkdownViewer                      | Inside ArtifactPanel only (`ArtifactPanel.tsx:107`) | Artifact type is `'markdown'`                                                                                                                                                                                                   | Rendered markdown content                                                      |
+| MissionPlan                         | **MarkdownViewer NOT used**                         | N/A                                                                                                                                                                                                                             | Plan content rendered as plain text (`MissionPlan.tsx:107-108`, 118-119, etc.) |
 
-| Overlay             | Trigger                        | Close: Escape     | Close: Backdrop Click | Close: X Button | z-index |
-| ------------------- | ------------------------------ | ----------------- | --------------------- | --------------- | ------- |
-| CommandPalette      | Ctrl+K                         | Yes               | Yes                   | No (no X)       | 50      |
-| EvidenceDetailModal | Click evidence card            | Yes               | Yes                   | No (no X)       | 50      |
-| AgentConfigPanel    | Settings icon (MissionExecute) | **No**            | **No**                | Yes             | 30      |
-| NotificationCenter  | Bell icon (TopBar)             | **No**            | Yes (click-outside)   | No              | 40      |
-| Success Toast       | After form submit              | No (auto-dismiss) | No                    | No              | inline  |
-
-**Gaps**: AgentConfigPanel is the only overlay that cannot be dismissed with Escape. NotificationCenter cannot be dismissed with Escape. Both should support Escape-to-close.
-
----
-
-## Deliberate Variation vs. Accidental Inconsistency
-
-### Deliberate Variation (acceptable)
-
-1. **LiveView drops AppShell**: The fullscreen supervision mode is a documented, distinct interaction mode with its own entry/exit affordances (accent banner, Escape key, back link). This is not an inconsistency -- it is a mode change.
-
-2. **Kanban cards omit StageBadge**: Since each card is placed in a stage column, the badge would be redundant. The column header already communicates the stage.
-
-3. **CostDashboard has no empty state**: Cost data is always computed from agent sessions. If no sessions exist, the charts show zero values. There is no "empty" condition.
-
-4. **EvidenceRail filters vs. MissionHome filters**: Page-level filters persist to URL (MissionHome); panel-level filters are ephemeral (EvidenceRail). This is correct: URL persistence enables shareable filter states for page-level views.
-
-5. **NotificationCenter as dropdown vs. CommandPalette as centered overlay**: Different overlay geometries for different interaction patterns. Notification dropdown is anchored to its trigger for spatial context. CommandPalette is centered because it is a search interface requiring focus.
-
-6. **MissionExecute left panel (260px) vs. LeftNav (200px)**: The execute context panel is wider because it shows mission goal, scope, and criteria -- more content than nav items.
-
-### Accidental Inconsistency (must fix)
-
-1. **EmptyState component unused** -- 7 ad-hoc implementations exist.
-2. **Not-found states structurally different** -- Pattern B pages lose the navigation shell.
-3. **Primary action button uses 3 different background colors** -- plateDark, accent, success.
-4. **Acceptance criteria rendered 4 ways** -- CheckCircle, dot, bull character (2 sizes).
-5. **Right rail widths vary** (260/280/300) without clear rationale for 260 vs 280.
-6. **AgentConfigPanel lacks Escape-to-close** -- breaks pattern set by other overlays.
-7. **No form validation or error states** -- create forms succeed with empty data.
-8. **Success feedback uses 5 different patterns** -- toast, nothing, label change, inline text, nothing.
-9. **CostDashboard uses p-6 while peer pages use p-8** -- breaks padding rhythm.
-10. **PanelPins/CornerBracket decoration is ungoverned** -- random combination across pages.
+**Inconsistency found**: MarkdownViewer exists in the codebase but is used ONLY inside ArtifactPanel. The MissionPlan page renders plan content (goal, scope, criteria, risks) as plain text interpolation, not as rendered markdown. If plans contain structured content (code blocks, links, tables), this will not render correctly.
 
 ---
 
-## Top Consistency Breaks (Most Damaging to User Trust)
+## 2. Inconsistencies Found (with file:line references)
 
-1. **Success feedback is unpredictable.** Sometimes a toast appears, sometimes the button changes, sometimes nothing happens. Users cannot build a reliable mental model of "did my action work?"
+### 2.1 MissionExecute vs. LiveView Component Split (HIGH)
 
-2. **Not-found states strand the user.** Four of the mission sub-pages render a not-found state with no navigation shell, forcing users to rely on browser back or direct URL manipulation.
+**Files**: `MissionExecute.tsx:206-330`, `LiveView.tsx:194-201`, `WorkspaceLayout.tsx:47-77`
 
-3. **Primary action color is ambiguous.** Three colors for "do the main thing" means users must re-learn what the primary action looks like on every page.
+MissionExecute shows agent activity using a set of components:
 
-4. **The EmptyState component exists but is never used.** Seven different empty-state treatments mean users cannot learn to recognize "this area has no data" as a consistent visual pattern.
+- `AgentSwimlane` (`MissionExecute.tsx:214`)
+- `AgentChatPanel` (in chat mode, `MissionExecute.tsx:333`)
+- `BrowserSessionPane` (`MissionExecute.tsx:322`)
+- `TerminalSessionPane` (`MissionExecute.tsx:325`)
+- `CodeViewer` (read-only preview, `MissionExecute.tsx:275-284`)
+
+LiveView shows agent activity using `WorkspaceLayout` which contains:
+
+- `FileTree` (`WorkspaceLayout.tsx:56`)
+- `CodeViewer` (full, `WorkspaceLayout.tsx:59-65`)
+- `BrowserPreview` (`WorkspaceLayout.tsx:68`) -- different from `BrowserSessionPane`
+- `TerminalEmulator` (`WorkspaceLayout.tsx:71`) -- different from `TerminalSessionPane`
+- `AgentChatPanel` (`WorkspaceLayout.tsx:74`)
+
+The MissionExecute and LiveView pages show overlapping but non-identical information using different component trees. The browser and terminal representations are particularly confusing: `BrowserSessionPane` (from `components/execute/SessionPane`) is a summary card, while `BrowserPreview` (from `components/workspace/BrowserPreview`) is an interactive viewport. The user sees two different visual representations of the same underlying data.
+
+### 2.2 Action Button Placement: Three Different Patterns (HIGH)
+
+**Files**: `MissionPlan.tsx:165-188`, `ApprovalBar.tsx:19-91`, `ConsequencePanel.tsx:19-156`
+
+| Page              | Action                         | Placement                     | Position                       | File:Line                       |
+| ----------------- | ------------------------------ | ----------------------------- | ------------------------------ | ------------------------------- |
+| MissionPlan       | Approve Plan & Begin Execution | Inline at end of content      | Center bottom, below risks     | `MissionPlan.tsx:166-177`       |
+| MissionPlan       | Request Changes                | Inline next to Approve        | Center bottom, next to Approve | `MissionPlan.tsx:178-186`       |
+| MissionReview     | Approve / Reject / Re-plan     | Sticky top bar (ApprovalBar)  | Top of page, always visible    | `ApprovalBar.tsx:20-21`         |
+| MissionEscalation | Decision options + CONFIRM     | Right rail (ConsequencePanel) | Right column, 300px            | `MissionEscalation.tsx:192-200` |
+
+A user who learns to look at the top for approval actions on MissionReview will not find them there on MissionPlan (they are at the bottom) or MissionEscalation (they are in the right rail). Three different mental models for "where do I act."
+
+### 2.3 Evidence Rail Width Inconsistency (MEDIUM)
+
+**Files**: `MissionPlan.tsx:193`, `MissionExecute.tsx:342`, `MissionReview.tsx:140`, `MissionEscalation.tsx:189`
+
+| Page              | Rail Component   | Width       | File:Line                   |
+| ----------------- | ---------------- | ----------- | --------------------------- |
+| MissionPlan       | EvidenceRail     | `w-[280px]` | `MissionPlan.tsx:193`       |
+| MissionExecute    | EvidenceRail     | `w-[260px]` | `MissionExecute.tsx:342`    |
+| MissionReview     | EvidenceRail     | `w-[280px]` | `MissionReview.tsx:140`     |
+| MissionEscalation | ConsequencePanel | `w-[300px]` | `MissionEscalation.tsx:189` |
+
+The 260px vs 280px difference between MissionExecute and MissionPlan/Review is not justified by content differences -- both display the same `EvidenceRail` component. The 300px escalation panel is wider because ConsequencePanel has more content (option cards with descriptions), which is defensible. But the 20px gap between Execute and Plan/Review evidence rails is accidental.
+
+### 2.4 Back Navigation Inconsistency (MEDIUM)
+
+**Files**: `MissionPlan.tsx:85-96`, `MissionExecute.tsx:100-111`, `MissionReview.tsx:107-118`, `MissionEscalation.tsx:116-127`, `LiveView.tsx:43-50, 106-108, 178-184`
+
+| Page              | Back mechanism                    | Target                             | Style                            | File:Line                       |
+| ----------------- | --------------------------------- | ---------------------------------- | -------------------------------- | ------------------------------- |
+| MissionPlan       | `<ArrowLeft>` + "Back to mission" | `/missions/:id` or workflow-scoped | `aw-micro`, `color: aw.textSoft` | `MissionPlan.tsx:85-96`         |
+| MissionExecute    | `<ArrowLeft>` + "Back to mission" | Same                               | Same                             | `MissionExecute.tsx:100-111`    |
+| MissionReview     | `<ArrowLeft>` + "Back to mission" | Same                               | Same                             | `MissionReview.tsx:107-118`     |
+| MissionEscalation | `<ArrowLeft>` + "Back to mission" | Same                               | Same                             | `MissionEscalation.tsx:116-127` |
+| LiveView          | `<ArrowLeft>` + "Back" (short)    | `/missions/:id/execute`            | Same style but shorter text      | `LiveView.tsx:43-50`            |
+| LiveView          | Esc key                           | `/missions/:id/execute`            | Keyboard shortcut                | `LiveView.tsx:106-108`          |
+| LiveView          | X button                          | `/missions/:id/execute`            | Icon button in accent banner     | `LiveView.tsx:178-184`          |
+| MissionHome       | **None**                          | N/A                                | N/A                              | --                              |
+| MissionDetail     | **None**                          | N/A                                | Relies on breadcrumbs            | --                              |
+
+LiveView has three redundant exit mechanisms. Mission sub-pages have one consistent back link. MissionHome and MissionDetail have no back affordance at all.
+
+### 2.5 MissionDetail Redundant Navigation (MEDIUM)
+
+**File**: `MissionDetail.tsx:106, 260-296`
+
+MissionDetail has BOTH:
+
+1. **StageTabBar** at line 106:
+
+   ```tsx
+   <StageTabBar missionId={mission.id} workflowId={workflowId} currentStage="overview" />
+   ```
+
+   Renders: OVERVIEW | PLAN | EXECUTE | REVIEW | ESCALATION
+
+2. **Navigation links section** at lines 260-296:
+   ```tsx
+   {(['plan', 'execute', 'review', 'escalation'] as const).map((stage) => { ... })}
+   ```
+   Plus an "ENTER LIVE VIEW" button.
+
+The first four links in the NAVIGATION section duplicate exactly what the StageTabBar provides. The only unique element is the ENTER LIVE VIEW button (lines 284-295), which could be placed elsewhere (e.g., in the TopBar actions area or as a standalone component).
+
+### 2.6 MissionExecute Unique View Mode Toggle (LOW)
+
+**File**: `MissionExecute.tsx:161-179`
+
+MissionExecute has an OVERVIEW / CHAT toggle:
+
+```tsx
+const [viewMode, setViewMode] = useState<'overview' | 'chat'>('overview');
+```
+
+This is the only page in the application with a view mode toggle. No other page has an equivalent. The pattern is not replicated on:
+
+- MissionDetail (no toggle between summary and chat)
+- MissionReview (no toggle between diff and chat)
+- MissionEscalation (no toggle between detail and chat)
+- LiveView (has all panels simultaneously, no toggle needed)
+
+This creates a unique interaction pattern that the user must learn for one page only.
+
+### 2.7 Acceptance Criteria Rendering (HIGH)
+
+**Files**: `MissionDetail.tsx:154-167`, `MissionPlan.tsx:129-139`, `MissionExecute.tsx:148-153`, `FocusPanel.tsx:65-70`
+
+The same `mission.acceptanceCriteria` array is rendered four different ways:
+
+| Location       | Bullet/Icon            | Icon Size  | Color                      | Typography   | File:Line                    |
+| -------------- | ---------------------- | ---------- | -------------------------- | ------------ | ---------------------------- |
+| MissionDetail  | `CheckCircle` (lucide) | 14px       | `semantic.success` (green) | `aw-body`    | `MissionDetail.tsx:157-164`  |
+| MissionPlan    | Colored dot (`<span>`) | 5px circle | `aw.lineInk`               | `aw-body`    | `MissionPlan.tsx:132-137`    |
+| MissionExecute | `&bull;` character     | N/A        | text color                 | `aw-body-sm` | `MissionExecute.tsx:149-151` |
+| FocusPanel     | `&bull;` character     | N/A        | text color                 | `aw-body`    | `FocusPanel.tsx:67-69`       |
+
+The MissionDetail version with green checkmarks implies criteria are verified/passing, but it is simply displaying the static list. This is a semantic error.
 
 ---
 
-## Invariants to Codify in the Design System
+## 3. Pattern Comparison Table (Screen x Pattern Matrix)
 
-1. **All pages rendered inside AppShell must use `<PageTransition>` wrapper**, including not-found states.
-2. **All not-found states must render `<TopBar>` with breadcrumbs** so users retain navigation context.
-3. **Primary CTA color is `aw.accent`**. Approval-specific CTAs may use `semantic.success`. No other colors for primary actions.
-4. **Secondary CTAs use `border:aw.lineDark, color:aw.textStrong, bg:transparent, hover:bg:aw.haze`**.
-5. **Destructive actions use `color:aw.accentStrong`** (text/border) or `bg:semantic.error` (filled).
-6. **All empty data states use the `EmptyState` primitive** (icon + title + description).
-7. **All overlays (z-index >= 30) must close on Escape key press.**
-8. **Right evidence/context rails are `w-[280px]`** unless content requires more (document exceptions).
-9. **Full-width single-column pages use `p-8 pb-16`** for content area padding.
-10. **Bordered content panels always use `CornerBracket` on both sides.** `PanelPins corners="top"` for display panels; `PanelPins corners="all"` for interactive panels.
-11. **All mutating actions produce visible feedback** (toast, inline confirmation, or state change).
-12. **Form labels use `aw-micro` class.** Panel/tool labels may use `aw-section` (documented exception).
-13. **Acceptance criteria are rendered by a shared `CriterionItem` component** with consistent bullet treatment.
+| Pattern                  | MissionHome |      MissionDetail      |   MissionPlan    |  MissionExecute  |  MissionReview   | MissionEscalation | LiveView |
+| ------------------------ | :---------: | :---------------------: | :--------------: | :--------------: | :--------------: | :---------------: | :------: |
+| TopBar w/ breadcrumbs    |      Y      |            Y            |        Y         |        Y         |        Y         |         Y         |    N     |
+| TopBar w/ missionId      |      N      |            Y            |        Y         |        Y         |        Y         |         Y         |    N     |
+| StageTabBar              |      N      |            Y            |        Y         |        Y         |        Y         |         Y         |    N     |
+| Back link (ArrowLeft)    |      N      |            N            |        Y         |        Y         |        Y         |         Y         |    Y     |
+| MissionHeader component  |      N      |       ~ (inline)        |        Y         |        Y         |        N         |         N         |    N     |
+| EvidenceRail             |      N      |            N            |    Y (280px)     |    Y (260px)     |    Y (280px)     |         N         |    N     |
+| Inline nav links         |      N      |            Y            |        N         |        N         |        N         |         N         |    N     |
+| LiveView entry link      |      N      |            Y            |        N         |        Y         |        N         |         N         |   N/A    |
+| Approval/decision CTA    |      N      |            N            |    Y (bottom)    |        N         |  Y (sticky top)  |  Y (right rail)   |    N     |
+| ArtifactPanel            |      N      | Y (via ActivityPreview) |        N         |        N         |        N         |         N         |    N     |
+| MarkdownViewer           |      N      |  Y (via ArtifactPanel)  |        N         |        N         |        N         |         N         |    N     |
+| AgentSwimlane            |      N      |            N            |        N         |        Y         |        N         |         N         |    N     |
+| AgentChatPanel           |      N      |            N            |        N         |    Y (toggle)    |        N         |         N         |    Y     |
+| BrowserSessionPane       |      N      | Y (via ActivityPreview) |        N         |        Y         |        N         |         N         |    N     |
+| TerminalSessionPane      |      N      | Y (via ActivityPreview) |        N         |        Y         |        N         |         N         |    N     |
+| CodeViewer               |      N      | Y (via ActivityPreview) |        N         |        Y         |        N         |         N         |    Y     |
+| WorkspaceLayout          |      N      |            N            |        N         |        N         |        N         |         N         |    Y     |
+| FileTree                 |      N      |            N            |        N         |        N         |        N         |         N         |    Y     |
+| BrowserPreview           |      N      |            N            |        N         |        N         |        N         |         N         |    Y     |
+| TerminalEmulator         |      N      |            N            |        N         |        N         |        N         |         N         |    Y     |
+| ReplayTimeline           |      N      |            N            |        N         |        N         |        N         |         Y         |    N     |
+| ConsequencePanel         |      N      |            N            |        N         |        N         |        N         |         Y         |    N     |
+| DiffByIntent             |      N      |            N            |        N         |        N         |        Y         |         N         |    N     |
+| Overview/Chat toggle     |      N      |            N            |        N         |        Y         |        N         |         N         |    N     |
+| PanelPins decoration     |      N      |            Y            |        Y         |        N         |        Y         |         Y         |    N     |
+| CornerBracket decoration |      N      |            N            |        Y         |        N         |        Y         |         Y         |    N     |
+| PageTransition wrapper   |     N/A     |            Y            |        Y         |        Y         |        Y         |         Y         |    N     |
+| ErrorBoundary            |     N/A     |    Y (via AppShell)     | Y (via AppShell) | Y (via AppShell) | Y (via AppShell) | Y (via AppShell)  |    N     |
+| Toast feedback           |      N      |            N            |        Y         |        N         |        Y         |         Y         |    N     |
+
+### Key Observations from Matrix
+
+1. **LiveView shares almost no patterns with in-shell pages** -- it has no TopBar, no StageTabBar, no back link (uses custom header), no PanelPins, no PageTransition, no ErrorBoundary. It is effectively a separate application.
+
+2. **MissionReview is the only page without a MissionHeader** -- every other mission sub-page either uses `MissionHeader` or has an inline header section. MissionReview goes directly from StageTabBar to ApprovalBar.
+
+3. **MissionExecute is the most component-dense page** -- it is the only page with AgentSwimlane, an overview/chat toggle, a config panel trigger, AND an ENTER LIVE VIEW link. It serves as a "bridge" between the in-shell experience and the fullscreen LiveView.
+
+4. **MissionEscalation and MissionReview are structurally symmetric** -- both use a 2-column layout with content on the left and a decision panel on the right. But the right-rail widths differ (300px vs 280px) and the decision patterns differ (ConsequencePanel cards vs ApprovalBar buttons).
 
 ---
 
-## Issues Likely to Confuse Users
+## 4. Deliberate Variation vs. Accidental Inconsistency
 
-| Scenario                                                                                   | Confusion                                                      | Root Cause                             |
-| ------------------------------------------------------------------------------------------ | -------------------------------------------------------------- | -------------------------------------- |
-| User approves a plan on MissionPlan, then approves on MissionReview                        | The approve button looks completely different (gray vs green)  | Different colors for same action type  |
-| User navigates to a deleted mission via Plan page                                          | Page shows bare text with no navigation; user feels "stuck"    | Not-found state omits TopBar/shell     |
-| User creates a mission with no title, sees "Mission created successfully"                  | Toast implies success but nothing meaningful happened          | No validation                          |
-| User looks at criteria on MissionDetail (green checks) then on MissionPlan (gray dots)     | Green checks imply criteria are passing; gray dots are neutral | Four different renderings of same data |
-| User tries to press Escape to close AgentConfigPanel                                       | Nothing happens; they must find and click the X button         | Missing Escape handler                 |
-| User sees "No missions match filters" (plain text) vs. Kanban empty column (dashed border) | Different visual weight for the same semantic state            | No shared EmptyState component         |
+### Deliberate (Acceptable)
+
+| #   | Variation                                              | Rationale                                                                                                                                                                                               |
+| --- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | LiveView drops AppShell                                | Fullscreen supervision is a distinct interaction mode with explicit entry/exit affordances (accent banner, Esc, back link). Documented.                                                                 |
+| 2   | MissionHome has no StageTabBar                         | MissionHome shows all missions; it is not scoped to a single mission. StageTabBar requires `missionId`.                                                                                                 |
+| 3   | MissionEscalation right rail (300px) wider than others | ConsequencePanel contains decision option cards with descriptions and risk assessments. More content requires more width.                                                                               |
+| 4   | MissionExecute overview/chat toggle                    | Execute is the active monitoring page. The toggle provides two monitoring modes (visual overview vs. conversational interaction) at the same navigation level. Unique to this page by design.           |
+| 5   | MissionDetail has inline navigation links              | The overview page serves as a navigation hub. Having both StageTabBar and inline links provides redundancy for discoverability. However, this is borderline -- see accidental inconsistency note below. |
+
+### Accidental (Must Fix)
+
+| #   | Inconsistency                                                          | Severity | Files                                                                                                                  | Fix                                                                            |
+| --- | ---------------------------------------------------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| 1   | Evidence rail widths: 260px (Execute) vs 280px (Plan, Review)          | MEDIUM   | `MissionExecute.tsx:342`, `MissionPlan.tsx:193`, `MissionReview.tsx:140`                                               | Standardize to `w-[280px]` for all EvidenceRail containers                     |
+| 2   | Primary CTA uses 3 different colors                                    | HIGH     | `MissionPlan.tsx:169` (`aw.plateDark`), `ApprovalBar.tsx:75` (`semantic.success`), `MissionHome.tsx:108` (`aw.accent`) | Standardize: `aw.accent` for primary, `semantic.success` for approval-specific |
+| 3   | Acceptance criteria rendered 4 ways                                    | HIGH     | `MissionDetail.tsx:154-167`, `MissionPlan.tsx:129-139`, `MissionExecute.tsx:148-153`, `FocusPanel.tsx:65-70`           | Create shared `CriterionItem` component                                        |
+| 4   | MissionReview has no MissionHeader                                     | MEDIUM   | `MissionReview.tsx` (entire file)                                                                                      | Add `MissionHeader` component after StageTabBar                                |
+| 5   | Back link text varies ("Back to mission" vs "Back")                    | LOW      | `LiveView.tsx:49` vs `MissionPlan.tsx:95`                                                                              | Standardize to "Back to mission" everywhere                                    |
+| 6   | MissionDetail NAVIGATION section duplicates StageTabBar                | LOW      | `MissionDetail.tsx:260-296`                                                                                            | Remove inline nav links; add LiveView link to StageTabBar or TopBar            |
+| 7   | Approval CTA placement: bottom/top/right                               | HIGH     | `MissionPlan.tsx:165`, `ApprovalBar.tsx:21`, `ConsequencePanel.tsx`                                                    | Adopt consistent pattern: sticky bar for all approval/decision actions         |
+| 8   | Not-found states structurally inconsistent                             | HIGH     | `MissionDetail.tsx:36-48` (with TopBar), `MissionPlan.tsx:31-54` (without TopBar on not-found path)                    | All not-found states must render inside PageTransition with TopBar             |
+| 9   | MissionPlan renders plan as plain text, not markdown                   | MEDIUM   | `MissionPlan.tsx:107-108`                                                                                              | Use MarkdownViewer for plan content                                            |
+| 10  | Content padding varies: `p-6` vs `p-8` for similar single-column pages | LOW      | `MissionDetail.tsx:108` (`p-6`), `MissionPlan.tsx:84` (`p-8`), `MissionReview.tsx:106` (`p-8`)                         | Standardize: `p-8 pb-16` for all full-width content areas                      |
+
+---
+
+## 5. Component Consistency Deep Dive
+
+### 5.1 Toast/Feedback Consistency
+
+| Page              | Action           | Feedback Mechanism                              | Toast Message                                  | Component  | File:Line                   |
+| ----------------- | ---------------- | ----------------------------------------------- | ---------------------------------------------- | ---------- | --------------------------- |
+| MissionPlan       | Approve Plan     | Toast (success)                                 | "Plan approved. Execution will begin shortly." | `useToast` | `MissionPlan.tsx:174`       |
+| MissionPlan       | Request Changes  | Toast (info)                                    | "Change request submitted."                    | `useToast` | `MissionPlan.tsx:183`       |
+| MissionReview     | Approve          | Toast (success)                                 | "Review approved. Changes will be deployed."   | `useToast` | `MissionReview.tsx:66`      |
+| MissionReview     | Reject           | Toast (error)                                   | "Review rejected. Author will be notified."    | `useToast` | `MissionReview.tsx:67`      |
+| MissionReview     | Re-plan          | Toast (info)                                    | "Sent back for re-planning."                   | `useToast` | `MissionReview.tsx:68`      |
+| MissionEscalation | Decision confirm | Toast (success)                                 | "Decision recorded: [option.label]"            | `useToast` | `MissionEscalation.tsx:195` |
+| MissionDetail     | --               | No actions, no toast                            | N/A                                            | N/A        | N/A                         |
+| MissionExecute    | --               | No toast (config panel has button state change) | N/A                                            | N/A        | N/A                         |
+| LiveView          | --               | No actions, no toast                            | N/A                                            | N/A        | N/A                         |
+
+**Assessment**: Pages with approval/decision actions (Plan, Review, Escalation) consistently use the `useToast` hook with `ToastContainer`. Pages without actions have no toast. This is consistent. The toast pattern itself (auto-dismiss, type-colored, optional undo callback) is uniformly implemented.
+
+### 5.2 Stage Badge Consistency
+
+| Screen                                |      Uses StageBadge      | Uses RiskBadge | Uses VerificationBadge | File                      |
+| ------------------------------------- | :-----------------------: | :------------: | :--------------------: | ------------------------- |
+| MissionCard (in MissionHome)          |             Y             |       Y        |           Y            | MissionCard.tsx           |
+| FocusPanel                            |             Y             |       Y        |           Y            | FocusPanel.tsx:43-45      |
+| MissionDetail                         |             Y             |       Y        |           Y            | MissionDetail.tsx:120-122 |
+| MissionHeader (used by Plan, Execute) |             Y             |       Y        |           Y            | MissionHeader.tsx         |
+| MissionReview                         |       N (no header)       |       N        |           N            | MissionReview.tsx         |
+| MissionEscalation                     | N (uses EscalationHeader) |       N        |           N            | MissionEscalation.tsx     |
+| LiveView                              |             N             |       N        |           N            | LiveView.tsx              |
+
+**Assessment**: Badge display is consistent wherever MissionHeader or inline header appears. MissionReview and MissionEscalation do not show badges because they lack a mission header section -- this is an inconsistency, not a deliberate choice.
+
+### 5.3 Keyboard Shortcut Consistency
+
+| Shortcut                   | Action                    | Scope                          | Component                           | File:Line                           |
+| -------------------------- | ------------------------- | ------------------------------ | ----------------------------------- | ----------------------------------- |
+| Cmd+K / Ctrl+K             | Open CommandPalette       | AppShell only                  | `AppShell.tsx:41-44`                | `AppShell.tsx:41-44`                |
+| Cmd+Shift+M / Ctrl+Shift+M | Open MissionSwitcher      | AppShell only                  | `AppShell.tsx:46-48`                | `AppShell.tsx:46-48`                |
+| Esc                        | Close CommandPalette      | CommandPalette open            | `CommandPalette.tsx:111`            | `CommandPalette.tsx:111`            |
+| Esc                        | Exit LiveView             | LiveView                       | `LiveView.tsx:107`                  | `LiveView.tsx:107`                  |
+| Esc                        | Close MissionSwitcher     | MissionSwitcher open           | `MissionSwitcherDropdown.tsx:77-79` | `MissionSwitcherDropdown.tsx:77-79` |
+| 'n'                        | Go to new mission         | MissionHome (no input focused) | `MissionHome.tsx:82-84`             | `MissionHome.tsx:82-84`             |
+| Arrow keys                 | Navigate CommandPalette   | CommandPalette                 | `CommandPalette.tsx:102-107`        | `CommandPalette.tsx:102-107`        |
+| Arrow keys                 | Navigate MissionSwitcher  | MissionSwitcher                | `MissionSwitcherDropdown.tsx:67-72` | `MissionSwitcherDropdown.tsx:67-72` |
+| Enter                      | Select in CommandPalette  | CommandPalette                 | `CommandPalette.tsx:108-110`        | `CommandPalette.tsx:108-110`        |
+| Enter                      | Select in MissionSwitcher | MissionSwitcher                | `MissionSwitcherDropdown.tsx:73-76` | `MissionSwitcherDropdown.tsx:73-76` |
+
+**Assessment**: Keyboard shortcuts are consistent within overlays (arrow keys + Enter + Esc). The 'n' shortcut on MissionHome is unique and undiscoverable (no tooltip or hint). Cmd+K is not available in LiveView.
+
+---
+
+## 6. Design Token Usage Consistency
+
+### 6.1 Border Colors
+
+| Context               | Token Used     | Pages Using It                                                                                                         |
+| --------------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Content panels        | `aw.lineDark`  | MissionDetail, MissionPlan, MissionExecute, MissionReview, MissionEscalation                                           |
+| Rail/sidebar borders  | `aw.line`      | MissionHome (sidebar), MissionPlan (rail), MissionExecute (both rails), MissionReview (rail), MissionEscalation (rail) |
+| Faint separators      | `aw.lineFaint` | Filter sections, content dividers within panels                                                                        |
+| Active/accent borders | `aw.accent`    | LiveView entry links, active filter chips, StageTabBar active tab                                                      |
+
+**Assessment**: Border color usage is consistent with the token hierarchy: `lineFaint` < `line` < `lineDark` < `lineInk`.
+
+### 6.2 Background Colors
+
+| Context                 | Token                                             | Usage                                         |
+| ----------------------- | ------------------------------------------------- | --------------------------------------------- |
+| Page background         | `aw.paperTop` (via `aw-paper` class)              | AppShell main area, LiveView                  |
+| Sidebar/rail background | `aw.haze`                                         | LeftNav, LiveView header                      |
+| Active tab/filter       | `aw.plate`                                        | StageTabBar active, MissionHome filter active |
+| Hover state             | `aw.haze` (via `hover:bg-[var(--color-aw-haze)]`) | Buttons, links, cards                         |
+
+**Assessment**: Background token usage is consistent.
+
+---
+
+## Summary: Top Consistency Breaks Ranked by Impact
+
+| Rank | Issue                                                                                 | Severity | User Impact                                                 | Fix Effort                      |
+| ---- | ------------------------------------------------------------------------------------- | -------- | ----------------------------------------------------------- | ------------------------------- |
+| 1    | Primary CTA uses 3 different colors (`aw.accent`, `aw.plateDark`, `semantic.success`) | HIGH     | User cannot build reliable mental model of "primary action" | LOW (change 2 color values)     |
+| 2    | Approval/decision CTA placement varies (bottom, sticky top, right rail)               | HIGH     | User must re-learn where to act on each page                | MEDIUM (design decision needed) |
+| 3    | Acceptance criteria rendered 4 ways (CheckCircle, dot, bull x2)                       | HIGH     | Green checks on MissionDetail imply verification status     | LOW (extract shared component)  |
+| 4    | MissionReview lacks MissionHeader/badges                                              | MEDIUM   | User cannot identify mission without reading breadcrumbs    | LOW (add MissionHeader)         |
+| 5    | Evidence rail widths inconsistent (260/280/300)                                       | MEDIUM   | Subtle layout shift when navigating between pages           | LOW (standardize width)         |
+| 6    | Not-found states render differently across pages                                      | HIGH     | Some not-found pages lose all navigation shell              | MEDIUM (refactor error paths)   |
+| 7    | MissionDetail has redundant NAVIGATION section                                        | LOW      | Clutters overview page with duplicate links                 | LOW (remove section)            |
+| 8    | MissionExecute vs LiveView component split                                            | HIGH     | Two different views of same data confuse understanding      | HIGH (architectural rework)     |
+| 9    | Plan content is plain text, not markdown                                              | MEDIUM   | Structured plans render poorly                              | LOW (use MarkdownViewer)        |
+| 10   | Content padding varies between pages                                                  | LOW      | Subtle visual inconsistency                                 | LOW (standardize padding)       |

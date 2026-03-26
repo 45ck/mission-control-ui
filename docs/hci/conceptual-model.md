@@ -1,556 +1,403 @@
-# Conceptual Model: Mission Control
+# Conceptual Model Analysis
 
-> HCI analysis of the Mission Control prototype -- a mission-centered agentic IDE for orchestrating and supervising AI coding agents.
->
-> **Date**: 2026-03-23
-> **Analyst**: HCI Expert (Conceptual Model lens)
-> **Scope**: Full system as implemented in `apps/web/`
+> HCI Review Document -- Mission Control Prototype
+> Date: 2026-03-24
+> Scope: Conceptual objects, user roles, actions, states, rules, and structural gaps
 
 ---
 
-## 1. Purpose of the System
+## 1. Users
 
-Mission Control is an **orchestration and oversight tool** that lets a human operator manage multiple AI coding agents working on software engineering tasks. Its core value proposition is the "zoom in / zoom out" pattern:
+Mission Control is designed for **human supervisors** overseeing agentic software engineering work. Three user roles are relevant to the current prototype and its foreseeable evolution:
 
-- **Zoom out**: See all missions across workflows, understand status, risks, and dependencies at a glance (Workflows list, Missions inbox, Kanban board).
-- **Zoom in**: Drop into a specific mission's live execution to supervise an agent in real-time (Live View mode).
+### 1.1 Supervisor (Primary)
 
-The system enforces a **structured lifecycle** on every unit of work (Mission) -- plan, execute, review, escalation -- ensuring human oversight at critical decision points while letting agents operate autonomously on routine tasks.
+The supervisor is the primary user. They review plans, monitor agent execution, approve or reject completed work, and resolve escalations. Every page in the prototype is oriented toward this role. The supervisor's core loop is:
 
-**Primary jobs-to-be-done:**
+1. Scan missions for items needing attention (MissionHome).
+2. Drill into a specific mission (MissionDetail).
+3. Review the plan, observe execution, approve/reject results, or resolve escalations.
+4. Optionally enter Live View to observe agent work in real time.
 
-1. Define a unit of AI work with clear scope boundaries, acceptance criteria, and risk classification.
-2. Monitor agents as they execute, collecting evidence of correctness.
-3. Review agent output with evidence trails before approving or rejecting.
-4. Resolve ambiguities and high-stakes decisions that agents cannot handle alone.
-5. Track cost, history, and policy compliance across all agent work.
+### 1.2 Agent Developer
 
----
+An implied secondary user who would configure agent behavior, set tool permissions, and tune model parameters. Currently represented only by the `AgentConfigPanel` stub on the MissionExecute page (`apps/web/src/components/execute/AgentConfigPanel.tsx`), accessed via the settings gear button at `apps/web/src/pages/MissionExecute.tsx:194-200`.
 
-## 2. Primary Actors
+### 1.3 Platform Admin
 
-| Actor                       | Goal                                                       | Main tasks                                                                          | Notes                                                                                                      |
-| --------------------------- | ---------------------------------------------------------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| **Human Operator** (Owner)  | Maintain oversight of agent-driven development             | Create missions, approve plans, review output, resolve escalations, enter Live View | The only actor in the current prototype. All UI is designed for this role. No multi-user model visible.    |
-| **AI Agent** (AgentSession) | Execute mission work autonomously within scope             | Read/write code, run tests, propose plans, raise escalations                        | Not a UI actor -- represented as data flowing through the system. Multiple agents can work on one mission. |
-| **System**                  | Enforce lifecycle rules and surface actionable information | Generate notifications, collect evidence, track costs                               | Implicit actor. Generates notifications (`NTF-*`), mission events (`ME-*`), and verification state.        |
-
-**Missing actors / ambiguities:**
-
-- No explicit **Reviewer** role distinct from Owner. The same person who creates the mission also reviews it (see `MissionReview.tsx`, `ApprovalBar`).
-- No **Admin** role for Settings page. Settings appear globally accessible.
-- No **Team** or **Organization** concept. Owners are free-text strings, not linked to any user model.
+An implied tertiary user responsible for system-level settings, cost management, and audit history. Represented by the Settings page (`apps/web/src/pages/Settings.tsx`), the CostDashboard page (`apps/web/src/pages/CostDashboard.tsx`), and the History page (`apps/web/src/pages/History.tsx`).
 
 ---
 
-## 3. Primary Objects / Entities
+## 2. Objects
 
-| Object                          | Definition                                                      | Key attributes                                                                                                                                                                         | Related objects                                                                                                             |
-| ------------------------------- | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| **Workflow**                    | Container grouping related missions into a strategic initiative | `id`, `title`, `description`, `owner`, `status` (active/completed/paused), `missionIds`                                                                                                | Contains Missions. Displayed as Kanban board at `/workflows/:id`.                                                           |
-| **Mission**                     | Atomic unit of AI-driven work with structured lifecycle         | `id`, `title`, `goal`, `scopeBoundary`, `stage`, `riskTier`, `verificationState`, `owner`, `priority`, `blockedBy`/`blocks`, `branch`, `tags`                                          | Belongs to 0..1 Workflow. Has 0..N AgentSessions, Evidence, Escalations, BrowserSessions, TerminalSessions. Central entity. |
-| **AgentSession**                | A single AI agent execution run within a mission                | `id`, `missionId`, `role`, `model`, `status`, `steps[]`, `semanticSummary`, `tokensUsed`, `estimatedCost`, `toolsUsed`, `branch`                                                       | Belongs to Mission. Contains AgentSteps. Linked to AgentMessages (chat).                                                    |
-| **AgentStep**                   | A discrete action taken by an agent within a session            | `id`, `action`, `status`, `detail`, `timestamp`                                                                                                                                        | Belongs to AgentSession.                                                                                                    |
-| **Evidence**                    | Verification artifact proving or disproving acceptance criteria | `id`, `missionId`, `type` (test-result/policy-check/requirement-trace/risk-explanation), `status`, `detail`, `source`                                                                  | Belongs to Mission. Displayed in EvidenceRail on Plan/Execute/Review pages.                                                 |
-| **Escalation**                  | A decision point requiring human judgment                       | `id`, `missionId`, `type` (ambiguous-requirement/conflicting-evidence/security-sensitive/scope-breach/architectural-friction), `title`, `summary`, `detail`, `options[]`, `checkpoint` | Belongs to Mission. Displayed on `/missions/:id/escalation`.                                                                |
-| **EscalationOption**            | A possible resolution to an escalation                          | `id`, `label`, `description`, `risk`                                                                                                                                                   | Belongs to Escalation. Presented in ConsequencePanel.                                                                       |
-| **Notification**                | System alert for a notable event                                | `id`, `type`, `title`, `detail`, `missionId`, `read`, `timestamp`                                                                                                                      | References Mission. Displayed in NotificationCenter (TopBar).                                                               |
-| **MissionEvent**                | Audit log entry for mission lifecycle                           | `id`, `missionId`, `type`, `actor`, `detail`, `timestamp`                                                                                                                              | Belongs to Mission. Displayed in MissionTimeline.                                                                           |
-| **Branch**                      | Git branch associated with a mission                            | `name`, `baseBranch`, `status`, `aheadBy`, `behindBy`, `lastCommit`, `missionId`                                                                                                       | 0..1 per Mission. Displayed in BranchBadge.                                                                                 |
-| **BrowserSession**              | A browser automation session within a mission                   | `id`, `missionId`, `url`, `status`, `semanticSummary`, `screenshotPlaceholder`                                                                                                         | Belongs to Mission. Visible in Execute page and Live View.                                                                  |
-| **TerminalSession**             | A terminal execution session within a mission                   | `id`, `missionId`, `command`, `status`, `semanticSummary`, `outputPreview`                                                                                                             | Belongs to Mission. Visible in Execute page and Live View.                                                                  |
-| **AgentMessage**                | A single message in the agent chat transcript                   | `id`, `sessionId`, `role`, `content`, `toolName`, `toolInput`, `requiresApproval`                                                                                                      | Belongs to AgentSession. Displayed in AgentChatPanel.                                                                       |
-| **Workspace** _(deprecated)_    | Former standalone entity for IDE-like environment               | `id`, `missionId`, `branch`, `activeFile`, `openFiles`, `terminalSessionId`, `browserSessionId`, `agentSessionId`                                                                      | **Dissolved.** Replaced by `Mission.branch` + `LiveViewState`. Still exists in data and code as bridge.                     |
-| **LiveViewState** _(ephemeral)_ | Transient view state for fullscreen supervision mode            | `missionId`, `activeFile`, `openFiles`, `focusedPane`                                                                                                                                  | Not persisted. Only a TypeScript interface. Realized through the LiveView page component.                                   |
+The following domain objects form the conceptual model of Mission Control:
 
----
+### 2.1 Object Inventory
 
-## 4. Actions Available on Each Object
+| #   | Object               | Definition                                                                                             | Primary Source File                         | Relationship                                                     |
+| --- | -------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------- | ---------------------------------------------------------------- |
+| 1   | **Mission**          | A unit of supervised agentic work with a defined goal, scope, risk tier, and lifecycle stage.          | `apps/web/src/data/missions.ts:8-35`        | Contains Agent Sessions, Evidence, Escalations, Artifacts        |
+| 2   | **Workflow**         | A grouping of related missions under a strategic initiative.                                           | `apps/web/src/data/workflows.ts:1-9`        | Contains Missions via `missionIds`                               |
+| 3   | **Agent Session**    | A single agent instance working on a mission, with steps, status, and token usage.                     | `apps/web/src/data/agent-sessions.ts:15-29` | Belongs to Mission via `missionId`                               |
+| 4   | **Browser Session**  | A headless browser session an agent uses to interact with web interfaces.                              | `apps/web/src/data/browser-sessions.ts`     | Belongs to Mission via `missionId`                               |
+| 5   | **Terminal Session** | A terminal session an agent uses for CLI operations.                                                   | `apps/web/src/data/terminal-sessions.ts`    | Belongs to Mission via `missionId`                               |
+| 6   | **Evidence**         | A verification artifact (test result, lint check, etc.) with pass/fail/warning/pending status.         | `apps/web/src/data/evidence.ts`             | Belongs to Mission via `missionId`                               |
+| 7   | **Escalation**       | An issue requiring human decision when agent work encounters a problem it cannot resolve autonomously. | `apps/web/src/data/escalations.ts`          | Belongs to Mission via `missionId`; has EscalationOptions        |
+| 8   | **Artifact**         | A deliverable produced by agent work (markdown report, image, video, HTML).                            | `apps/web/src/data/artifacts.ts:1-13`       | Belongs to Mission via `missionId`; referenced by `artifactIds`  |
+| 9   | **Code File**        | A source file modified or viewed during agent work.                                                    | `apps/web/src/data/code-files.ts`           | Accessed via LiveView/WorkspaceLayout                            |
+| 10  | **Branch**           | A git branch associated with a mission's code changes.                                                 | `apps/web/src/data/branches.ts`             | Belongs to Mission via `mission.branch`                          |
+| 11  | **Workspace**        | **DEPRECATED.** A now-dissolved entity that grouped branch + open files + sessions.                    | `apps/web/src/data/workspaces.ts:1-12`      | Replaced by LiveView; legacy redirect at `WorkspaceRedirect.tsx` |
 
-| Action                           | Target object          | Preconditions                                                                                                        | Result                                                                                                                      |
-| -------------------------------- | ---------------------- | -------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| **Create Mission**               | Mission                | None                                                                                                                 | New mission in `plan` stage, `pending` verification, assigned risk tier. Route: `/missions/new`.                            |
-| **Approve Plan**                 | Mission (plan stage)   | Mission in `plan` stage                                                                                              | Mission transitions to `execute` stage. Button: "Approve Plan & Begin Execution" in `MissionPlan.tsx`.                      |
-| **Request Changes**              | Mission (plan stage)   | Mission in `plan` stage                                                                                              | Mission stays in `plan` (presumably returned for revision). Button in `MissionPlan.tsx`.                                    |
-| **Enter Live View**              | Mission                | Mission exists (shown primarily when `stage === 'execute'` on Kanban, but link available on all MissionDetail pages) | Fullscreen IDE-like supervision. Route: `/missions/:id/live`. Exits via Escape key.                                         |
-| **Approve/Reject** (Review)      | Mission (review stage) | Mission in `review` stage                                                                                            | Mission approved (presumably transitions to completed) or rejected (rollback preview shown). `ApprovalBar` component.       |
-| **Resolve Escalation**           | Escalation             | Escalation exists, options available                                                                                 | Human selects an option from ConsequencePanel. No explicit "resolve" action wired -- options are display-only in prototype. |
-| **Filter Missions**              | Mission list           | On MissionHome page                                                                                                  | Narrows visible missions by `stage` and `riskTier`. URL query params: `?stage=X&risk=Y`.                                    |
-| **Select Mission** (Focus Panel) | Mission                | On MissionHome page                                                                                                  | Right-side FocusPanel shows mission summary. Click-to-select, not navigate.                                                 |
-| **Navigate to Stage**            | Mission                | From MissionDetail                                                                                                   | Links to `/missions/:id/plan`, `/execute`, `/review`, `/escalation`.                                                        |
-| **Create Workflow**              | Workflow               | None                                                                                                                 | New workflow with selected missions. Route: `/workflows/new`.                                                               |
-| **View Workflow Board**          | Workflow               | Workflow exists                                                                                                      | Kanban board of missions by stage. Route: `/workflows/:id`.                                                                 |
-| **Mark Notification Read**       | Notification           | Notification is unread                                                                                               | Removes unread indicator. Click navigates to mission detail.                                                                |
-| **Search (Command Palette)**     | System-wide            | Cmd+K (implied)                                                                                                      | Searches missions, pages, and actions. Navigates to selected item's stage-specific page.                                    |
-| **Toggle Policy**                | Settings               | On Settings page                                                                                                     | Enables/disables system policy.                                                                                             |
-| **Configure Agent**              | AgentSession (implied) | On Execute page                                                                                                      | Opens AgentConfigPanel overlay.                                                                                             |
-| **Switch Chat/Overview**         | Execute view mode      | On MissionExecute page                                                                                               | Toggles between overview (swimlanes + code preview) and chat transcript.                                                    |
-
----
-
-## 5. States and Transitions
-
-### 5.1 Mission Stage (primary lifecycle)
-
-| Object  | State        | Meaning                                     | Entered by                           | Exited by                                                                  |
-| ------- | ------------ | ------------------------------------------- | ------------------------------------ | -------------------------------------------------------------------------- |
-| Mission | `plan`       | Work is being defined and scoped            | Mission creation                     | Plan approval ("Approve Plan & Begin Execution")                           |
-| Mission | `execute`    | AI agents are actively working              | Plan approval                        | Execution completion (moves to `review`), or escalation triggered          |
-| Mission | `review`     | Agent work complete, human verifying output | Execution completion                 | Approval (implied completion), rejection (implied rollback), or escalation |
-| Mission | `escalation` | Blocked on human decision                   | Escalation raised by agent or system | Resolution of escalation (returns to `execute` or `review`)                |
-
-```mermaid
-stateDiagram-v2
-    [*] --> plan : Create Mission
-    plan --> execute : Approve Plan
-    plan --> plan : Request Changes
-    execute --> review : Execution Complete
-    execute --> escalation : Escalation Raised
-    review --> escalation : Escalation Raised
-    review --> [*] : Approve (Merge)
-    review --> execute : Reject (Revise)
-    escalation --> execute : Escalation Resolved
-    escalation --> review : Escalation Resolved
-```
-
-### 5.2 Mission Verification State
-
-| Object  | State     | Meaning                            | Entered by                            | Exited by                   |
-| ------- | --------- | ---------------------------------- | ------------------------------------- | --------------------------- |
-| Mission | `pending` | No evidence collected yet          | Mission creation, early plan stage    | Evidence begins flowing     |
-| Mission | `passing` | All evidence checks pass           | All evidence items have `pass` status | Any evidence fails or warns |
-| Mission | `failing` | One or more evidence items failing | Evidence item reports `fail`          | Failing evidence resolved   |
-| Mission | `blocked` | Evidence blocked, cannot proceed   | Escalation or unresolvable failure    | Escalation resolved         |
-
-```mermaid
-stateDiagram-v2
-    [*] --> pending : Mission Created
-    pending --> passing : All Evidence Passes
-    pending --> failing : Evidence Fails
-    passing --> failing : Evidence Fails
-    failing --> passing : Failures Resolved
-    failing --> blocked : Escalation Raised
-    blocked --> failing : Escalation Resolved
-    blocked --> passing : All Issues Resolved
-```
-
-### 5.3 AgentSession Status
-
-| Object       | State       | Meaning                               | Entered by                       | Exited by                        |
-| ------------ | ----------- | ------------------------------------- | -------------------------------- | -------------------------------- |
-| AgentSession | `active`    | Agent is currently running            | Session started                  | Completion, failure, or pause    |
-| AgentSession | `paused`    | Agent stopped, awaiting human input   | Escalation or ambiguity detected | Human resolves, agent resumes    |
-| AgentSession | `completed` | Agent finished all work successfully  | All steps completed              | N/A (terminal)                   |
-| AgentSession | `failed`    | Agent encountered unrecoverable error | Step failure                     | N/A (terminal, unless restarted) |
-
-```mermaid
-stateDiagram-v2
-    [*] --> active : Start Session
-    active --> completed : All Steps Done
-    active --> failed : Unrecoverable Error
-    active --> paused : Needs Human Input
-    paused --> active : Human Resolves
-    completed --> [*]
-    failed --> [*]
-```
-
-### 5.4 AgentStep Status
-
-| Object    | State       | Meaning               | Entered by             | Exited by               |
-| --------- | ----------- | --------------------- | ---------------------- | ----------------------- |
-| AgentStep | `pending`   | Not yet started       | Step queued            | Agent begins step       |
-| AgentStep | `running`   | Currently executing   | Agent starts step      | Step completes or fails |
-| AgentStep | `completed` | Successfully finished | Step finishes          | N/A (terminal)          |
-| AgentStep | `failed`    | Step failed           | Error during execution | N/A (terminal)          |
-
-### 5.5 Workflow Status
-
-| Object   | State       | Meaning               | Entered by            | Exited by                              |
-| -------- | ----------- | --------------------- | --------------------- | -------------------------------------- |
-| Workflow | `active`    | Work in progress      | Workflow creation     | All missions complete, or manual pause |
-| Workflow | `paused`    | Temporarily halted    | Manual action         | Resume                                 |
-| Workflow | `completed` | All missions finished | All missions approved | N/A (terminal)                         |
-
-### 5.6 Evidence Status
-
-| Object   | State     | Meaning              | Entered by                   | Exited by             |
-| -------- | --------- | -------------------- | ---------------------------- | --------------------- |
-| Evidence | `pass`    | Check succeeded      | Test passes, policy passes   | Regression            |
-| Evidence | `fail`    | Check failed         | Test fails, policy violation | Fix applied           |
-| Evidence | `warning` | Non-blocking concern | Partial compliance           | Addressed or accepted |
-| Evidence | `pending` | Not yet evaluated    | Evidence registered          | Evaluation runs       |
-
-### 5.7 Branch Status
-
-| Object | State    | Meaning                      | Entered by                                   | Exited by            |
-| ------ | -------- | ---------------------------- | -------------------------------------------- | -------------------- |
-| Branch | `active` | Currently being worked on    | Branch created for mission                   | Merge or abandonment |
-| Branch | `merged` | Integrated into base branch  | Review approved                              | N/A (terminal)       |
-| Branch | `stale`  | Inactive, behind base branch | Prolonged inactivity, significant divergence | Rebase or close      |
-
----
-
-## 6. Rules, Constraints, Permissions, and Guardrails
-
-### 6.1 Lifecycle Rules (from data model and UI)
-
-| Rule                                                        | Enforcement                                                                  | Source                                       |
-| ----------------------------------------------------------- | ---------------------------------------------------------------------------- | -------------------------------------------- |
-| Missions always start in `plan` stage                       | `MissionCreate.tsx` hardcodes `stage: 'plan'`                                | `apps/web/src/pages/MissionCreate.tsx:31`    |
-| Missions always start with `pending` verification           | `MissionCreate.tsx` hardcodes `verificationState: 'pending'`                 | `apps/web/src/pages/MissionCreate.tsx:33`    |
-| Plan approval gate: human must approve before execution     | "Approve Plan & Begin Execution" button only renders when `stage === 'plan'` | `apps/web/src/pages/MissionPlan.tsx:136`     |
-| Review gate: blockers shown before approval                 | `ApprovalBar` receives `blockerCount` (fail + warning evidence)              | `apps/web/src/pages/MissionReview.tsx:38-40` |
-| Escalation requires options: agent must propose resolutions | `EscalationOption[]` is required on `Escalation` interface                   | `apps/web/src/data/escalations.ts:8-13`      |
-| Live View exit: Escape key always available                 | `useEffect` keydown handler in `LiveView.tsx`                                | `apps/web/src/pages/LiveView.tsx:99-107`     |
-
-### 6.2 Risk Classification
-
-| Risk Tier | Configured Description (Settings)                           | Automation Level (Implied)                                  |
-| --------- | ----------------------------------------------------------- | ----------------------------------------------------------- |
-| `low`     | Changes to non-critical paths, documentation, tests (0-30)  | Higher autonomy. Agent can proceed with less oversight.     |
-| `medium`  | Feature additions, refactors, new endpoints (31-70)         | Moderate oversight. Standard review flow.                   |
-| `high`    | Auth, payments, data migration, security-sensitive (71-100) | Lower autonomy. Multiple approvals, more evidence required. |
-
-### 6.3 Configurable Policies (Settings page)
-
-| Policy                                           | Default  | Effect                                              |
-| ------------------------------------------------ | -------- | --------------------------------------------------- |
-| No direct commits to main without review         | Enabled  | Enforces review stage                               |
-| High-risk missions require 2 approvals           | Enabled  | Escalates approval for high-risk                    |
-| All missions must pass verification before merge | Enabled  | Blocks merge when `verificationState !== 'passing'` |
-| Escalations timeout after 24h -- auto-reject     | Disabled | Would auto-close stale escalations                  |
-
-### 6.4 Notification Rules
-
-| Event type               | Default urgency (Settings) |
-| ------------------------ | -------------------------- |
-| Escalation alerts        | Immediate                  |
-| Review ready             | Batched (15 min)           |
-| Execution status updates | On completion only         |
-| Workflow summaries       | Daily digest               |
-
-### 6.5 Dependency Constraints
-
-- `Mission.blockedBy` and `Mission.blocks` create a directed dependency graph between missions.
-- Displayed in `DependencyGraph` component on Workflows page.
-- **Not enforced**: A mission can be in `execute` while its blocker is also in `execute` (MSN-002 is executing while blocked by MSN-001 in review). This is a data inconsistency in the prototype.
-
----
-
-## 7. Entity Relationship Diagram
+### 2.2 Object Relationship Diagram
 
 ```mermaid
 erDiagram
-    WORKFLOW ||--o{ MISSION : contains
-    MISSION ||--o{ AGENT_SESSION : "has agents"
-    MISSION ||--o{ EVIDENCE : "collects"
-    MISSION ||--o{ ESCALATION : "raises"
-    MISSION ||--o{ BROWSER_SESSION : "has"
-    MISSION ||--o{ TERMINAL_SESSION : "has"
-    MISSION ||--o{ NOTIFICATION : "triggers"
-    MISSION ||--o{ MISSION_EVENT : "logs"
-    MISSION ||--o| BRANCH : "works on"
-    MISSION }o--o{ MISSION : "blocks/blockedBy"
-    AGENT_SESSION ||--o{ AGENT_STEP : "contains"
-    AGENT_SESSION ||--o{ AGENT_MESSAGE : "has transcript"
-    ESCALATION ||--o{ ESCALATION_OPTION : "offers"
-    WORKFLOW {
-        string id PK
-        string title
-        string description
-        string owner
-        enum status
-        string[] missionIds
-    }
-    MISSION {
-        string id PK
-        string title
-        string goal
-        string scopeBoundary
-        enum stage
-        enum riskTier
-        enum verificationState
-        enum priority
-        string owner
-        string branch
-        string workflowId FK
-    }
-    AGENT_SESSION {
-        string id PK
-        string missionId FK
-        string role
-        string model
-        enum status
-        string semanticSummary
-        number estimatedCost
-    }
-    EVIDENCE {
-        string id PK
-        string missionId FK
-        enum type
-        enum status
-        string title
-        string source
-    }
-    ESCALATION {
-        string id PK
-        string missionId FK
-        enum type
-        string title
-        string summary
-        string checkpoint
-    }
-    NOTIFICATION {
-        string id PK
-        string missionId FK
-        enum type
-        string title
-        boolean read
-    }
-    BRANCH {
-        string name PK
-        string baseBranch
-        enum status
-        number aheadBy
-        number behindBy
-        string missionId FK
-    }
+    Workflow ||--o{ Mission : "contains (missionIds)"
+    Mission ||--o{ AgentSession : "has (agentSessionIds)"
+    Mission ||--o{ BrowserSession : "has (browserSessionIds)"
+    Mission ||--o{ TerminalSession : "has (terminalSessionIds)"
+    Mission ||--o{ Evidence : "has (evidenceIds)"
+    Mission ||--o{ Escalation : "has (escalationIds)"
+    Mission ||--o{ Artifact : "has (artifactIds)"
+    Mission ||--o| Branch : "on (branch)"
+    Mission }o--o{ Mission : "blockedBy / blocks"
+    Escalation ||--o{ EscalationOption : "offers"
+    AgentSession ||--o{ AgentStep : "contains"
+    Workspace }o--|| Mission : "DEPRECATED references"
 ```
 
 ---
 
-## 8. Ambiguities and Overloaded Concepts
+## 3. Actions
 
-### 8.1 The Workspace Ghost
+The following table maps every user action across each object. Implementation status is indicated as:
 
-**Severity: High.** The `Workspace` entity is marked `@deprecated` in `apps/web/src/data/workspaces.ts:1` with a comment saying "use Mission.branch + LiveViewState instead," yet:
+- **Yes** -- fully implemented in the prototype UI
+- **Partial** -- partially implemented (e.g., toast-only feedback, no state mutation)
+- **No** -- no UI exists for this action
 
-- `Workspace.tsx` page still exists as a fully implemented component (`apps/web/src/pages/Workspace.tsx`).
-- `WorkspaceRedirect.tsx` redirects `/workspace/:id` to Live View, acknowledging the old URL scheme.
-- `LiveView.tsx:111` still queries `workspaces.find((ws) => ws.missionId === missionId)` as a "bridge until Workspace entity fully dissolved."
-- The `components/workspace/` directory contains 6 components (`WorkspaceLayout`, `WorkspaceTabs`, `BranchBadge`, `BrowserPreview`, `CodeViewer`, `FileTree`, `TerminalEmulator`) -- all named around the dissolved concept.
+### 3.1 Mission Actions
 
-**Impact**: A new user reading the code encounters two competing models for the same idea: "the place where an agent does its work." The Workspace says it with a standalone entity and URL. The Mission says it with `branch`, `agentSessionIds`, and a Live View mode. They mean the same thing.
+| Action                   | UI Location                                                   | Status  | Notes                                                                 |
+| ------------------------ | ------------------------------------------------------------- | ------- | --------------------------------------------------------------------- |
+| **View list**            | `MissionHome.tsx` -- left sidebar with cards                  | Yes     | Filter by stage/risk, sort by stage/title/created/risk                |
+| **View detail**          | `MissionDetail.tsx` -- overview page                          | Yes     | Header, goal, scope, criteria, risks, evidence, escalations, timeline |
+| **Create**               | `MissionCreate.tsx` via "NEW MISSION" button                  | Yes     | Route at `/missions/new` (`App.tsx:61`)                               |
+| **Edit**                 | --                                                            | No      | No edit capability for existing missions                              |
+| **Delete**               | --                                                            | No      | No delete capability                                                  |
+| **Approve plan**         | `MissionPlan.tsx:166-177` -- "Approve Plan & Begin Execution" | Partial | Shows toast; no state mutation (static data)                          |
+| **Request changes**      | `MissionPlan.tsx:178-186` -- "Request Changes" button         | Partial | Shows toast; no state mutation                                        |
+| **Approve review**       | `ApprovalBar.tsx:72-87` -- "Approve" button                   | Partial | Shows toast; gated by `canApprove` check (line 17)                    |
+| **Reject review**        | `ApprovalBar.tsx:60-70` -- "Reject" button                    | Partial | Shows toast; no state mutation                                        |
+| **Re-plan**              | `ApprovalBar.tsx:48-59` -- "Re-plan" button                   | Partial | Shows toast; no state mutation                                        |
+| **Monitor (inline)**     | --                                                            | No      | **GAP**: No inline agent visibility; binary fullscreen or nothing     |
+| **Monitor (fullscreen)** | `LiveView.tsx` -- "ENTER LIVE VIEW" links                     | Yes     | Fullscreen page outside AppShell                                      |
+| **Filter**               | `MissionHome.tsx:61-65` -- stage + risk filters               | Yes     | URL search params for stage/risk                                      |
+| **Sort**                 | `MissionHome.tsx:67-75` -- sort dropdown                      | Yes     | By stage, title, created, risk                                        |
+| **Switch between**       | `MissionSwitcherDropdown.tsx`, `CommandPalette.tsx`           | Yes     | Cmd+Shift+M switcher, Cmd+K palette                                   |
 
-**Recommendation**: Complete the dissolution. Remove `Workspace.tsx`, `WorkspaceTabs.tsx`, and the `workspaces` data file. Rename `components/workspace/` to `components/live-view/`. Stop querying `workspaces` in `LiveView.tsx`.
+### 3.2 Workflow Actions
 
-### 8.2 "Stage" vs. "Status" -- Two Lifecycle Dimensions
+| Action                      | UI Location                               | Status | Notes                                                |
+| --------------------------- | ----------------------------------------- | ------ | ---------------------------------------------------- |
+| **View list**               | `Workflows.tsx`                           | Yes    |                                                      |
+| **View detail**             | `WorkflowDetail.tsx`                      | Yes    | Shows member missions                                |
+| **Create**                  | `WorkflowCreate.tsx` via `/workflows/new` | Yes    |                                                      |
+| **Edit**                    | --                                        | No     |                                                      |
+| **Delete**                  | --                                        | No     |                                                      |
+| **Add mission to workflow** | --                                        | No     | Workflows reference missions via static `missionIds` |
 
-**Severity: Medium.** Mission has both `stage` (plan/execute/review/escalation) and `verificationState` (pending/passing/failing/blocked). These are orthogonal dimensions, but the UI does not always make this clear:
+### 3.3 Agent Session Actions
 
-- `StageBadge` and `VerificationBadge` appear side-by-side on `MissionDetail` and `MissionCard`, which is good.
-- But the MissionHome sort order puts `escalation` first, then `review`, then `execute`, then `plan` -- implying `stage` is a priority signal, not just a lifecycle position.
-- The Kanban board on WorkflowDetail uses `stage` as columns, which works well for lifecycle visualization. But `verificationState` is not visible on the Kanban cards at all (only `RiskBadge` is shown in `MissionBoardCard`).
+| Action          | UI Location                                         | Status | Notes                                                                |
+| --------------- | --------------------------------------------------- | ------ | -------------------------------------------------------------------- |
+| **View list**   | `MissionDetail.tsx:191-201` -- AGENT SESSIONS panel | Yes    | Count + status summary                                               |
+| **View detail** | `MissionExecute.tsx:207-217` -- AgentSwimlane       | Yes    | Shows steps in swimlane format                                       |
+| **View log**    | `MissionExecute.tsx:232-270` -- AGENT LOG           | Yes    | Last 8 steps per session                                             |
+| **Chat with**   | `AgentChatPanel` via `MissionExecute.tsx:332-334`   | Yes    | Chat view toggle on execute page                                     |
+| **Configure**   | `AgentConfigPanel` via `MissionExecute.tsx:337`     | Yes    | Modal overlay                                                        |
+| **Pause**       | --                                                  | No     | Status `paused` exists (`agent-sessions.ts:20`) but no UI to trigger |
+| **Resume**      | --                                                  | No     |                                                                      |
+| **Stop**        | --                                                  | No     |                                                                      |
 
-**Recommendation**: Always pair stage and verification state in summary views. Add `VerificationBadge` to the Kanban card. Consider whether `escalation` is truly a stage (position in lifecycle) or a status overlay that can co-occur with any stage.
+### 3.4 Evidence Actions
 
-### 8.3 Escalation as Stage vs. Mode
+| Action           | UI Location                                                  | Status | Notes                        |
+| ---------------- | ------------------------------------------------------------ | ------ | ---------------------------- |
+| **View summary** | `MissionDetail.tsx:203-220` -- EVIDENCE SUMMARY              | Yes    | Pass/fail/warning counts     |
+| **View rail**    | `EvidenceRail` on MissionPlan, MissionExecute, MissionReview | Yes    | Right sidebar                |
+| **Create**       | --                                                           | No     | Evidence is system-generated |
+| **Dismiss**      | --                                                           | No     |                              |
 
-**Severity: High.** In the data model, `escalation` is one of the four stages (`'plan' | 'execute' | 'review' | 'escalation'`). This implies a mission can only be in one stage at a time. But the real semantics are different:
+### 3.5 Escalation Actions
 
-- An escalation can be raised _during_ execution (ESC-001 arose during AS-001's work on MSN-001, which is currently in `review` stage).
-- A mission in `escalation` stage cannot simultaneously be in `review`, even though MSN-001 has both unresolved escalations AND is in review.
-- Multiple escalations can exist on one mission (MSN-004 has ESC-002 and ESC-003), but the escalation page focuses on `primaryEscalation = mEscalations[0]`, treating secondary ones as subordinate.
+| Action                | UI Location                                                 | Status | Notes                      |
+| --------------------- | ----------------------------------------------------------- | ------ | -------------------------- |
+| **View list**         | `MissionDetail.tsx:222-249` -- ESCALATION ALERTS            | Yes    | Alert-style list           |
+| **View detail**       | `MissionEscalation.tsx:129-140` -- ISSUE DETAIL             | Yes    |                            |
+| **Select escalation** | `MissionEscalation.tsx:147-184` -- escalation selector      | Yes    | Multi-escalation switching |
+| **Make decision**     | `ConsequencePanel.tsx:63-109` -- option selection + confirm | Yes    | With undo via toast        |
+| **Replay timeline**   | `ReplayTimeline` at `MissionEscalation.tsx:143-145`         | Yes    | Agent step replay          |
 
-**Impact**: The model forces a linear lifecycle where the reality is a branching one. An escalation should be a parallel concern, not a mutually exclusive stage.
+### 3.6 Artifact Actions
 
-**Recommendation**: Model escalation as a boolean flag or a separate collection that overlays any stage, not as a stage itself. Missions would then be `plan + escalated`, `execute + escalated`, or `review + escalated`.
-
-### 8.4 Owner is a String, Not an Entity
-
-**Severity: Medium.** `Mission.owner` and `Workflow.owner` are free-text strings (e.g., "Sarah Chen", "Marcus Rivera"). They are not linked to any user entity, authentication system, or permission model.
-
-- The same person can own both workflows and missions.
-- There is no concept of "who is currently logged in" or "who can approve."
-- Settings page has no user identity -- all policies are global.
-
-**Impact**: Makes it impossible to implement permission-based guardrails (e.g., "only the owner can approve a plan," "high-risk missions require a different reviewer").
-
-### 8.5 "Priority" vs. "RiskTier" vs. Sort Order
-
-**Severity: Low-Medium.** Three overlapping concepts of importance:
-
-- `riskTier` (low/medium/high): Classifies the inherent danger of the work.
-- `priority` (low/medium/high/critical): Classifies urgency. Optional field.
-- Sort order in MissionHome: Sorts by stage first (escalation > review > execute > plan), then by risk tier -- but never by `priority`.
-
-**Impact**: `priority` is defined in the data model and set on all sample missions but is never displayed or used for sorting in any UI component. It is an invisible attribute.
-
-**Recommendation**: Either surface `priority` explicitly (as a filter, sort option, or badge) or remove it from the model. Currently it creates a dead concept.
-
-### 8.6 "Branch" Appears in Three Places
-
-**Severity: Low.** A git branch is referenced in three different ways:
-
-1. `Mission.branch`: Optional string field (e.g., `'feature/auth-pkce'`).
-2. `Branch` entity: Full object in `branches.ts` with `status`, `aheadBy`, `behindBy`, `missionId`.
-3. `AgentSession.branch`: Optional string field duplicating the association.
-4. `Workspace.branch` (deprecated): Yet another reference.
-
-The `Branch` entity has a `missionId` back-reference, creating a bidirectional link that could desynchronize.
-
-### 8.7 Notification Routing Always Goes to Mission Detail
-
-**Severity: Low.** `NotificationCenter.tsx:59` navigates to `/missions/${n.missionId}` for all notification types. But an escalation notification should probably navigate to `/missions/:id/escalation`, and an evidence notification to `/missions/:id/review`. The current behavior drops the user at the overview page, requiring an extra click.
-
----
-
-## 9. Navigation Model
-
-### 9.1 Route Map
-
-```
-/                               --> Redirect to /missions
-/missions                       --> MissionHome (inbox + focus panel)
-/missions/new                   --> MissionCreate (form + preview)
-/missions/:id                   --> MissionDetail (overview)
-/missions/:id/plan              --> MissionPlan
-/missions/:id/execute           --> MissionExecute
-/missions/:id/review            --> MissionReview
-/missions/:id/escalation        --> MissionEscalation
-/missions/:id/live              --> LiveView (fullscreen, outside AppShell)
-/workflows                      --> Workflows (list + dependency graphs)
-/workflows/new                  --> WorkflowCreate (form + preview)
-/workflows/:id                  --> WorkflowDetail (Kanban board)
-/workflows/:wfId/missions/:mId  --> MissionDetail (workflow-contexted)
-/workflows/:wfId/missions/:mId/plan|execute|review|escalation
-/workflows/:wfId/missions/:mId/live --> LiveView (workflow-contexted)
-/workspace/:id                  --> WorkspaceRedirect (legacy, redirects to Live View)
-/costs                          --> CostDashboard
-/history                        --> History
-/settings                       --> Settings
-```
-
-### 9.2 Left Nav Structure
-
-```
-Workflows (/workflows)           -- GitBranch icon
-Missions (/missions)             -- Target icon, badge with total count
---- separator ---
-Costs (/costs)                   -- DollarSign icon
-History (/history)               -- History icon
-Settings (/settings)             -- Settings icon
-```
-
-**Observation**: The separator divides "work objects" (Workflows, Missions) from "utilities" (Costs, History, Settings). This is a reasonable grouping. The Missions nav item also highlights when viewing workflow-scoped mission pages, which prevents disorientation.
-
-### 9.3 Navigation Friction Points
-
-1. **Live View is outside AppShell**: When entering Live View, the LeftNav, TopBar, and NotificationCenter all disappear. The only exit is the Escape key or the "Back" link. This is intentional (fullscreen supervision), but it means the user loses all ambient awareness of other missions while supervising one.
-
-2. **Dual-path routing**: Every mission page exists at both `/missions/:id/...` and `/workflows/:wfId/missions/:mId/...`. The breadcrumbs and "Back" links adapt correctly, but the CommandPalette navigates to the workflow-contexted path if a `workflowId` exists, and the notification center always navigates to `/missions/:id`. These inconsistencies could cause disorientation when context-switching.
-
-3. **MissionDetail as hub**: The MissionDetail page has a NAVIGATION section with explicit links to all four stage pages and Live View. This is a good information architecture decision -- it makes MissionDetail the canonical "hub" for a mission. But it shows links to all stages regardless of the mission's current stage, which might tempt users to visit irrelevant stages.
+| Action           | UI Location                                                 | Status | Notes                                                    |
+| ---------------- | ----------------------------------------------------------- | ------ | -------------------------------------------------------- |
+| **View gallery** | `ArtifactPanel.tsx:19-68` via `ActivityPreview.tsx:152-159` | Yes    | **Gated**: only `review` or `completed` stages (line 47) |
+| **View detail**  | `ArtifactPanel.tsx:73-122` -- ArtifactViewer                | Yes    | Renders markdown, image, video, html                     |
+| **Create**       | --                                                          | No     | Artifacts are system-generated                           |
+| **Download**     | --                                                          | No     |                                                          |
 
 ---
 
-## 10. Recommendations to Simplify the Model
+## 4. States
 
-### R1. Decouple Escalation from Stage Lifecycle (High Impact)
+### 4.1 Mission Lifecycle
 
-**Problem**: Modeling `escalation` as a stage forces a mission into a single-track lifecycle where it cannot be simultaneously "in review" and "escalated."
+Missions progress through a linear lifecycle with an escalation overlay:
 
-**Fix**: Remove `escalation` from the `Stage` union. Add an `escalations: Escalation[]` collection to Mission (already exists via `escalationIds`). Add a computed property `isEscalated: boolean` derived from whether unresolved escalations exist. The Kanban board can show an escalation badge overlay rather than a separate column.
+```
+plan --> execute --> review --> completed
+                       |
+                       v
+                  escalation (overlay)
+```
 
-**Files affected**: `apps/web/src/data/missions.ts` (Stage type), `apps/web/src/pages/WorkflowDetail.tsx` (stageColumns), `apps/web/src/pages/MissionHome.tsx` (sort order, filter options), `apps/web/src/components/mission/StageBadge.tsx`.
+The `Stage` type is defined at `apps/web/src/data/missions.ts:2`:
 
-### R2. Complete the Workspace Dissolution (High Impact)
+```typescript
+export type Stage = 'plan' | 'execute' | 'review' | 'escalation' | 'completed';
+```
 
-**Problem**: The deprecated Workspace entity creates a ghost concept that confuses the mental model.
+Note the deprecation comment at `missions.ts:1`:
 
-**Fix**:
+```typescript
+/** @deprecated 'escalation' as a stage is being replaced by the escalationActive overlay flag */
+```
 
-- Delete `apps/web/src/pages/Workspace.tsx` and `apps/web/src/components/workspace/WorkspaceTabs.tsx`.
-- Rename `apps/web/src/components/workspace/` to `apps/web/src/components/live-view/`.
-- Remove the `workspaces.find()` fallback in `LiveView.tsx` and derive all state from `Mission` and its associated sessions.
-- Keep `WorkspaceRedirect.tsx` for backward compatibility, but consider a deprecation timeline.
+This signals an in-progress transition from escalation-as-stage to escalation-as-overlay, using the `escalationActive?: boolean` field (`missions.ts:33`). MSN-004 demonstrates this pattern with `stage: 'review'` and `escalationActive: true`.
 
-### R3. Surface Priority or Remove It (Medium Impact)
+### 4.2 Stage Distribution in Mock Data
 
-**Problem**: `Mission.priority` exists in the data model but is invisible in the UI.
+| Stage      | Missions                  | Count |
+| ---------- | ------------------------- | ----- |
+| plan       | MSN-003                   | 1     |
+| execute    | MSN-002                   | 1     |
+| review     | MSN-001, MSN-004, MSN-005 | 3     |
+| escalation | (none as primary stage)   | 0     |
+| completed  | (none)                    | **0** |
 
-**Fix**: Either add a `PriorityBadge` component and use it in `MissionCard`, `MissionBoardCard`, and `FocusPanel` -- and make it a filter option in MissionHome -- or remove the field from the `Mission` interface entirely.
+### 4.3 Verification States
 
-### R4. Route Notifications to Stage-Specific Pages (Low-Medium Impact)
+Defined at `missions.ts:4`:
 
-**Problem**: All notifications navigate to `/missions/:id` regardless of type.
+```typescript
+export type VerificationState = 'pending' | 'passing' | 'failing' | 'blocked';
+```
 
-**Fix**: Map notification types to target routes:
+Used to gate the approve button in `apps/web/src/components/review/ApprovalBar.tsx:17`:
 
-- `escalation` -> `/missions/:id/escalation`
-- `evidence` -> `/missions/:id/review`
-- `stage-change` -> `/missions/:id` (current stage)
-- `agent-failure` -> `/missions/:id/execute`
-- `approval` -> `/missions/:id/plan` or `/missions/:id/review`
+```typescript
+const canApprove = blockerCount === 0 && mission.verificationState === 'passing';
+```
 
-**File affected**: `apps/web/src/components/shell/NotificationCenter.tsx:59`.
+### 4.4 Agent Session States
 
-### R5. Highlight Current Stage in MissionDetail Navigation (Low Impact)
+Defined at `apps/web/src/data/agent-sessions.ts:20`:
 
-**Problem**: MissionDetail shows navigation links to all four stages with equal visual weight, regardless of which stage the mission is actually in.
+```typescript
+status: 'active' | 'paused' | 'completed' | 'failed';
+```
 
-**Fix**: Visually distinguish the current stage link (e.g., filled background, different border color) and optionally gray out stages the mission has not yet reached.
-
-**File affected**: `apps/web/src/pages/MissionDetail.tsx:252-266`.
-
-### R6. Enforce Dependency Constraints (Medium Impact)
-
-**Problem**: `blockedBy` / `blocks` relationships are displayed in the DependencyGraph but not enforced. MSN-002 is in `execute` while its blocker MSN-001 is in `review`.
-
-**Fix**: Either enforce that a blocked mission cannot advance past `plan` until its blockers are resolved, or clearly label the dependency as "soft" (informational) vs. "hard" (enforced).
-
-### R7. Introduce a User Entity (Medium Impact, Structural)
-
-**Problem**: Owners are free-text strings. No authentication, no permissions, no multi-user awareness.
-
-**Fix**: Define a `User` entity with `id`, `name`, `role`. Link `Mission.ownerId` and `Workflow.ownerId` to it. This enables role-based access control, reviewer assignment, and audit trails with identity rather than free text. This is a structural change and probably post-prototype.
-
-### R8. Add Verification State to Kanban Cards (Low Impact)
-
-**Problem**: The Kanban board (`WorkflowDetail.tsx`) shows `RiskBadge` but not `VerificationBadge` on each mission card. A mission in `review` with `failing` verification looks identical to one with `passing` verification on the board.
-
-**Fix**: Add `<VerificationBadge state={mission.verificationState} />` to `MissionBoardCard`.
-
-**File affected**: `apps/web/src/pages/WorkflowDetail.tsx:38-45`.
+> See `state-model.md` for detailed sub-state analysis and UI coverage audit.
 
 ---
 
-## 11. Evaluation: Does the Model Make Things Obvious?
+## 5. Rules
 
-### What exists in the system?
+### 5.1 Transition Rules
 
-**Mostly clear.** The LeftNav clearly presents the two primary objects (Workflows, Missions) and three utility views (Costs, History, Settings). The entity hierarchy (Workflow > Mission > AgentSession/Evidence/Escalation) is well-structured. But the Workspace ghost and the invisible Priority attribute introduce phantom concepts that either clutter or are missing from the user's mental model.
+| Transition               | Trigger                                      | Human Approval Required | Implemented                  |
+| ------------------------ | -------------------------------------------- | ----------------------- | ---------------------------- |
+| plan --> execute         | "Approve Plan & Begin Execution" button      | Yes                     | Partial (toast only)         |
+| plan --> plan (revision) | "Request Changes" button                     | Yes                     | Partial (toast only)         |
+| execute --> review       | (implied: all agent work complete)           | No (automatic)          | No (no transition logic)     |
+| review --> completed     | "Approve" button in ApprovalBar              | Yes                     | Partial (toast only)         |
+| review --> rejected      | "Reject" button in ApprovalBar               | Yes                     | Partial (toast only)         |
+| review --> plan          | "Re-plan" button in ApprovalBar              | Yes                     | Partial (toast only)         |
+| any --> escalation       | System-triggered when agent encounters issue | No (automatic)          | Partial (static overlay)     |
+| escalation --> resolved  | ConsequencePanel decision + confirm          | Yes                     | Partial (module-level store) |
 
-**Grade: B+**
+### 5.2 Approval Gates
 
-### What users can do?
+1. **Plan approval** (`MissionPlan.tsx:164`): Only shown when `mission.stage === 'plan'`.
+2. **Review approval** (`ApprovalBar.tsx:17`): Approve button disabled unless `blockerCount === 0 && mission.verificationState === 'passing'`. This means failing evidence blocks approval.
+3. **Escalation decision** (`ConsequencePanel.tsx:73-75`): Options become disabled after a decision is confirmed. Undo is available via toast callback.
 
-**Mostly clear.** Each mission stage page presents appropriate actions: approve/reject on Plan and Review, resolve on Escalation, supervise via Live View on Execute. The Command Palette provides quick navigation. However, some actions are display-only in the prototype (escalation option selection, policy toggles, agent configuration). The user cannot tell which buttons will actually work.
+### 5.3 Visibility Rules
 
-**Grade: B**
-
-### What state something is in?
-
-**Mixed.** Stage badges, verification badges, and risk badges provide strong visual signals on individual mission views. But the Kanban board omits verification state, the mission inbox uses an implicit sort order as a proxy for urgency rather than explicit state communication, and the relationship between stage and escalation is structurally confused. The dual-axis of stage + verification is powerful when both are shown but creates gaps when one is hidden.
-
-**Grade: B-**
-
-### What will happen next?
-
-**Weakest area.** The system does not clearly communicate what the next expected action is for a given mission state. A mission in `review` with `failing` evidence: does the user reject it? Wait for the agent to fix it? Re-enter Live View? The rollback preview in MissionReview hints at consequences of rejection, but there is no explicit "recommended next step" or "what happens if I do nothing." The notification system shows _what happened_ but not _what needs to happen_.
-
-**Grade: C+**
+1. **Artifacts** (`ActivityPreview.tsx:47`): Only shown when `mission.stage === 'completed' || mission.stage === 'review'`.
+2. **Activity preview** (`MissionDetail.tsx:189`): Shown for all stages except `plan`.
+3. **Live View link in ActivityPreview** (`ActivityPreview.tsx:162`): Only shown when `mission.stage === 'execute'` (isActive check at line 46).
+4. **Approval CTA** (`MissionPlan.tsx:164`): Only shown when `mission.stage === 'plan'`.
 
 ---
 
-## 12. Summary
+## 6. Key Gaps
 
-Mission Control has a strong conceptual foundation: the Workflow > Mission > Agent hierarchy is clean, the four-stage lifecycle provides structure, and the zoom-in/zoom-out pattern between management views and Live View supervision is well-articulated.
+### 6.1 GAP: "View agent work" is a primary action but requires a fullscreen mode switch
 
-The three highest-priority improvements to the conceptual model are:
+The most important action for a supervisor -- watching what agents are doing -- requires navigating to a fullscreen LiveView page that exists entirely outside the AppShell (`App.tsx:48-49`). This is a significant conceptual model problem:
 
-1. **Decouple escalation from the stage lifecycle.** It is a concurrent concern, not a sequential stage.
-2. **Complete the Workspace dissolution.** The ghost entity creates conceptual noise.
-3. **Make "what happens next" obvious.** Add recommended actions, enforce or soften dependency constraints, and route notifications to contextually appropriate pages.
+- **Entry points are buried**: The "ENTER LIVE VIEW" button appears on MissionDetail (`MissionDetail.tsx:284-295`) and MissionExecute (`MissionExecute.tsx:182-193`), but not in the LeftNav (`LeftNav.tsx:6-12` -- LiveView is absent from `navItems`).
+- **Context is destroyed**: Entering LiveView removes the LeftNav, TopBar breadcrumbs, StageTabBar, and all other navigation affordances. The user is in a completely different application context.
+- **Exit is non-obvious**: The only ways to exit are pressing Escape (`LiveView.tsx:106-113`) or clicking the small X button (`LiveView.tsx:178-184`). The "Back" link goes to the execute page only (`LiveView.tsx:34-36`).
 
-These changes would sharpen the conceptual model from a prototype-grade sketch into a production-ready mental model that users can internalize quickly and operate within confidently.
+**Recommendation**: Add an inline preview mode (split pane or picture-in-picture) that lets the supervisor glance at agent work without losing their navigation context.
+
+### 6.2 GAP: No intermediate "inline monitoring" between no-view and fullscreen
+
+The system offers a binary choice: either the supervisor has no view of agent work (the default on most pages) or they enter a fullscreen LiveView. There is no middle ground:
+
+- No split-pane view on MissionDetail or MissionExecute.
+- No picture-in-picture window for agent activity.
+- No mini-view or thumbnail of agent work in the mission card or focus panel.
+
+The Execute page's "AGENT LOG" (`MissionExecute.tsx:232-270`) provides a partial inline view of agent steps, but this is a text log, not a live workspace view. The Execute Preview (`MissionExecute.tsx:219-294`) shows code but not the agent's active work in real time.
+
+### 6.3 GAP: Plan document should be an artifact type but renders as plain text
+
+The MissionPlan page renders `mission.goal`, `mission.scopeBoundary`, `mission.acceptanceCriteria`, and `mission.risks` as plain text in styled divs (`MissionPlan.tsx:101-161`). It does not use MarkdownViewer.
+
+This creates a conceptual inconsistency:
+
+- The plan is a structured document that could contain formatting, links, and code examples.
+- Artifacts support a `markdown` type with full rendering via `MarkdownViewer.tsx`.
+- But the plan is not an Artifact -- it is a collection of plain-text Mission fields.
+
+**Recommendation**: Either make "plan" an artifact type (so plans use the same rendering pipeline as other documents) or add MarkdownViewer support to MissionPlan for the plan content fields.
+
+### 6.4 GAP: No "completed" state exercised in mock data
+
+The mock data has 0 missions in the `completed` stage (`missions.ts:37-192`). The stage exists in the type definition (`missions.ts:2`) and in filter UI (`MissionHome.tsx:93`), but:
+
+- No mission card ever shows a "completed" badge.
+- The ArtifactPanel gating at `ActivityPreview.tsx:47` includes `completed` but is never exercised for it.
+- The CommandPalette handles `completed` specially (`CommandPalette.tsx:70-71`: navigates to base URL instead of stage URL) but this path is untestable.
+- The stageOrder in `MissionHome.tsx:23` places `completed` at position 4 (lowest priority) but this ordering is never visible in the list.
+
+### 6.5 GAP: Artifacts gated to review/completed stages only
+
+The `isCompleted` check at `ActivityPreview.tsx:47`:
+
+```typescript
+const isCompleted = mission.stage === 'completed' || mission.stage === 'review';
+```
+
+This means:
+
+- During the `execute` stage, when agents are actively producing artifacts, the supervisor cannot view them.
+- Artifacts produced during execution are invisible until the mission transitions to review.
+- This contradicts the expected user mental model where artifacts are accessible as soon as they are produced.
+
+### 6.6 GAP: Escalation dual-model creates conceptual confusion
+
+The codebase is in mid-transition between two escalation models:
+
+1. **Escalation-as-stage**: `Stage` type includes `'escalation'` (`missions.ts:2`), LeftNav counts escalation-stage missions as "needs review" (`LeftNav.tsx:19-21`), MissionHome offers escalation as a filter stage (`MissionHome.tsx:93`).
+2. **Escalation-as-overlay**: `escalationActive?: boolean` field (`missions.ts:33`), MSN-004 uses this pattern (`missions.ts:159`), deprecation comment on Stage type.
+
+Both models coexist, and the UI does not consistently distinguish between them. A mission can be in `stage: 'review'` with `escalationActive: true` (MSN-004), which means the escalation tab is meaningful AND the review tab is meaningful simultaneously.
+
+---
+
+## 7. Cross-References
+
+- **State model details**: See `state-model.md` for sub-state analysis, UI coverage audit, and detailed Mermaid state diagrams.
+- **Terminology**: See `glossary.md` for canonical term definitions and drift analysis (especially around "Live View" vs "workspace" vs "supervision mode").
+- **Navigation structure**: See `information-architecture.md` for sitemap, depth analysis, and the LiveView orphan page problem.
+
+---
+
+## 8. Appendix: Object Field Reference
+
+### Mission Interface (`apps/web/src/data/missions.ts:8-35`)
+
+```typescript
+export interface Mission {
+  id: string;
+  title: string;
+  goal: string;
+  scopeBoundary: string;
+  risks: string[];
+  acceptanceCriteria: string[];
+  owner: string;
+  stage: Stage;
+  riskTier: RiskTier;
+  verificationState: VerificationState;
+  agentSessionIds: string[];
+  browserSessionIds: string[];
+  terminalSessionIds: string[];
+  evidenceIds: string[];
+  escalationIds: string[];
+  createdAt: string;
+  updatedAt: string;
+  blockedBy?: string[];
+  blocks?: string[];
+  priority?: Priority;
+  tags?: string[];
+  workflowId?: string;
+  branch?: string;
+  escalationActive?: boolean;
+  artifactIds?: string[];
+}
+```
+
+### Workflow Interface (`apps/web/src/data/workflows.ts:1-9`)
+
+```typescript
+export interface Workflow {
+  id: string;
+  title: string;
+  description: string;
+  missionIds: string[];
+  owner: string;
+  status: 'active' | 'completed' | 'paused';
+  createdAt: string;
+}
+```
+
+### Agent Session Interface (`apps/web/src/data/agent-sessions.ts:15-29`)
+
+```typescript
+export interface AgentSession {
+  id: string;
+  missionId: string;
+  role: string;
+  model: string;
+  status: 'active' | 'paused' | 'completed' | 'failed';
+  steps: AgentStep[];
+  semanticSummary: string;
+  startedAt: string;
+  updatedAt: string;
+  tokensUsed?: TokenUsage;
+  estimatedCost?: number;
+  toolsUsed?: string[];
+  branch?: string;
+}
+```
+
+### Artifact Interface (`apps/web/src/data/artifacts.ts:3-13`)
+
+```typescript
+export interface Artifact {
+  id: string;
+  missionId: string;
+  type: ArtifactType; // 'image' | 'video' | 'markdown' | 'html'
+  title: string;
+  content: string;
+  thumbnail?: string;
+  createdAt: string;
+}
+```

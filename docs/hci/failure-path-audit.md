@@ -1,468 +1,731 @@
 # Failure Path Audit -- Mission Control Prototype
 
-**Auditor**: HCI Expert (Automated)
-**Date**: 2026-03-23
-**Scope**: All pages, components, and interaction paths in `apps/web/src`
-**Methodology**: Systematic enumeration of every non-happy-path state implied by the prototype's design surface
+> Document 7 of 10 | Date: 2026-03-24
+> Cross-references: [state-model.md](./state-model.md), [information-architecture.md](./information-architecture.md)
 
 ---
 
-## 1) Empty States
+## Overview
 
-| Screen / Component                                      | What is empty                                             | Current empty state treatment                                                                             | Has guidance?                                                       | Has call to action?                                                                             | Rating                                           |
-| ------------------------------------------------------- | --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------ | --- | ------- |
-| MissionHome (filtered list)                             | No missions match stage+risk filter combination           | Inline text: "No missions match filters"                                                                  | No -- does not say which filters are active or how to clear them    | No -- no "Clear filters" button                                                                 | PARTIAL                                          |
-| MissionHome (zero missions total)                       | No missions exist at all                                  | Falls through to same "No missions match filters" text                                                    | No -- misleading; says "no match" when problem is "none exist"      | No -- the "+ NEW MISSION" button exists above but is visually disconnected from the empty state | PARTIAL                                          |
-| FocusPanel (no selection)                               | No mission selected                                       | Inline text: "Select a mission to preview"                                                                | Yes -- tells user what to do                                        | No CTA needed -- guidance is sufficient                                                         | OK                                               |
-| MissionExecute (overview, no agent sessions)            | No agent sessions for mission                             | Text: "No agent activity yet" in the agent log pane                                                       | Partial -- explains absence but not why or how to start             | No -- no "Launch Agent" CTA in this context; user must find the gear icon                       | PARTIAL                                          |
-| MissionExecute (overview, no code files)                | No file tree for mission                                  | Text: "No code files"                                                                                     | No -- does not explain when files will appear                       | No                                                                                              | PARTIAL                                          |
-| MissionExecute (overview, no browser/terminal sessions) | No sessions                                               | Entire SESSIONS section silently hidden (`mBrowserSessions.length > 0                                     |                                                                     | mTerminalSessions.length > 0`)                                                                  | No -- user has no idea sessions are a capability | No  | MISSING |
-| MissionExecute (chat mode, zero messages)               | Empty message list when agent session has no chat history | Renders empty `<div>` -- blank white space                                                                | No                                                                  | No                                                                                              | MISSING                                          |
-| MissionPlan (evidence rail)                             | No evidence gathered yet                                  | "No evidence gathered yet. Evidence will appear once execution begins."                                   | Yes -- explains why and when                                        | No CTA needed at this stage                                                                     | OK                                               |
-| MissionEscalation (no escalations)                      | Mission exists but has no escalations                     | Text: "No escalations for this mission."                                                                  | Minimal -- does not explain what escalations are or when they occur | No                                                                                              | PARTIAL                                          |
-| MissionDetail (zero acceptance criteria)                | Mission with empty `acceptanceCriteria` array             | Renders empty `<ul>` -- blank space under heading                                                         | No                                                                  | No                                                                                              | MISSING                                          |
-| MissionDetail (zero risks)                              | Mission with empty `risks` array                          | Renders empty `<div>` under RISK ASSESSMENT heading                                                       | No                                                                  | No                                                                                              | MISSING                                          |
-| MissionDetail (zero evidence)                           | All evidence counts show "0 PASS / 0 FAIL / 0 WARN"       | Shows the zeros, which is informative but not explanatory                                                 | No guidance on when evidence appears                                | No                                                                                              | PARTIAL                                          |
-| MissionDetail (zero escalations)                        | No escalation alerts                                      | Section conditionally hidden (`missionEscalations.length > 0`)                                            | N/A -- user does not see it                                         | N/A                                                                                             | OK                                               |
-| MissionDetail (zero agent sessions)                     | "0 sessions"                                              | Shows "0 sessions" text                                                                                   | No                                                                  | No                                                                                              | PARTIAL                                          |
-| WorkflowDetail Kanban (empty column)                    | A stage column has zero missions                          | Dashed border: "No missions"                                                                              | No guidance                                                         | No                                                                                              | PARTIAL                                          |
-| WorkflowDetail Kanban (all columns empty)               | Workflow with zero missions                               | All four columns show "No missions" simultaneously                                                        | No -- does not say "Add missions to this workflow"                  | No                                                                                              | PARTIAL                                          |
-| Workflows page (zero workflows)                         | No workflows exist                                        | Would render heading "ACTIVE WORKFLOWS (0)" with empty space below                                        | No guidance text                                                    | The "+ CREATE WORKFLOW" button exists but no empty-state messaging                              | MISSING                                          |
-| EvidenceRail (zero items)                               | No evidence items passed to rail                          | Shows "0 pass" summary line and empty filter bar, then renders nothing                                    | No -- looks broken                                                  | No                                                                                              | MISSING                                          |
-| EvidenceRail (all filtered out)                         | Active filter matches no items                            | Filter buttons visible but content area is empty -- no "No results" message                               | No                                                                  | No                                                                                              | MISSING                                          |
-| NotificationCenter (zero notifications)                 | No notifications in data                                  | Renders empty scrollable `<div>` -- blank dropdown                                                        | No -- should say "No notifications" or "All caught up"              | No                                                                                              | MISSING                                          |
-| CommandPalette (no search results)                      | Query matches nothing                                     | "No results found"                                                                                        | Yes -- concise and clear                                            | No -- could suggest broadening query                                                            | OK                                               |
-| AgentChatPanel (zero sessions)                          | No agent sessions passed                                  | `sessions[0]?.id` returns undefined; SessionTabs renders empty div                                        | No -- blank tab bar                                                 | No                                                                                              | MISSING                                          |
-| CodeViewer (no open files)                              | `openFiles` is empty                                      | Empty tab bar, dark background, no content                                                                | No                                                                  | No                                                                                              | MISSING                                          |
-| CodeViewer (active file not found)                      | `activeFile` path doesn't match any `CodeFile`            | `file` is undefined, `lines` is `[]` -- renders empty dark pane                                           | No -- silent failure                                                | No                                                                                              | MISSING                                          |
-| History page (zero missions)                            | No missions exist                                         | Empty timeline with just the vertical line -- looks broken                                                | No                                                                  | No                                                                                              | MISSING                                          |
-| CostDashboard (zero agent sessions)                     | No sessions to compute costs from                         | Empty arrays, `Math.max(...[])` returns `-Infinity` -- **potential runtime bug** in bar width calculation | No                                                                  | No                                                                                              | MISSING                                          |
-| WorkspaceLayout (no browser session)                    | `browserSession` is undefined                             | Renders `null` in the browser quadrant -- empty white rectangle                                           | No                                                                  | No                                                                                              | MISSING                                          |
-| WorkspaceLayout (no terminal session)                   | `terminalSession` is undefined                            | Renders `null` in the terminal quadrant -- empty white rectangle                                          | No                                                                  | No                                                                                              | MISSING                                          |
+This document audits every non-happy-path state in the Mission Control prototype: empty states, loading states, error states, permission states, offline handling, and edge cases. Each finding includes file:line references and a severity assessment.
 
-### Summary: 27 empty states identified. 3 rated OK, 10 PARTIAL, 14 MISSING.
+**Rating key**:
+
+- Y = properly handled
+- ~ = partially handled (exists but incomplete)
+- N = not handled (missing or broken)
 
 ---
 
-## 2) Loading States
+## 1. Empty States
 
-| Operation                   | Current loading indicator                      | Location                    | Blocks interaction?                             | Has timeout handling?               |
-| --------------------------- | ---------------------------------------------- | --------------------------- | ----------------------------------------------- | ----------------------------------- |
-| Page navigation             | `PageTransition` (framer-motion fade-in)       | Wraps page content          | No -- instant because data is mock              | No                                  |
-| Mission list render         | None                                           | MissionHome                 | No                                              | No                                  |
-| Agent chat "typing"         | `TypingIndicator` (3 bouncing dots)            | AgentChatPanel message area | Yes -- input disabled during typing + streaming | No timeout; hardcoded 1500ms delay  |
-| Agent chat streaming        | `StreamingMessage` with cursor blink           | AgentChatPanel message area | Yes -- input disabled                           | No timeout; streams until complete  |
-| BrowserPreview default page | "Loading..." text with `aw-skeleton` class     | BrowserPreview viewport     | No                                              | No                                  |
-| Terminal streaming          | Pulsing `_` cursor                             | TerminalEmulator            | No                                              | No -- streams until all lines shown |
-| Create Mission submit       | None -- instant toast                          | MissionCreate               | No -- button stays clickable                    | No                                  |
-| Create Workflow submit      | None -- instant toast                          | WorkflowCreate              | No -- button stays clickable                    | No                                  |
-| Settings save               | None                                           | Settings                    | No feedback at all                              | No                                  |
-| Command Palette open        | None                                           | CommandPalette              | No -- instant filter from in-memory data        | No                                  |
-| Live View load              | None                                           | LiveView                    | No -- renders synchronously from mock data      | No                                  |
-| Agent launch                | Button changes to "AGENT LAUNCHED" immediately | AgentConfigPanel            | Button becomes disabled                         | No                                  |
+### 1.1 MissionHome: Empty Filter Results
 
-### Analysis
+**File**: `MissionHome.tsx:192-198`
+**Rating**: Y (with caveat)
 
-There are **zero real loading states** in the prototype. This is expected for a static prototype, but the design does not include any patterns, skeletons, or placeholder states that show how the production system will handle:
+```tsx
+{
+  sorted.length === 0 && (
+    <EmptyState
+      icon={SearchX}
+      title="No missions match filters"
+      description="Try adjusting your stage or risk filters to see more results."
+    />
+  );
+}
+```
 
-- **API latency** (fetching missions, evidence, agent sessions)
-- **WebSocket connection** (agent chat, terminal, browser preview)
-- **Long-running operations** (agent launch, mission creation, plan approval)
-- **Progressive loading** (large evidence rails, long chat histories)
+The `EmptyState` component from `components/primitives/EmptyState.tsx` is used here with the `SearchX` icon, providing both a title and actionable description. This is the ONLY place in the entire application that uses the `EmptyState` component.
 
-**No skeleton screens exist.** The `aw-skeleton` class is used exactly once (BrowserPreview default page) and is not a general-purpose loading pattern.
+**Caveat**: This same message appears when zero missions exist in the system (not just when filters exclude all missions). The message "No missions match filters" is misleading in a zero-mission scenario. The `+ NEW MISSION` button exists above (`MissionHome.tsx:105-112`) but is visually disconnected from the empty state.
 
-**No timeout handling exists anywhere.** If a real API call takes >5 seconds, the user sees nothing. If it takes >30 seconds, there is no way to cancel, retry, or even know something is wrong.
+### 1.2 MissionPlan: No Evidence
 
-**Critical gap**: The design gives no indication of what the loading experience will feel like in production.
+**File**: `MissionPlan.tsx:200-207`
+**Rating**: Y
 
----
+```tsx
+{
+  missionEvidence.length > 0 ? (
+    <EvidenceRail items={missionEvidence} />
+  ) : (
+    <div className="aw-body py-4 text-center" style={{ color: aw.textSoft }}>
+      No evidence gathered yet.
+      <br />
+      Evidence will appear once execution begins.
+    </div>
+  );
+}
+```
 
-## 3) Validation Errors
+Properly handled. Explains both the current state ("no evidence gathered yet") and when it will change ("once execution begins"). Applied to MSN-003 which is in plan stage with `evidenceIds: []`.
 
-| Form / Input                             | Validation rules                                            | When validation runs | Error message                        | Error placement | Recovery path |
-| ---------------------------------------- | ----------------------------------------------------------- | -------------------- | ------------------------------------ | --------------- | ------------- |
-| MissionCreate: Title                     | None                                                        | Never                | None                                 | N/A             | N/A           |
-| MissionCreate: Goal                      | None                                                        | Never                | None                                 | N/A             | N/A           |
-| MissionCreate: Scope Boundary            | None                                                        | Never                | None                                 | N/A             | N/A           |
-| MissionCreate: Owner                     | None                                                        | Never                | None                                 | N/A             | N/A           |
-| MissionCreate: Risk Tier                 | Default selected (always valid)                             | N/A                  | N/A                                  | N/A             | N/A           |
-| MissionCreate: Acceptance Criteria input | Trims whitespace; skips empty                               | On add (Enter/click) | None -- silently ignores empty input | N/A             | N/A           |
-| MissionCreate: Risk input                | Trims whitespace; skips empty                               | On add (Enter/click) | None -- silently ignores empty input | N/A             | N/A           |
-| MissionCreate: Submit                    | **None** -- fires `handleCreate()` regardless of form state | On click             | None -- always shows success toast   | N/A             | N/A           |
-| WorkflowCreate: Title                    | None                                                        | Never                | None                                 | N/A             | N/A           |
-| WorkflowCreate: Description              | None                                                        | Never                | None                                 | N/A             | N/A           |
-| WorkflowCreate: Owner                    | None                                                        | Never                | None                                 | N/A             | N/A           |
-| WorkflowCreate: Mission selection        | None -- zero missions is accepted                           | Never                | None                                 | N/A             | N/A           |
-| WorkflowCreate: Submit                   | **None** -- fires regardless                                | On click             | None -- always shows success toast   | N/A             | N/A           |
-| AgentConfigPanel: Max Tokens             | Range slider (1000-200000)                                  | Continuous           | N/A -- constrained by slider         | N/A             | N/A           |
-| AgentConfigPanel: Timeout                | Range slider (30-600)                                       | Continuous           | N/A -- constrained by slider         | N/A             | N/A           |
-| AgentChatPanel: Message input            | Trims and checks non-empty                                  | On Enter/Send click  | None -- silently ignores empty       | N/A             | N/A           |
-| Settings: Policies                       | Toggle only                                                 | N/A                  | N/A                                  | N/A             | N/A           |
-| Settings: Save                           | **None** -- button does nothing                             | On click             | None -- no feedback                  | N/A             | N/A           |
+### 1.3 MissionExecute: No Agent Sessions
 
-### Analysis
+**File**: `MissionExecute.tsx:265-268`
+**Rating**: Y (minimal)
 
-**There is zero validation in any form.** Not one field has:
+```tsx
+{
+  mAgentSessions.length > 0 ? (
+    <div className="space-y-1.5">{/* ...agent log entries... */}</div>
+  ) : (
+    <div className="aw-body-sm" style={{ color: aw.textSoft }}>
+      No agent activity yet
+    </div>
+  );
+}
+```
 
-- Required field indicators (no asterisks, no "required" labels)
-- Character limits or length validation
-- Format validation (e.g., owner could be an email)
-- Duplicate detection (what if mission title already exists?)
-- Cross-field validation (e.g., high-risk mission should have acceptance criteria)
+Shows "No agent activity yet" text in the agent log pane. However:
 
-**Both create forms will "succeed" with completely empty fields.** The MissionCreate form produces a preview showing "Untitled Mission" / "No goal specified" / "No scope defined" / "Unassigned" -- but the Create button fires a success toast anyway. There is no indication to the user that they have created an incomplete mission.
+- No guidance on how to start an agent (the gear icon for AgentConfigPanel is nearby but not referenced)
+- The AgentSwimlane section above (`MissionExecute.tsx:208-217`) renders "AGENT SESSIONS (0)" heading with an empty `<div className="mt-3 space-y-4">` -- no empty state message in the swimlane area itself
+- The code viewer section (`MissionExecute.tsx:274-293`) shows "No code files" if no file tree exists, which is a separate empty state
 
-**The Settings page Save button does nothing.** No click handler, no feedback, no state change. The user clicks it and nothing happens.
+### 1.4 MissionEscalation: No Escalations
 
-**Critical gap**: The prototype teaches users that forms have no constraints. When validation is added in production, the UX will feel like a regression.
+**File**: `MissionEscalation.tsx:57-86`
+**Rating**: Y
 
----
+```tsx
+if (!selectedEscalation) {
+  return (
+    <PageTransition>
+      <TopBar missionId={mission.id} currentStage="escalation" breadcrumbs={...} />
+      <StageTabBar missionId={mission.id} workflowId={workflowId} currentStage="escalation" />
+      <div className="flex h-full items-center justify-center">
+        <span className="aw-body" style={{ color: aw.textSoft }}>
+          No escalations for this mission.
+        </span>
+      </div>
+    </PageTransition>
+  );
+}
+```
 
-## 4) Permission and Authorization Failures
+Properly handled -- renders within `PageTransition` with `TopBar` and `StageTabBar` so navigation is preserved. Centered message text is clear. Note that this renders TopBar and StageTabBar correctly (lines 60-78), unlike the not-found states on Plan/Execute/Review which omit the TopBar.
 
-| Action / Screen          | Required permission | What happens without permission                                    | User feedback                                                |
-| ------------------------ | ------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------ |
-| Create Mission           | Not defined         | N/A -- no auth system                                              | None                                                         |
-| Approve Plan             | Not defined         | Button is always visible and clickable                             | None                                                         |
-| Reject Mission (Review)  | Not defined         | Button is always visible and clickable                             | None                                                         |
-| Approve Mission (Review) | Not defined         | Button is visually disabled when blockers exist but still rendered | Disabled state via `cursor: not-allowed` and reduced opacity |
-| Escalation Decision      | Not defined         | All users see all options                                          | None                                                         |
-| Agent Launch             | Not defined         | Button is always visible                                           | None                                                         |
-| Settings Save            | Not defined         | Button is always visible                                           | None                                                         |
-| Agent Stop/Pause/Restart | Not defined         | Controls always visible                                            | None                                                         |
+### 1.5 Completed Stage: NEVER EXERCISED
 
-### Analysis
+**File**: `missions.ts:37-192` (all mission definitions)
+**Rating**: N (critical gap)
 
-**There is no permission model anywhere in the prototype.** No concept of:
+All 5 missions in mock data:
 
-- Roles (reviewer, operator, admin)
-- Ownership-based access (only mission owner can approve)
-- Risk-tier-based permissions (high-risk missions need senior approval)
+| Mission | Stage     | artifactIds              |
+| ------- | --------- | ------------------------ |
+| MSN-001 | `review`  | `['ART-001', 'ART-002']` |
+| MSN-002 | `execute` | none                     |
+| MSN-003 | `plan`    | none                     |
+| MSN-004 | `review`  | `['ART-003', 'ART-004']` |
+| MSN-005 | `review`  | `['ART-005', 'ART-006']` |
 
-The Settings page mentions "High-risk missions require 2 approvals" as a policy, but the Review page has a single Approve button with no concept of multi-approval.
+**Zero completed missions.** The completed stage rendering path is never exercised. This means the following are untested:
 
-**Critical gap**: For a mission-control system managing autonomous agents, the absence of authorization design is a significant risk. The prototype does not even hint at who can approve what.
+1. `ActivityPreview.tsx:47` -- `isCompleted` evaluates to true for `completed` or `review` stages. The `review`-stage rendering IS tested by MSN-001/004/005, but `completed` specifically is not.
+2. `FocusPanel.tsx:15-16` -- completed missions route to overview (no stage suffix). This path exists in code but is never hit by mock data.
+3. `MissionHome.tsx:93` -- the filter chip for "completed" renders but produces 0 results.
+4. Any completed-specific empty states, summary views, or post-completion affordances are unknown.
 
----
+### 1.6 LiveView with No Workspace
 
-## 5) Network and Connectivity Failures
+**File**: `LiveView.tsx:136-145`
+**Rating**: ~ (partial)
 
-| Operation                            | Behavior on network failure       | Retry available? | Data preserved? | Offline fallback? |
-| ------------------------------------ | --------------------------------- | ---------------- | --------------- | ----------------- |
-| Any page load                        | N/A -- all data is in-memory mock | N/A              | N/A             | N/A               |
-| Mission create                       | N/A -- mock                       | N/A              | N/A             | N/A               |
-| Agent chat send                      | N/A -- mock with canned responses | N/A              | N/A             | N/A               |
-| Agent lifecycle (pause/stop/restart) | N/A -- mock                       | N/A              | N/A             | N/A               |
-| Notification load                    | N/A -- mock                       | N/A              | N/A             | N/A               |
+```tsx
+const effectiveWorkspace = workspace ?? {
+  id: `LV-${missionId}`,
+  missionId: missionId ?? '',
+  branch: mission?.branch ?? 'main',
+  baseBranch: 'main',
+  activeFile: '',
+  openFiles: [] as string[],
+  terminalSessionId: '',
+  agentSessionId: '',
+};
+```
 
-### Analysis
+When no workspace data exists for a mission, LiveView constructs a fallback `effectiveWorkspace` with empty defaults. This is passed to `WorkspaceLayout` (`LiveView.tsx:194-201`), which renders:
 
-**There is no network layer, so there are no network failure designs.** This is the most dangerous gap in the prototype because:
+- `FileTree` with empty `fileTree` array (`LiveView.tsx:196`: `fileTree ? [fileTree] : []`) -- shows nothing
+- `CodeViewer` with empty files -- shows empty dark pane
+- `BrowserPreview` with `undefined` session (`LiveView.tsx:198`): `WorkspaceLayout.tsx:68` renders `null` -- white rectangle
+- `TerminalEmulator` with `undefined` session (`LiveView.tsx:199`): `WorkspaceLayout.tsx:71` renders `null` -- white rectangle
+- `AgentChatPanel` with empty sessions -- renders empty chat interface
 
-1. **No error boundary exists.** The entire React app has zero `ErrorBoundary` components. A runtime error in any component will crash the whole page with the default React error screen.
+The result is a functional but mostly empty grid layout. No "No data available" messages in any quadrant. No "retry" or "reconnect" affordance. The user sees the WorkspaceLayout grid structure with blank quadrants.
 
-2. **No global error handling pattern.** There is no toast system for API errors, no error banner, no retry mechanism designed.
+### 1.7 ArtifactPanel with Empty Artifacts
 
-3. **No API error shape defined.** The prototype does not model what error responses look like, so there is no design for how to display "403 Forbidden" vs "500 Internal Server Error" vs "429 Rate Limited" vs "Network timeout."
+**File**: `ArtifactPanel.tsx:23`
+**Rating**: Y (but silent)
 
-4. **The agent chat is a WebSocket use case.** The design shows a real-time streaming chat with agents. There is no design for:
-   - WebSocket connection lost
-   - WebSocket reconnection
-   - Message delivery failure
-   - Message ordering issues
-   - Stale session state
+```tsx
+if (artifacts.length === 0) return null;
+```
 
-5. **The Live View is a real-time dashboard.** There is no design for what happens when the live data feed drops.
+When called with an empty array, ArtifactPanel returns `null`, rendering nothing. This is clean -- no broken UI, no empty container. However, for a completed mission where artifacts are expected, the silent disappearance gives no indication that deliverables are expected but missing. No "No artifacts produced" message is shown.
 
-**Critical gap**: This is the single largest category of missing failure handling. Every future API integration will need error handling designed from scratch because the prototype provides zero patterns to follow.
+### 1.8 Additional Empty States Identified
 
----
+| Component                                    | Condition                            | Current Behavior                            | File:Line                    | Rating |
+| -------------------------------------------- | ------------------------------------ | ------------------------------------------- | ---------------------------- | ------ |
+| MissionDetail: zero acceptance criteria      | `mission.acceptanceCriteria` is `[]` | Renders empty `<ul>` under heading          | `MissionDetail.tsx:154-167`  | N      |
+| MissionDetail: zero risks                    | `mission.risks` is `[]`              | Renders empty `<div>` under RISK ASSESSMENT | `MissionDetail.tsx:176-185`  | N      |
+| MissionDetail: zero evidence                 | All counts are 0                     | Shows "0 PASS / 0 FAIL / 0 WARN"            | `MissionDetail.tsx:210-218`  | ~      |
+| MissionDetail: zero escalations              | `missionEscalations.length === 0`    | Section conditionally hidden                | `MissionDetail.tsx:223`      | Y      |
+| MissionDetail: zero agent sessions           | Empty sessions array                 | Shows "0 sessions"                          | `MissionDetail.tsx:198`      | ~      |
+| MissionExecute: no code files                | No file tree for mission             | "No code files" text                        | `MissionExecute.tsx:287-291` | ~      |
+| MissionExecute: no browser/terminal sessions | Length is 0                          | SESSIONS section hidden entirely            | `MissionExecute.tsx:315`     | N      |
+| FocusPanel: no mission selected              | `mission` is null                    | "Select a mission to preview" text          | `FocusPanel.tsx:21-27`       | Y      |
+| CommandPalette: no search results            | Query matches nothing                | "No results found" text                     | `CommandPalette.tsx:243-247` | Y      |
+| WorkspaceLayout: no browser session          | `browserSession` is undefined        | Renders `null` in grid cell                 | `WorkspaceLayout.tsx:68`     | N      |
+| WorkspaceLayout: no terminal session         | `terminalSession` is undefined       | Renders `null` in grid cell                 | `WorkspaceLayout.tsx:71`     | N      |
 
-## 6) Partial Completion
+### Empty States Summary
 
-| Flow                         | Can be partially completed?                      | What happens if abandoned?                      | Can be resumed? | Is progress saved?                  |
-| ---------------------------- | ------------------------------------------------ | ----------------------------------------------- | --------------- | ----------------------------------- |
-| MissionCreate form           | Yes -- user can fill some fields                 | All data lost on navigation                     | No              | No                                  |
-| WorkflowCreate form          | Yes -- user can fill some fields                 | All data lost on navigation                     | No              | No                                  |
-| Escalation decision          | Yes -- user can select but not confirm           | Selection state reset on remount                | No              | No                                  |
-| Agent chat conversation      | Yes -- user can type but not send                | Draft text lost on session switch or navigation | No              | No                                  |
-| Mission approval flow (Plan) | Yes -- user can view but not approve             | No data to lose                                 | N/A             | N/A                                 |
-| Mission review flow          | Yes -- user can view diff but not approve/reject | No data to lose                                 | N/A             | N/A                                 |
-| Agent config + launch        | Yes -- user can configure but not launch         | Config state lost on close                      | No              | No                                  |
-| Notification mark-as-read    | Yes -- partial reads tracked in component state  | State lost on remount (back to initial data)    | No              | No -- `readIds` is local `useState` |
-
-### Analysis
-
-**No form has auto-save, drafts, or navigation guards.** If a user fills out the MissionCreate form with a detailed goal, scope boundary, 5 acceptance criteria, and 3 risks -- then accidentally clicks a sidebar link -- everything is gone. No "unsaved changes" warning. No confirmation dialog. No draft.
-
-**Notification read state is ephemeral.** The `readIds` state in NotificationCenter uses `useState`, which resets when the component unmounts and remounts. This means marking notifications as read has no persistence -- refreshing the page un-reads everything.
-
-**The agent config panel state is ephemeral.** Closing and reopening the agent config panel resets all settings to defaults.
-
-**Critical gap**: For a tool that manages multi-step mission lifecycles, the lack of any state persistence or navigation protection is a significant usability risk.
-
----
-
-## 7) Undo, Cancel, and Recovery
-
-| Action                                      | Reversible?              | Undo mechanism                                                    | Confirmation required?                 | Time limit on undo?                                                   |
-| ------------------------------------------- | ------------------------ | ----------------------------------------------------------------- | -------------------------------------- | --------------------------------------------------------------------- |
-| Create Mission                              | No                       | None -- mission "created" is a mock toast                         | No confirmation                        | N/A                                                                   |
-| Create Workflow                             | No                       | None -- same mock toast                                           | No confirmation                        | N/A                                                                   |
-| Approve Plan                                | No                       | None -- button click has no handler                               | N/A                                    | N/A                                                                   |
-| Reject Plan (request changes)               | No                       | None -- button click has no handler                               | N/A                                    | N/A                                                                   |
-| Approve Mission (Review)                    | No                       | None -- button disabled when blockers exist, no handler otherwise | No                                     | N/A                                                                   |
-| Reject Mission (Review)                     | No                       | None -- no handler                                                | No                                     | N/A                                                                   |
-| Re-plan Mission (Review)                    | No                       | None -- no handler                                                | No                                     | N/A                                                                   |
-| Escalation Decision (Confirm)               | No                       | None -- decision is final once confirmed                          | **Yes** -- 2-step: select then confirm | N/A                                                                   |
-| Agent Stop                                  | Partial                  | 2-step: click Stop, then "Confirm?"                               | **Yes** -- 2-step confirmation         | No explicit timeout, but Confirm text resets if user clicks elsewhere |
-| Agent Pause                                 | No                       | Toggle to Resume                                                  | No -- immediate toggle                 | N/A                                                                   |
-| Agent Launch                                | No                       | Cannot un-launch -- button permanently disabled                   | No confirmation                        | N/A                                                                   |
-| Remove acceptance criterion (MissionCreate) | No                       | None -- immediately removed from list                             | No                                     | N/A                                                                   |
-| Remove risk (MissionCreate)                 | No                       | None -- immediately removed from list                             | No                                     | N/A                                                                   |
-| Remove mission from workflow order          | No                       | None -- immediately removed                                       | No                                     | N/A                                                                   |
-| Close file tab (CodeViewer)                 | No                       | None -- tab immediately closed                                    | No                                     | N/A                                                                   |
-| Mark notification as read                   | No                       | None -- no mark-as-unread                                         | No                                     | N/A                                                                   |
-| Settings policy toggle                      | No undo, but toggle back | Toggle back to previous state                                     | No                                     | N/A                                                                   |
-| Settings Save                               | N/A                      | Button has no handler                                             | N/A                                    | N/A                                                                   |
-
-### Analysis
-
-**Two actions have confirmation dialogs:**
-
-1. **Escalation Decision**: Select -> Confirm/Cancel. This is well-designed. The confirmation shows what will happen ("Are you sure? This will: [description]").
-2. **Agent Stop**: Click -> "Confirm?" text replaces icon. This is adequate but minimal.
-
-**Every other destructive action has no confirmation.** Removing acceptance criteria and risks from the create forms is immediate and irreversible. There is no undo stack. No "deleted -- undo?" toast pattern.
-
-**Agent Launch is irreversible by design.** Once launched, the button permanently shows "AGENT LAUNCHED" (disabled). There is no way to cancel a launch, reconfigure, or un-launch. This is a significant concern for a safety-critical agent management tool.
-
-**The MissionReview page mentions "ROLLBACK PREVIEW"** with a hardcoded commit hash, which is the only place in the UI that acknowledges the concept of reverting changes. But it has no associated action button.
-
-**Critical gap**: In a mission-control system where agents make real code changes, the lack of undo/rollback mechanisms is a serious design gap.
+| Rating                | Count | Percentage |
+| --------------------- | ----- | ---------- |
+| Y (properly handled)  | 7     | 39%        |
+| ~ (partially handled) | 5     | 28%        |
+| N (not handled)       | 6     | 33%        |
 
 ---
 
-## 8) Concurrent and Conflict States
+## 2. Loading States
 
-| Scenario                                            | Current handling | User feedback                                  |
-| --------------------------------------------------- | ---------------- | ---------------------------------------------- |
-| Two users viewing same mission                      | Not addressed    | None -- no presence indicators                 |
-| Two users editing same escalation decision          | Not addressed    | None -- no locking, no optimistic concurrency  |
-| Mission stage changes while user is on detail page  | Not addressed    | None -- data is static mock                    |
-| Evidence status updates while viewing evidence rail | Not addressed    | None -- no real-time updates                   |
-| Agent completes while user is typing a message      | Not addressed    | None -- chat state is local                    |
-| Notification arrives while dropdown is open         | Not addressed    | None -- notification list is static            |
-| User opens Live View for same mission in two tabs   | Not addressed    | Would render independently from same mock data |
-| Mission deleted while user is on its detail page    | Not addressed    | User would see stale data until navigation     |
-| Workflow modified while user is on WorkflowDetail   | Not addressed    | None                                           |
+**File**: All pages in `apps/web/src/pages/`
+**Rating**: N/A (acceptable for prototype)
 
-### Analysis
+All data in the Mission Control prototype is static mock data imported synchronously from `apps/web/src/data/*.ts` files. There are no asynchronous data fetching operations, no API calls, and no loading delays.
 
-**There is zero concurrency handling.** This is expected for a static prototype, but the designs do not include:
+| Operation           | Current Loading Indicator                                      | Blocks UI?    | Has Timeout? | File                       |
+| ------------------- | -------------------------------------------------------------- | ------------- | ------------ | -------------------------- |
+| Page navigation     | `PageTransition` (framer-motion fade-in, `PageTransition.tsx`) | No -- instant | No           | AppShell children          |
+| Mission list render | None -- synchronous import                                     | No            | No           | `MissionHome.tsx:3`        |
+| Evidence data       | None -- synchronous                                            | No            | No           | `MissionPlan.tsx:57`       |
+| Agent sessions      | None -- synchronous                                            | No            | No           | `MissionExecute.tsx:62-65` |
+| Code files          | None -- synchronous                                            | No            | No           | `MissionExecute.tsx:67`    |
+| LiveView workspace  | None -- synchronous                                            | No            | No           | `LiveView.tsx:117-132`     |
+| All data in app     | Static imports from `data/`                                    | No            | No           | N/A                        |
 
-- User presence indicators ("Alex is also viewing this mission")
-- Optimistic locking ("This mission was updated. Refresh to see changes.")
-- Conflict resolution ("Your decision conflicts with a decision made by...")
-- Real-time update indicators (badge counts, status changes)
+**Assessment**: No loading states exist because all data is static. This is acceptable for a prototype but would be CRITICAL for production. The following loading scenarios are undesigned:
 
-For a multi-user mission control system, this is a significant gap. The escalation decision flow is particularly dangerous: two users could both select and confirm different options with no awareness of each other.
+1. **API latency**: fetching missions, evidence, agent sessions from a backend
+2. **WebSocket connection**: agent chat real-time updates, terminal streaming, browser preview
+3. **Long-running operations**: agent launch, mission creation, plan approval
+4. **Progressive loading**: large evidence rails, long chat histories, many missions
 
----
-
-## Summary Table
-
-| Category                | Items audited | Handled well | Partially handled | Not handled  | Critical gaps                                                                            |
-| ----------------------- | ------------- | ------------ | ----------------- | ------------ | ---------------------------------------------------------------------------------------- |
-| 1. Empty states         | 27            | 3 (11%)      | 10 (37%)          | 14 (52%)     | EvidenceRail, ChatPanel, NotificationCenter, CostDashboard (runtime bug), Workflows page |
-| 2. Loading states       | 12            | 0 (0%)       | 3 (25%)           | 9 (75%)      | No loading patterns exist; no skeletons, no timeouts, no cancel                          |
-| 3. Validation errors    | 17            | 1 (6%)       | 0 (0%)            | 16 (94%)     | Both create forms accept empty submissions; Settings save does nothing                   |
-| 4. Permissions          | 8             | 0 (0%)       | 1 (13%)           | 7 (87%)      | No permission model at all; no role-based access                                         |
-| 5. Network failures     | 5             | 0 (0%)       | 0 (0%)            | 5 (100%)     | No error boundary; no API error patterns; no offline handling                            |
-| 6. Partial completion   | 8             | 0 (0%)       | 0 (0%)            | 8 (100%)     | No auto-save; no navigation guards; no draft persistence                                 |
-| 7. Undo/cancel/recovery | 17            | 2 (12%)      | 2 (12%)           | 13 (76%)     | Agent launch irreversible; no undo for destructive list edits                            |
-| 8. Concurrency          | 9             | 0 (0%)       | 0 (0%)            | 9 (100%)     | No presence; no locking; no conflict resolution                                          |
-| **TOTAL**               | **103**       | **6 (6%)**   | **16 (16%)**      | **81 (79%)** |                                                                                          |
+The `aw-skeleton` CSS class is defined in `index.css` but never used as a general loading pattern. No skeleton screens, no loading spinners, no progress indicators exist anywhere in the component tree.
 
 ---
 
-## Synthesis
+## 3. Error States
 
-### Top 5 Most Likely Failure Scenarios Users Will Encounter
+### 3.1 Mission Not Found
 
-1. **Accidental data loss in create forms.** User fills out a detailed mission or workflow, accidentally navigates away, and loses everything. No navigation guard, no auto-save, no draft. This will happen frequently because the sidebar is always visible and clickable.
+**Rating**: Y (with structural inconsistency)
 
-2. **Empty mission with fake success.** User clicks "CREATE MISSION" with zero fields filled. Gets a success toast. Goes to mission list. The "mission" does not actually exist (mock), but the design teaches them that empty submissions are valid. When real validation is added, this becomes a confusing behavior change.
+Mission not found is handled on every mission-scoped page, but with structurally inconsistent patterns:
 
-3. **Blank panels in Live View.** User enters Live View for a mission that has no browser session, no terminal session, or no code files. Two of the four quadrants render as empty white rectangles with no explanation. The layout grid remains rigid, wasting 50%+ of screen real estate on nothing.
+| Page              | Wraps in PageTransition | Shows TopBar  |        Shows breadcrumbs         |         Has back link         | File:Line                     |
+| ----------------- | :---------------------: | :-----------: | :------------------------------: | :---------------------------: | ----------------------------- |
+| MissionDetail     |            Y            |       Y       |       Y (Missions > [ID])        |   N (relies on breadcrumbs)   | `MissionDetail.tsx:36-48`     |
+| MissionPlan       |            Y            |       Y       |    Y (Missions > [ID] > Plan)    |  Y ("Back to missions" link)  | `MissionPlan.tsx:31-54`       |
+| MissionExecute    |            Y            |       Y       |  Y (Missions > [ID] > Execute)   |  Y ("Back to missions" link)  | `MissionExecute.tsx:36-59`    |
+| MissionReview     |            Y            |       Y       |   Y (Missions > [ID] > Review)   |  Y ("Back to missions" link)  | `MissionReview.tsx:31-54`     |
+| MissionEscalation |            Y            |       Y       | Y (Missions > [ID] > Escalation) |  Y ("Back to missions" link)  | `MissionEscalation.tsx:27-50` |
+| LiveView          |  N (no PageTransition)  | N (no TopBar) |        N (no breadcrumbs)        | Y ("Return to Missions" link) | `LiveView.tsx:147-167`        |
 
-4. **Notification state not persisting.** User marks 5 notifications as read. Navigates away. Comes back. All 5 are unread again. This will train users to stop using the notification system.
+**Structural note**: All in-shell pages (Detail, Plan, Execute, Review, Escalation) now properly wrap their not-found states in `PageTransition` and show `TopBar` with breadcrumbs. LiveView's not-found state is fullscreen without any shell (deliberate -- LiveView is always outside AppShell).
 
-5. **Agent chat with no sessions.** User switches to Chat mode on MissionExecute for a mission with no agent sessions. The AgentChatPanel receives an empty array, `sessions[0]?.id` is undefined, and the panel renders as a broken-looking empty state with no tabs, no status bar, but an active input field that does nothing useful.
+### 3.2 Global 404 Not Found
 
-### Top 5 Missing or Broken Failure States
+**File**: `App.tsx:24-43`
+**Rating**: Y
 
-1. **CostDashboard with zero agent sessions.** `Math.max(...[])` returns `-Infinity`. This is used as a divisor for bar width calculations. `Math.max(...missionGroups.map(g => g.totalTokens), 1)` is safe because of the `,1` fallback. But if `agentSessions` is empty, `missionGroups` is `[]`, `modelGroups` is `[]`, and `workflowGroups` has all zeros. The SVG bars will render with width `1` (the fallback), which is cosmetically wrong but not crashing. However, the page will show empty sections with no "No data" messaging. Rating: **functional bug risk**.
+```tsx
+function NotFound() {
+  return (
+    <PageTransition>
+      <TopBar breadcrumbs={[{ label: 'Not Found' }]} />
+      <div className="flex flex-1 flex-col items-center justify-center gap-4">
+        <EmptyState
+          icon={AlertCircle}
+          title="Page not found"
+          description="The URL you followed doesn't exist in Mission Control."
+        />
+        <Link to="/missions" className="...">
+          Go to Missions
+        </Link>
+      </div>
+    </PageTransition>
+  );
+}
+```
 
-2. **No React ErrorBoundary.** There is no error boundary anywhere in the component tree. If any component throws (e.g., accessing a property on undefined mission data), the entire application crashes to a white screen. No recovery path, no "go back" link, no error reporting. This is the most dangerous missing piece.
+Properly handled. Uses `EmptyState` component (one of only two places it is used), renders inside AppShell with TopBar, provides a clear "Go to Missions" link. The catch-all route is at `App.tsx:89`: `{ path: '*', element: <NotFound /> }`.
 
-3. **EvidenceRail with zero items after filtering.** User clicks a filter (e.g., "Policy") and no items match. The rail shows the filter buttons and sort control, then... nothing. No "No items match this filter" message. The user might think the UI is broken or loading.
+### 3.3 LiveView: No Error Recovery
 
-4. **NotificationCenter with zero notifications.** The dropdown opens and shows the header "NOTIFICATIONS" and then an empty scrollable area. No "All caught up" or "No notifications" message. Looks broken.
+**File**: `LiveView.tsx:136-145, 193-202`
+**Rating**: N
 
-5. **AgentChatPanel empty message list.** When `allMessages` is an empty array and there is no typing/streaming state, the message area is completely blank. Combined with the issue of zero sessions (no tabs to display), the entire panel is a mostly empty box with only an input field at the bottom.
+When workspace data is missing or incomplete, LiveView constructs an `effectiveWorkspace` with empty fallbacks (line 136-145) and renders `WorkspaceLayout` with whatever data is available (line 194-201). There is:
 
-### Pattern: Which Failure Category Is Systematically Ignored?
+- No error message for missing workspace
+- No "retry" button
+- No "reconnect" affordance for when a backend is introduced
+- No indication that data is incomplete or stale
+- No fallback UI when `WorkspaceLayout` renders empty quadrants
 
-**Network and connectivity failures are 100% unhandled.** Not a single component in the entire prototype addresses what happens when data is unavailable, stale, or fails to load. This is not just a "prototype limitation" -- it is a design gap. The prototype does not even include placeholder patterns (skeletons, error banners, retry buttons) that would signal how these cases should be handled.
+The grid layout (`WorkspaceLayout.tsx:47-77`) rigidly maintains its 3-column, 2-row structure (`gridTemplateColumns: '200px 1fr 380px'`, `gridTemplateRows: '1fr 280px'`) regardless of whether data exists for each quadrant. Empty quadrants are blank rectangles.
 
-The second most systematically ignored category is **partial completion / state persistence** (100% unhandled). Every piece of user input is stored in ephemeral `useState` with no persistence layer, no navigation guards, and no draft mechanism.
+### 3.4 Network Error Handling
 
-The third is **concurrency** (100% unhandled), though this is more understandable for a prototype.
+**Rating**: N (not applicable to prototype, critical for production)
 
-### Quickest Wins (Easy to Fix)
+No network error handling exists anywhere in the codebase. This is expected for a static data prototype. However, no patterns or placeholders are in place for:
 
-1. **Add "No results" message to EvidenceRail.** Two lines of JSX after the filter loop:
+- API request failures (4xx, 5xx responses)
+- Network timeout
+- Connection loss (offline detection)
+- WebSocket disconnection (agent chat, terminal, browser preview)
+- Rate limiting (429 responses)
+- Authentication failures (401, 403)
+
+### 3.5 ErrorBoundary
+
+**File**: `AppShell.tsx:85`, `ErrorBoundary.tsx:1-79`
+**Rating**: Y
+
+```tsx
+<ErrorBoundary resetKey={location.pathname}>
+  <Outlet />
+</ErrorBoundary>
+```
+
+The `ErrorBoundary` component (`components/primitives/ErrorBoundary.tsx`) wraps the `Outlet` in AppShell. It:
+
+- Catches render errors via `getDerivedStateFromError` (line 22-24)
+- Logs to console via `componentDidCatch` (line 26-28)
+- Resets on route change via `componentDidUpdate` comparing `resetKey` (line 30-33)
+- Renders an error UI with: AlertTriangle icon, "Something went wrong" message, dev-mode stack trace (line 41-65), and a "Back to Missions" link (line 66-76)
+
+**Coverage gap**: LiveView (`App.tsx:48-49`) is OUTSIDE the AppShell and therefore OUTSIDE the ErrorBoundary. A render error in LiveView will crash to a blank screen with no recovery UI. The LiveView routes have no independent ErrorBoundary.
+
+### 3.6 WorkspaceRedirect
+
+**File**: `WorkspaceRedirect.tsx:1-19`
+**Rating**: Y
+
+Handles legacy `/workspace/:id` URLs:
+
+- If workspace found and has a linked mission: redirects to `/missions/:missionId/live` or workflow-scoped equivalent (line 10-14)
+- If workspace not found: redirects to `/missions` (line 18)
+- Uses `<Navigate replace />` for clean URL history
+
+---
+
+## 4. Permission States
+
+**Rating**: N (no permission model exists)
+
+| Action                          | Permission Required | Current Behavior                                                                            | File:Line                     |
+| ------------------------------- | ------------------- | ------------------------------------------------------------------------------------------- | ----------------------------- |
+| Create mission                  | Not defined         | Button always visible and functional                                                        | `MissionHome.tsx:105-112`     |
+| Approve plan                    | Not defined         | Button visible when `mission.stage === 'plan'`                                              | `MissionPlan.tsx:164`         |
+| Approve/Reject/Re-plan (Review) | Not defined         | Approve visually disabled when blockers exist but no actual `disabled` attribute for clicks | `ApprovalBar.tsx:72-87`       |
+| Escalation decision             | Not defined         | All options visible to all users                                                            | `ConsequencePanel.tsx:49-153` |
+| Enter LiveView                  | Not defined         | Link always visible                                                                         | `MissionExecute.tsx:182-193`  |
+| Agent configuration             | Not defined         | Gear icon always visible                                                                    | `MissionExecute.tsx:194-200`  |
+| Settings changes                | Not defined         | All toggles accessible                                                                      | Settings page                 |
+| View costs                      | Not defined         | Page always accessible                                                                      | CostDashboard                 |
+
+**Assessment**: There is no authentication system, no role model, no ownership-based access control. Critical gaps include:
+
+1. **No auth gating on approve/reject/escalation actions** -- any user can make any decision
+2. **No concept of multi-approval** -- the Settings page mentions "High-risk missions require 2 approvals" as a policy text, but the Review page has a single Approve button
+3. **No ownership enforcement** -- mission owner field exists (`missions.ts:12`) but is display-only
+4. **No risk-tier-based access control** -- high-risk missions are visually distinguished (RiskBadge) but not permission-gated
+
+### ApprovalBar Approve Button: Visually Disabled But Clickable
+
+**File**: `ApprovalBar.tsx:72-87`
+
+```tsx
+<motion.button
+  style={{
+    backgroundColor: canApprove ? semantic.success : aw.lineDark,
+    color: aw.inverse,
+    opacity: canApprove ? 1 : 0.5,
+    cursor: canApprove ? 'pointer' : 'not-allowed',
+  }}
+  disabled={!canApprove}
+  onClick={() => canApprove && onAction?.('approve')}
+>
+```
+
+The button IS properly `disabled` via the HTML `disabled` attribute (line 80). It also has defensive `canApprove && ...` guard in the onClick handler (line 83). The visual styling (opacity 0.5, cursor not-allowed) correctly communicates the disabled state. The `canApprove` condition checks both `blockerCount === 0` and `mission.verificationState === 'passing'` (line 17).
+
+**Assessment**: The ApprovalBar's conditional enable/disable is well-implemented. The gap is that it is the ONLY action in the system with conditional enablement. MissionPlan's Approve button has no equivalent guard.
+
+---
+
+## 5. Offline Handling
+
+**Rating**: N (no offline capabilities)
+
+| Aspect                   | Status | Notes                                                                   |
+| ------------------------ | ------ | ----------------------------------------------------------------------- |
+| Offline detection        | N      | No `navigator.onLine` check, no `online`/`offline` event listeners      |
+| Service worker           | N      | No service worker registered                                            |
+| Cache strategy           | N      | No caching of static assets beyond default browser behavior             |
+| Offline banner/indicator | N      | No UI indication of connection status                                   |
+| Offline queue            | N      | No queuing of actions for later sync                                    |
+| Local data persistence   | N      | All state is in-memory React `useState`. Page refresh loses everything. |
+
+**Assessment**: This is expected for a prototype with no backend. However, the design surface includes no patterns or placeholder components that indicate how offline scenarios would be handled in production. No connection status indicator exists in the LiveView header, TopBar, or LeftNav bottom status bar.
+
+---
+
+## 6. Edge Cases
+
+### 6.1 Completed Mission with No Artifacts
+
+**Files**: `ActivityPreview.tsx:153-159`, `ArtifactPanel.tsx:23`
+**Rating**: ~ (partial)
+
+When a completed mission has no `artifactIds` or an empty array:
+
+1. `ActivityPreview.tsx:153-159`:
 
    ```tsx
    {
-     filteredAndSorted.length === 0 && (
-       <div className="aw-body py-4 text-center" style={{ color: aw.textSoft }}>
-         No evidence items match this filter.
-       </div>
-     );
+     isCompleted &&
+       (() => {
+         const missionArtifacts = artifacts.filter((a) => a.missionId === mission.id);
+         return missionArtifacts.length > 0 ? <ArtifactPanel artifacts={missionArtifacts} /> : null;
+       })();
    }
    ```
 
-2. **Add "No notifications" message to NotificationCenter.** Same pattern inside the dropdown:
+   If no artifacts match, `ArtifactPanel` is not rendered and `null` is returned. No "No deliverables produced" message is shown.
 
-   ```tsx
-   {
-     notifications.length === 0 && (
-       <div className="aw-body px-3 py-6 text-center" style={{ color: aw.textSoft }}>
-         No notifications yet.
-       </div>
-     );
-   }
-   ```
+2. `ArtifactPanel.tsx:23`: `if (artifacts.length === 0) return null;` -- additional guard, also returns nothing.
 
-3. **Add "All caught up" state for all-read notifications.** Check `unreadCount === 0` and show a subtle message.
+**Impact**: A completed mission without artifacts shows no indication that deliverables were expected but are absent. The RESULT PREVIEW section (ActivityPreview) would still show browser sessions, terminal sessions, and code viewer (if they exist), but the ARTIFACTS subsection simply does not appear.
 
-4. **Disable create buttons when required fields are empty.** Add `disabled={!title.trim()}` to both MissionCreate and WorkflowCreate submit buttons. Show disabled styling. Minimal effort, large UX improvement.
+### 6.2 Mission with escalationActive but No Escalation Items
 
-5. **Add empty state to Workflows page.** When `workflows.length === 0`, show an EmptyState component with the GitBranch icon and "Create your first workflow" CTA. Already have the EmptyState primitive; just need to use it.
+**Files**: `MissionEscalation.tsx:53-55, 57-86`, `missions.ts:159`
+**Rating**: Y
 
-6. **Add empty state for AgentChatPanel with zero sessions.** Show "No agent sessions. Launch an agent to begin." with a link or button.
+```tsx
+const mEscalations = escalations.filter((e) => e.missionId === mission.id);
+const selectedEscalation = mEscalations[selectedEscIdx] ?? mEscalations[0];
 
-7. **Fix MissionHome empty state.** Differentiate "no missions match filters" (show "Clear filters" button) from "no missions exist at all" (show "Create your first mission" CTA).
+if (!selectedEscalation) {
+  // ...renders "No escalations for this mission." with TopBar and StageTabBar
+}
+```
 
-8. **Add empty panel states to WorkspaceLayout.** When `browserSession` is undefined, render a placeholder: "No browser session active." Same for terminal.
+If a mission has `escalationActive: true` but no actual escalation records in the escalation data, the MissionEscalation page shows "No escalations for this mission." with full navigation preserved. This is correctly handled.
 
-### Structural Issues (Need Architectural Changes)
+**However**: The LeftNav counts this mission as needing review (`LeftNav.tsx:19-21` checks `stage === 'review' || stage === 'escalation'`). If the mission's stage is not `escalation` but `escalationActive` is true, the LeftNav count does not reflect the escalation overlay -- it only counts stage-based review. The MissionSwitcherDropdown does show the warning icon for `escalationActive` (`MissionSwitcherDropdown.tsx:230-233`).
 
-1. **React ErrorBoundary.** The app needs at minimum a top-level ErrorBoundary in `App.tsx` that catches render errors and shows a recovery UI. Ideally, page-level boundaries too, so one broken page does not take down the whole app. This requires adding a class component (React error boundaries cannot be function components) or using a library like `react-error-boundary`.
+### 6.3 WorkspaceRedirect: Legacy Path Handling
 
-2. **Form state persistence.** The create forms need either:
-   - A `useBeforeUnload` / router `useBlocker` hook to warn on navigation with unsaved changes, or
-   - Auto-save to localStorage/sessionStorage, or
-   - Both.
-     This requires a form state management decision (local storage, URL params, or a state management library).
+**File**: `WorkspaceRedirect.tsx:1-19`
+**Rating**: Y
 
-3. **API error handling architecture.** Before connecting to a real backend, the team needs to design:
-   - A global error boundary + toast system for API errors
-   - Per-request error states (inline error messages in components)
-   - Retry mechanisms (automatic for idempotent GETs, manual for mutations)
-   - Timeout configuration and user-visible timeout indicators
-     This is not a component fix -- it is an architectural decision about where error state lives and how it propagates.
+```tsx
+export function WorkspaceRedirect() {
+  const { id } = useParams<{ id: string }>();
+  const workspace = workspaces.find((ws) => ws.id === id);
 
-4. **Loading state architecture.** The prototype needs a skeleton/loading pattern library. Options include:
-   - Skeleton screens (preferred for data-heavy views like MissionHome, CostDashboard)
-   - Spinner overlays (acceptable for short operations like create/approve)
-   - Progressive loading (for chat history, evidence rails)
-     This requires deciding on a loading state primitive and retrofitting it across all data-consuming components.
+  if (workspace) {
+    const mission = missions.find((m) => m.id === workspace.missionId);
+    const to = mission?.workflowId
+      ? `/workflows/${mission.workflowId}/missions/${workspace.missionId}/live`
+      : `/missions/${workspace.missionId}/live`;
+    return <Navigate to={to} replace />;
+  }
 
-5. **Permission model integration.** The prototype needs to design how permissions affect the UI:
-   - Which buttons are hidden vs disabled vs shown-with-error?
-   - How does the UI communicate "you need X permission to do Y"?
-   - How does multi-approval (2 approvals for high-risk) appear in the Review flow?
-     This requires a permission model design before the UI can be updated.
+  return <Navigate to="/missions" replace />;
+}
+```
 
-6. **Real-time state management.** The Live View, Agent Chat, and Evidence Rail all imply real-time data streams. The prototype needs to design:
-   - Connection status indicators (connected / reconnecting / disconnected)
-   - Stale data warnings
-   - Optimistic updates with rollback
-     This requires choosing a real-time data layer (WebSocket, SSE, polling) and designing the UX around connection lifecycle.
+Handles both cases:
 
-7. **Concurrency and conflict resolution for escalation decisions.** When two users can both see and confirm escalation options, the system needs:
-   - Optimistic locking (show "this escalation was resolved by X at Y" if someone else decided first)
-   - Or pessimistic locking (lock the escalation to the first user who opens it)
-   - Either way, presence indicators showing who else is viewing the escalation
+- Valid workspace ID: redirects to workflow-contexted or direct LiveView URL
+- Invalid workspace ID: redirects to `/missions` (safe fallback)
+- Uses `replace` navigation to keep URL history clean
+
+### 6.4 LiveView Esc Key Conflicts
+
+**File**: `LiveView.tsx:105-113`
+**Rating**: ~ (potential issue)
+
+```tsx
+useEffect(() => {
+  const handler = (e: KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      void navigate(liveBackTo);
+    }
+  };
+  document.addEventListener('keydown', handler);
+  return () => document.removeEventListener('keydown', handler);
+}, [navigate, liveBackTo]);
+```
+
+The Esc handler uses `document.addEventListener` which captures ALL Esc key presses. If any overlay, dropdown, or modal were ever added to LiveView, pressing Esc would navigate away from LiveView instead of closing the overlay. There is no `e.stopPropagation()` and no check for whether an overlay is open.
+
+Currently, this is not a problem because LiveView has no overlays. But it is a latent issue.
+
+### 6.5 ConsequencePanel Module-Level State Persistence
+
+**File**: `ConsequencePanel.tsx:17`
+**Rating**: ~ (clever but fragile)
+
+```tsx
+const decisionStore = new Map<string, { optionId: string; confirmedAt: string }>();
+```
+
+Escalation decisions are persisted in a module-level `Map` that survives component re-mounts (e.g., navigating away and back). This is better than pure `useState` but:
+
+- Lost on page refresh (full page reload)
+- Lost on hot module replacement during development
+- Not synced to any backend
+- The `panelKey` (`ConsequencePanel.tsx:27`) is derived from option IDs, which means if escalation options change, the decision is orphaned
+
+### 6.6 StageTabBar Always Shows All Tabs
+
+**File**: `StageTabBar.tsx:4-10`
+**Rating**: ~ (design concern)
+
+```tsx
+const stages = [
+  { key: 'overview', label: 'OVERVIEW', suffix: '' },
+  { key: 'plan', label: 'PLAN', suffix: '/plan' },
+  { key: 'execute', label: 'EXECUTE', suffix: '/execute' },
+  { key: 'review', label: 'REVIEW', suffix: '/review' },
+  { key: 'escalation', label: 'ESCALATION', suffix: '/escalation' },
+] as const;
+```
+
+The tab bar always renders all 5 tabs regardless of the mission's current stage. A plan-stage mission shows PLAN, EXECUTE, REVIEW, and ESCALATION tabs, but the Execute, Review, and Escalation pages will show largely empty content since the mission has not reached those stages. There is no visual indication of which tabs are "available" or "active" for the current mission state.
+
+### 6.7 MissionSwitcher Only Available on Mission Pages
+
+**File**: `TopBar.tsx:49`
+**Rating**: ~ (design limitation)
+
+```tsx
+{missionId && (
+  <>
+    <button ref={switcherButtonRef} ...>
+```
+
+The MissionSwitcherDropdown button only renders when `missionId` is truthy. Pages that do not pass `missionId` to TopBar:
+
+- MissionHome (`MissionHome.tsx:98`)
+- Workflows, WorkflowDetail
+- CostDashboard, History, Settings
+- MissionCreate
+
+The Cmd+Shift+M keyboard shortcut (`AppShell.tsx:46-48`) dispatches the `mc:toggle-mission-switcher` event, but TopBar's listener (`TopBar.tsx:36-41`) only toggles the switcher when `missionId` exists. On non-mission pages, the shortcut silently does nothing.
 
 ---
 
-## Appendix: Component-Level Failure Path Inventory
+## 7. Gap Severity Table
 
-### MissionCreate (`apps/web/src/pages/MissionCreate.tsx`)
+### State x Severity Matrix
 
-- **F1**: Submit with all fields empty -> success toast (should: validate required fields)
-- **F2**: Submit with extremely long title (10,000 chars) -> no length limit (should: cap at reasonable length)
-- **F3**: Submit with XSS payload in title -> renders in preview card (should: sanitize, though React auto-escapes)
-- **F4**: Add duplicate acceptance criteria -> accepted (should: warn or deduplicate)
-- **F5**: Navigate away with filled form -> data lost silently (should: warn unsaved changes)
-- **F6**: Rapidly double-click Create -> two success toasts (should: disable button during "submission")
+| State Category          | Properly Handled (Y) |     Partially Handled (~)      |     Not Handled (N)     | Critical Gaps                                                                      |
+| ----------------------- | :------------------: | :----------------------------: | :---------------------: | ---------------------------------------------------------------------------------- |
+| **Empty states**        |          7           |               5                |            6            | Completed stage untested; WorkspaceLayout empty quadrants; hidden sessions section |
+| **Loading states**      |          0           |               0                | All (N/A for prototype) | No loading patterns designed; no skeleton screens; no timeouts                     |
+| **Error: not found**    |          6           |               0                |            0            | All mission pages handle not-found. LiveView handles its own.                      |
+| **Error: 404**          |          1           |               0                |            0            | Global 404 well-handled.                                                           |
+| **Error: render crash** |     1 (AppShell)     |               0                |      1 (LiveView)       | LiveView has no ErrorBoundary                                                      |
+| **Error: network**      |          0           |               0                |           All           | No network error patterns exist                                                    |
+| **Permissions**         |          0           | 1 (ApprovalBar disabled state) |            7            | No auth model, no role-based access                                                |
+| **Offline**             |          0           |               0                |           All           | No offline detection or handling                                                   |
+| **Edge cases**          |          3           |               4                |            1            | Esc key conflict potential; completed stage untested                               |
 
-### WorkflowCreate (`apps/web/src/pages/WorkflowCreate.tsx`)
+### Severity-Ranked Gap List
 
-- **F1-F5**: Same issues as MissionCreate
-- **F6**: Select 50+ missions -> no pagination or scrolling limit on checkbox list (should: paginate or virtualize)
-- **F7**: Drag-to-reorder not functional (GripVertical icon is visual only) -> (should: either implement or remove grip icon to avoid confusion)
+| Rank | Gap                                                   | Severity            | Impact                                                                                     | File(s)                                                                    |
+| ---- | ----------------------------------------------------- | ------------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| 1    | **Completed stage never exercised**                   | CRITICAL            | Entire completed flow is untested: artifact display, post-completion summary, empty states | `missions.ts` (0 completed), `ActivityPreview.tsx:47`, `ArtifactPanel.tsx` |
+| 2    | **LiveView has no ErrorBoundary**                     | CRITICAL            | Render error in LiveView crashes to blank screen with no recovery                          | `App.tsx:48-49` (outside AppShell)                                         |
+| 3    | **No network error handling patterns**                | HIGH (production)   | When backend is added, no error display patterns exist to follow                           | All pages                                                                  |
+| 4    | **No permission model**                               | HIGH (production)   | All actions available to all users; no auth gating                                         | All action components                                                      |
+| 5    | **No offline handling**                               | MEDIUM (production) | No connection status indicator; no degraded mode                                           | Global                                                                     |
+| 6    | **WorkspaceLayout empty quadrants show nothing**      | MEDIUM              | User sees blank rectangles in LiveView                                                     | `WorkspaceLayout.tsx:68, 71`                                               |
+| 7    | **Completed mission with no artifacts shows nothing** | MEDIUM              | Silent absence of expected deliverables                                                    | `ActivityPreview.tsx:153-159`                                              |
+| 8    | **MissionExecute hides sessions section silently**    | LOW                 | User does not know browser/terminal sessions are a capability                              | `MissionExecute.tsx:315`                                                   |
+| 9    | **StageTabBar shows all tabs regardless of stage**    | LOW                 | Misleading navigation to empty stage pages                                                 | `StageTabBar.tsx:4-10`                                                     |
+| 10   | **LiveView Esc key not guarded against overlays**     | LOW (latent)        | Would cause navigation on Esc instead of overlay close                                     | `LiveView.tsx:105-113`                                                     |
 
-### MissionExecute (`apps/web/src/pages/MissionExecute.tsx`)
+---
 
-- **F1**: Switch to Chat mode with 0 agent sessions -> broken AgentChatPanel
-- **F2**: Open Agent Config, launch, close, reopen -> config panel resets but shows "LAUNCH AGENT" again (state is per-mount)
-- **F3**: AgentConfigPanel overlaps content -> absolute positioned panel covers right rail evidence
+## 8. Error State Inventory by Page
 
-### AgentChatPanel (`apps/web/src/components/execute/AgentChatPanel.tsx`)
+### MissionHome
 
-- **F1**: Zero sessions -> empty tabs, no status bar, input still enabled
-- **F2**: User sends message, switches session tab -> local messages filtered by session ID, but typing/streaming state is global (streaming response may appear in wrong session context)
-- **F3**: User sends message during streaming -> blocked by `disabled` state, but no visual explanation of why
-- **F4**: Very long message -> no character limit, textarea grows but no scroll handling
+| State                           | Handled | Treatment                                                               | File:Line                 |
+| ------------------------------- | ------- | ----------------------------------------------------------------------- | ------------------------- |
+| Zero missions (no data)         | ~       | Same "No missions match filters" message (misleading)                   | `MissionHome.tsx:192-198` |
+| Filter yields no results        | Y       | EmptyState with SearchX icon and guidance text                          | `MissionHome.tsx:192-198` |
+| FocusPanel with stale selection | ~       | FocusPanel shows last selected mission even when filtered list is empty | `MissionHome.tsx:90`      |
 
-### ConsequencePanel (`apps/web/src/components/escalation/ConsequencePanel.tsx`)
+### MissionDetail
 
-- **F1**: Zero options -> renders empty `<div>` (should: "No decision options available")
-- **F2**: User confirms decision, then page remounts -> decision state lost (useState ephemeral)
-- **F3**: User wants to undo a confirmed decision -> impossible; no undo mechanism
-- **F4**: All options have identical labels -> no disambiguation
+| State                    | Handled | Treatment                                              | File:Line                   |
+| ------------------------ | ------- | ------------------------------------------------------ | --------------------------- |
+| Mission not found        | Y       | PageTransition + TopBar + centered "Mission not found" | `MissionDetail.tsx:36-48`   |
+| Zero agent sessions      | ~       | Shows "0 sessions" text, no guidance                   | `MissionDetail.tsx:198`     |
+| Zero evidence            | ~       | Shows "0 PASS / 0 FAIL / 0 WARN"                       | `MissionDetail.tsx:210-218` |
+| Zero escalations         | Y       | Section conditionally hidden                           | `MissionDetail.tsx:223`     |
+| Zero acceptance criteria | N       | Empty `<ul>` rendered                                  | `MissionDetail.tsx:154-167` |
+| Zero risks               | N       | Empty `<div>` under heading                            | `MissionDetail.tsx:176-185` |
 
-### NotificationCenter (`apps/web/src/components/shell/NotificationCenter.tsx`)
+### MissionPlan
 
-- **F1**: Zero notifications -> blank dropdown
-- **F2**: 100+ notifications -> no virtualization, may be slow to render
-- **F3**: Notification links to mission that no longer exists -> navigates to MissionDetail "not found" state
-- **F4**: Click notification -> navigates to `/missions/${n.missionId}` even if mission is workflow-contexted (should use workflow prefix when applicable)
+| State                               | Handled | Treatment                                                               | File:Line                 |
+| ----------------------------------- | ------- | ----------------------------------------------------------------------- | ------------------------- |
+| Mission not found                   | Y       | PageTransition + TopBar + "Mission not found" + back link               | `MissionPlan.tsx:31-54`   |
+| No evidence                         | Y       | "No evidence gathered yet. Evidence will appear once execution begins." | `MissionPlan.tsx:200-207` |
+| Non-plan stage (no approve buttons) | Y       | Approval section conditionally hidden with `mission.stage === 'plan'`   | `MissionPlan.tsx:164`     |
 
-### CommandPalette (`apps/web/src/components/shell/CommandPalette.tsx`)
+### MissionExecute
 
-- **F1**: Very long mission title -> truncated with CSS, but may break layout at extreme lengths
-- **F2**: Special characters in search -> regex-safe because using `String.includes()` not regex
-- **F3**: Rapid open/close -> `setTimeout` for focus may fire after close
+| State                        | Handled | Treatment                                                 | File:Line                    |
+| ---------------------------- | ------- | --------------------------------------------------------- | ---------------------------- |
+| Mission not found            | Y       | PageTransition + TopBar + "Mission not found" + back link | `MissionExecute.tsx:36-59`   |
+| No agent sessions (log pane) | Y       | "No agent activity yet" text                              | `MissionExecute.tsx:265-268` |
+| No agent sessions (swimlane) | N       | Empty container, no message                               | `MissionExecute.tsx:208-217` |
+| No code files                | ~       | "No code files" text                                      | `MissionExecute.tsx:287-291` |
+| No browser/terminal sessions | N       | SESSIONS section silently hidden                          | `MissionExecute.tsx:315`     |
 
-### WorkspaceRedirect (`apps/web/src/pages/WorkspaceRedirect.tsx`)
+### MissionReview
 
-- **F1**: Unknown workspace ID -> silent redirect to `/missions` (OK -- handled)
-- **F2**: Workspace maps to non-existent mission -> redirects to LiveView which shows "Mission not found" (OK -- handled)
+| State                 | Handled | Treatment                                                 | File:Line                 |
+| --------------------- | ------- | --------------------------------------------------------- | ------------------------- |
+| Mission not found     | Y       | PageTransition + TopBar + "Mission not found" + back link | `MissionReview.tsx:31-54` |
+| Zero evidence (rail)  | N       | EvidenceRail renders but may show empty                   | `MissionReview.tsx:143`   |
+| Blockers vs. warnings | Y       | ApprovalBar distinguishes blocker count and warning count | `ApprovalBar.tsx:36-42`   |
 
-### ApprovalBar (`apps/web/src/components/review/ApprovalBar.tsx`)
+### MissionEscalation
 
-- **F1**: Approve, Reject, Re-plan buttons have no `onClick` handlers -> buttons are clickable but do nothing
-- **F2**: `canApprove` is false but user clicks Approve -> button has disabled styling via CSS (`cursor: not-allowed`, `opacity: 0.5`) but no `disabled` attribute -- **the button is still technically clickable**
+| State                | Handled | Treatment                                                 | File:Line                       |
+| -------------------- | ------- | --------------------------------------------------------- | ------------------------------- |
+| Mission not found    | Y       | PageTransition + TopBar + "Mission not found" + back link | `MissionEscalation.tsx:27-50`   |
+| No escalations       | Y       | "No escalations for this mission." with full navigation   | `MissionEscalation.tsx:57-86`   |
+| Multiple escalations | Y       | Escalation selector shown below ReplayTimeline            | `MissionEscalation.tsx:148-184` |
 
-### 404 Route (`App.tsx NotFound`)
+### LiveView
 
-- **F1**: 404 shows EmptyState + "Go to Missions" link -> well-handled
-- **F2**: 404 inside AppShell preserves sidebar navigation -> well-handled
-- **F3**: LiveView routes are outside AppShell -- a bad Live View URL renders the LiveView's own "Mission not found" state without the AppShell -> user has no sidebar to navigate, only the "Return to Missions" link. This is acceptable but inconsistent.
+| State                           | Handled | Treatment                                                       | File:Line                    |
+| ------------------------------- | ------- | --------------------------------------------------------------- | ---------------------------- |
+| Mission not found               | Y       | Fullscreen centered with "Mission not found" + ID + return link | `LiveView.tsx:147-167`       |
+| No workspace data               | ~       | Constructs effectiveWorkspace with empty defaults               | `LiveView.tsx:136-145`       |
+| Empty WorkspaceLayout quadrants | N       | Blank rectangles, no messages                                   | `WorkspaceLayout.tsx:68, 71` |
+| Render error                    | N       | No ErrorBoundary wrapping LiveView                              | `App.tsx:48-49`              |
+| No error recovery               | N       | No retry, reconnect, or error state UI                          | --                           |
+
+---
+
+## 9. Structural Recommendations
+
+### 9.1 Add ErrorBoundary to LiveView
+
+The most critical missing error path. LiveView routes (`App.tsx:48-49`) are outside the AppShell's ErrorBoundary. Wrap the LiveView element:
+
+```tsx
+// App.tsx, lines 48-49
+{ path: 'missions/:missionId/live', element: <ErrorBoundary><LiveView /></ErrorBoundary> },
+{ path: 'workflows/:workflowId/missions/:missionId/live', element: <ErrorBoundary><LiveView /></ErrorBoundary> },
+```
+
+Or create a `LiveViewShell` wrapper that provides its own ErrorBoundary with LiveView-appropriate error UI.
+
+### 9.2 Add Completed Mission to Mock Data
+
+Add at least one mission with `stage: 'completed'` to `missions.ts` to exercise:
+
+- ActivityPreview with `isCompleted = true` and artifacts
+- FocusPanel routing to overview
+- MissionHome filter for completed
+- ArtifactPanel rendering (gallery + viewer)
+- Post-completion summary (completed summary bar in ActivityPreview)
+
+### 9.3 Add Empty State Messages to WorkspaceLayout Quadrants
+
+Replace `null` returns in `WorkspaceLayout.tsx:68, 71` with placeholder UI:
+
+```tsx
+// WorkspaceLayout.tsx:68
+{
+  browserSession ? (
+    <BrowserPreview session={browserSession} />
+  ) : (
+    <div className="flex h-full items-center justify-center" style={{ color: aw.textSoft }}>
+      <span className="aw-body-sm">No browser session active</span>
+    </div>
+  );
+}
+```
+
+### 9.4 Design Loading State Patterns
+
+Before connecting to a real backend, design and document:
+
+1. **Skeleton screens** for data-heavy views (MissionHome, CostDashboard, evidence rails)
+2. **Inline spinners** for short operations (approve, create, launch)
+3. **Connection indicators** for real-time views (LiveView, AgentChatPanel)
+4. **Timeout handling** with user-visible retry affordances
+
+### 9.5 Design Permission Error States
+
+Before implementing auth, design:
+
+1. **Disabled button states** with tooltip explaining why (e.g., "You need reviewer role to approve")
+2. **Hidden vs. disabled** decision: should unauthorized actions be invisible or visible-but-disabled?
+3. **401/403 response handling**: global redirect to login vs. inline error message
+
+---
+
+## 10. Summary Statistics
+
+| Category                | Total States Audited |      Y       |      ~       |      N       |
+| ----------------------- | -------------------: | :----------: | :----------: | :----------: |
+| Empty states            |                   18 |   7 (39%)    |   5 (28%)    |   6 (33%)    |
+| Loading states          |                    7 |      0       |      0       |  7 (100%)\*  |
+| Error: entity not found |                    7 |   7 (100%)   |      0       |      0       |
+| Error: 404 global       |                    1 |   1 (100%)   |      0       |      0       |
+| Error: render crash     |                    2 |   1 (50%)    |      0       |   1 (50%)    |
+| Error: network          |                    5 |      0       |      0       |  5 (100%)\*  |
+| Permissions             |                    8 |      0       |   1 (12%)    |   7 (88%)    |
+| Offline                 |                    4 |      0       |      0       |  4 (100%)\*  |
+| Edge cases              |                    8 |   3 (38%)    |   4 (50%)    |   1 (12%)    |
+| **TOTAL**               |               **60** | **19 (32%)** | **10 (17%)** | **31 (52%)** |
+
+\* Marked as N but N/A for a static prototype. These become critical when a backend is introduced.
+
+### Verdict
+
+The prototype handles **entity not found states well** (100% coverage across all pages) and has a **solid global 404 page**. The **ErrorBoundary in AppShell** is correctly implemented.
+
+The primary gaps are:
+
+1. **Completed stage is entirely untested** (0 completed missions in data)
+2. **LiveView lacks ErrorBoundary protection** (outside AppShell)
+3. **Empty states are inconsistently handled** (33% missing)
+4. **No loading, network, permission, or offline patterns exist** (expected for prototype but must be designed before production)
+
+The most impactful quick fix is adding a completed mission to mock data. The most impactful structural fix is wrapping LiveView in an ErrorBoundary.

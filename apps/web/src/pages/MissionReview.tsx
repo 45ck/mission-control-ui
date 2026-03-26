@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router';
 import { ArrowLeft } from 'lucide-react';
 import { missions } from '../data/missions';
@@ -12,6 +12,7 @@ import { EvidenceRail } from '../components/evidence/EvidenceRail';
 import { CornerBracket } from '../components/primitives/CornerBracket';
 import { PanelPins } from '../components/primitives/PanelPins';
 import { ToastContainer } from '../components/primitives/ToastContainer';
+import { ConfirmDialog } from '../components/primitives/ConfirmDialog';
 import { PageTransition } from '../components/shell/PageTransition';
 import { StageTabBar } from '../components/mission/StageTabBar';
 import { useToast } from '../hooks/useToast';
@@ -58,17 +59,36 @@ export function MissionReview() {
   const blockerCount = mEvidence.filter((e) => e.status === 'fail').length;
   const warningCount = mEvidence.filter((e) => e.status === 'warning').length;
 
+  const [pendingAction, setPendingAction] = useState<'reject' | 're-plan' | null>(null);
+
+  const executeAction = useCallback(
+    (action: 'approve' | 'reject' | 're-plan') => {
+      const messages: Record<
+        'approve' | 'reject' | 're-plan',
+        { text: string; type: 'success' | 'error' | 'info' }
+      > = {
+        approve: { text: 'Review approved. Changes will be deployed.', type: 'success' },
+        reject: { text: 'Review rejected. Author will be notified.', type: 'error' },
+        're-plan': { text: 'Sent back for re-planning.', type: 'info' },
+      };
+      const msg = messages[action];
+      show(msg.text, msg.type);
+    },
+    [show],
+  );
+
   const handleAction = (action: 'approve' | 'reject' | 're-plan') => {
-    const messages: Record<
-      'approve' | 'reject' | 're-plan',
-      { text: string; type: 'success' | 'error' | 'info' }
-    > = {
-      approve: { text: 'Review approved. Changes will be deployed.', type: 'success' },
-      reject: { text: 'Review rejected. Author will be notified.', type: 'error' },
-      're-plan': { text: 'Sent back for re-planning.', type: 'info' },
-    };
-    const msg = messages[action];
-    show(msg.text, msg.type);
+    if (action === 'approve') {
+      executeAction(action);
+    } else {
+      setPendingAction(action);
+    }
+  };
+
+  const confirmDescriptions: Record<'reject' | 're-plan', string> = {
+    reject: 'This will reject the review and notify the author. Changes will be reverted.',
+    're-plan':
+      'This will send the mission back for re-planning. Current review progress will be lost.',
   };
 
   return (
@@ -143,6 +163,19 @@ export function MissionReview() {
           <EvidenceRail items={mEvidence} />
         </div>
       </div>
+
+      <ConfirmDialog
+        open={pendingAction !== null}
+        title={pendingAction === 'reject' ? 'Reject review?' : 'Send back for re-planning?'}
+        description={pendingAction ? confirmDescriptions[pendingAction] : ''}
+        confirmLabel={pendingAction === 'reject' ? 'Reject' : 'Re-plan'}
+        variant={pendingAction === 'reject' ? 'danger' : 'default'}
+        onConfirm={() => {
+          if (pendingAction) executeAction(pendingAction);
+          setPendingAction(null);
+        }}
+        onCancel={() => setPendingAction(null)}
+      />
 
       <ToastContainer toasts={toasts} onDismiss={dismiss} />
     </PageTransition>

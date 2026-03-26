@@ -1,96 +1,567 @@
 # Heuristic Evaluation: Mission Control Prototype
 
 **Evaluator**: HCI Expert (Nielsen's 10 Usability Heuristics)
-**Date**: 2026-03-23
+**Date**: 2026-03-24
 **Artifact version**: v0.1.0 (static prototype, no backend)
 **Method**: Code-level inspection of all pages, components, routes, data models, and interaction flows
+**User pain points under evaluation**: A (Inline Agent Visibility), B (Mode Switching), C (Rich Plan Content), D (Demo/Deliverable Artifacts)
 
 ---
 
 ## Evaluation Matrix
 
-| ID     | Heuristic                                                  | Screen / Flow / Component                                   | Evidence                                                                                                                                                                                                                                                                                                                                                                        | Why It Matters                                                                                                                                                                                                                                                                                                                      | Severity (0--4) | Recommendation                                                                                                                                                                                                                                                                                                                           |
-| ------ | ---------------------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| H1-01  | 1. Visibility of system status                             | `MissionExecute` -- overview mode                           | Agent swimlanes show static mock steps. There is no real-time progress indicator, spinner, or progress bar showing how far through a plan an agent is. The `AgentSwimlane` shows past steps but no "current step" highlight or ETA.                                                                                                                                             | In a supervision tool, the operator's primary question is "what is the agent doing right now?" Without a pulsing or highlighted current-step indicator, the user must scan the entire log to infer liveness. GitHub research shows 82% productive time lost to unnecessary context-switching; ambiguous status forces exactly that. | 3               | Add a distinct "current step" marker (animated border or pulse) to the active step in each swimlane. Show a mini progress fraction (e.g., "Step 5/12") in the `AgentSwimlane` header.                                                                                                                                                    |
-| H1-02  | 1. Visibility of system status                             | `AgentChatPanel` -- `AgentControls`                         | The Pause/Play button toggles `isPaused` local state but does not actually pause the streaming response or change any visible status indicator beyond swapping the icon. The `StatusBar` still shows "ACTIVE" regardless.                                                                                                                                                       | Users who click Pause expect the agent to stop. The prototype silently ignores the action. In production this would cause severe trust erosion -- the operator believes they have control but do not. Relates to Bainbridge's "ironies of automation": if pause does nothing observable, the user loses confidence in all controls. | 4               | Wire Pause/Play to halt the streaming simulation. Update `StatusBar` to reflect "PAUSED" state. Add a visible banner: "Agent paused by operator" when paused.                                                                                                                                                                            |
-| H1-03  | 1. Visibility of system status                             | `AppShell` -- bottom timestamp bar                          | The timestamp in the bottom bar (`AppShell.tsx` lines 54--59) renders `new Date().toLocaleTimeString()` once on mount and never updates. It shows the time the page loaded, not a live clock.                                                                                                                                                                                   | A "live" timestamp that is actually stale is worse than no timestamp at all. It suggests real-time monitoring but delivers a frozen value, undermining the "operating surface" metaphor.                                                                                                                                            | 2               | Use a 1-second `setInterval` to update the timestamp, or replace it with an uptime counter ("Session: 14m 32s").                                                                                                                                                                                                                         |
-| H1-04  | 1. Visibility of system status                             | `LiveView` -- agent status                                  | The header shows "{N} agents active" but there is no indication of what each agent is currently doing. The `WorkspaceLayout` grid allocates a chat panel but no per-agent status summary in the header.                                                                                                                                                                         | Live View is the highest-engagement mode ("supervising"). The user needs at-a-glance status per agent, not just a count. Per Parasuraman's automation levels, Level 6--7 automation still requires the human to know _what_ is being automated.                                                                                     | 3               | Add a compact per-agent status row in the `LiveViewHeader` showing agent role, current action, and a colored dot (active/paused/failed).                                                                                                                                                                                                 |
-| H1-05  | 1. Visibility of system status                             | `MissionCreate` -- form submission                          | `handleCreate()` (`MissionCreate.tsx` line 67) shows a toast "Mission created successfully" but performs no actual creation, navigation, or state change. The form remains filled. The user has no way to know whether the "creation" persisted.                                                                                                                                | Even in a prototype, the flow should demonstrate the expected post-creation state (redirect to the new mission, clear the form, or show the mission in the list). The current behavior trains users to distrust the create flow.                                                                                                    | 3               | After the toast, navigate to `/missions` or show a persistent success state with a "View Mission" link. Clear the form or disable resubmission.                                                                                                                                                                                          |
-| H2-01  | 2. Match between system and the real world                 | `StageBadge` -- color coding                                | REVIEW badge uses `accentStrong` (#c85f49, terracotta/red) and ESCALATION uses `accent` (#d56f5f, lighter red). Both are warm red tones. In conventional UI, red signals danger/error. Using red for "review" (a normal, expected stage) conflicts with learned color semantics.                                                                                                | Users will interpret the red REVIEW badge as a problem state. This is especially dangerous because REVIEW is the approval gate -- adding a danger connotation may cause unnecessary alarm or, worse, normalise the red color so ESCALATION (an actual danger) loses its salience.                                                   | 3               | Reserve red/terracotta exclusively for ESCALATION and error states. Use a neutral or cool tone (blue, slate) for REVIEW. Consider the existing `semantic.info` (#5a7a8a) for the review stage.                                                                                                                                           |
-| H2-02  | 2. Match between system and the real world                 | Global -- Military/tactical metaphor                        | Terms like "mission," "escalation," "scope boundary," "agent supervision," and "live supervision mode" are consistently applied. However, "Inbox" as a breadcrumb label on `MissionHome` (line 68) breaks the metaphor -- missions are not emails. Similarly, "FocusPanel" is an internal component name that leaks into the conceptual model (the panel has no visible label). | Metaphor consistency is strong overall, but "Inbox" is a jarring mismatch. It implies passive receipt rather than active command. The military metaphor works well for the target audience (engineering leads overseeing AI agents), but the Inbox label undermines it.                                                             | 1               | Rename "Inbox" breadcrumb to "Dashboard" or "Ops Board." Ensure all user-facing labels stay within the tactical vocabulary.                                                                                                                                                                                                              |
-| H2-03  | 2. Match between system and the real world                 | `ConsequencePanel` -- risk labels                           | Risk levels use natural language ("Risk: High -- potential data inconsistency") which is good. However, the `HeatNode` visual encoding (a colored circle of varying intensity) has no legend or explanation. A user seeing a red circle next to "Risk: Medium -- moderate" gets no calibration for what the colors mean.                                                        | Without a legend, the HeatNode is decorative rather than informative. Users cannot distinguish whether color encodes severity, likelihood, or impact. This violates the principle that visual encodings must be self-explanatory or accompanied by a key.                                                                           | 2               | Add a minimal legend near the first HeatNode usage (e.g., a tooltip or a small inline key: "low / medium / high / critical"). Alternatively, use text labels alongside the node.                                                                                                                                                         |
-| H3-01  | 3. User control and freedom                                | `MissionCreate` -- no cancel/discard                        | The `MissionCreate` page has no Cancel button, no "Discard draft" option, and no confirmation if the user navigates away with filled fields. The breadcrumb links back to Missions, but there is no explicit abandon action.                                                                                                                                                    | Users who start filling a mission form and change their mind have no clear escape hatch. They must use the browser back button or click a breadcrumb, with no warning about losing their work. This is a basic form hygiene issue.                                                                                                  | 2               | Add a "Cancel" or "Discard" button alongside "CREATE MISSION." If fields are dirty, show a confirmation dialog on navigation away (use `beforeunload` or a route blocker).                                                                                                                                                               |
-| H3-02  | 3. User control and freedom                                | `ApprovalBar` -- no confirmation on Approve/Reject          | The Approve and Reject buttons in `ApprovalBar.tsx` have `onClick` handlers that are effectively no-ops (no confirmation dialog, no state change). Even structurally, there is no confirmation step for these high-stakes actions. Contrast with `ConsequencePanel`, which does implement a two-step confirm.                                                                   | Approving or rejecting a mission is a consequential, potentially irreversible action. The `ConsequencePanel` correctly implements inline confirmation for escalation decisions, but the `ApprovalBar` -- which gates code merges -- does not. This inconsistency means the most frequent approval action has the least protection.  | 3               | Add inline confirmation (matching the ConsequencePanel pattern) to both Approve and Reject in the ApprovalBar. Show what will happen: "Approve will merge {branch} to main" / "Reject will revert to {commit}."                                                                                                                          |
-| H3-03  | 3. User control and freedom                                | `ConsequencePanel` -- escalation decision irreversibility   | After confirming an escalation option, `confirmedOption` is set and all other options become disabled (`opacity: 0.4`, `pointerEvents: none`). There is no "Undo" or "Change decision" mechanism. The decision timestamp is shown but no reversal path exists.                                                                                                                  | Escalation decisions are the highest-stakes actions in the system. Making them irreversible in a single click (even with confirmation) violates the principle of undo. If an operator makes a wrong escalation call, they are locked out of correction without developer intervention.                                              | 3               | Add an "Undo" option that is available for a grace period (e.g., 30 seconds) after confirmation. After the grace period, show a "Request reversal" action that logs a new escalation.                                                                                                                                                    |
-| H3-04  | 3. User control and freedom                                | `LiveView` -- exit mechanism                                | Escape key exits Live View (via `useEffect` keydown handler, `LiveView.tsx` lines 99--107). A "Back" link and "Press Esc to exit" text are also shown. However, there is no visible close/exit button -- only a text-only link and a keyboard shortcut.                                                                                                                         | Mouse-primary users may not discover the Esc shortcut. The "Back" link is styled as micro text (`aw-micro`) and visually subordinate. For a fullscreen mode, a prominent exit button (like a floating X or a top-bar close icon) is expected.                                                                                       | 2               | Add a visible close button (X icon) in the `LiveViewHeader`, positioned at the far right. Keep Esc as a power-user shortcut.                                                                                                                                                                                                             |
-| H4-01  | 4. Consistency and standards                               | `MissionPlan` -- "Approve Plan" button style                | The "Approve Plan & Begin Execution" button uses `aw.plateDark` background (dark gray, #4f5559), while every other primary action (Create Mission, Create Workflow, Launch Agent, Save Changes) uses `aw.accent` (terracotta, #d56f5f).                                                                                                                                         | A button that advances the mission lifecycle (plan -> execute) should use the same primary action styling as other create/submit actions. The gray styling makes it look secondary or disabled, reducing the likelihood that users will find and confidently click it.                                                              | 2               | Change the Plan approval button to use `aw.accent` background for consistency with other primary CTAs.                                                                                                                                                                                                                                   |
-| H4-02  | 4. Consistency and standards                               | `TopBar` -- search button disconnect                        | The search icon button in `TopBar.tsx` (line 69) accepts an `onOpenCommandPalette` prop, but this prop is never passed from any page. The `CommandPalette` is opened only via the Ctrl+K handler in `AppShell.tsx`. Clicking the search icon does nothing.                                                                                                                      | A visible, clickable search icon that does nothing on click is a broken affordance. Users who discover it by clicking (rather than knowing Ctrl+K) will conclude search is broken.                                                                                                                                                  | 3               | Thread the `onOpenCommandPalette` callback from `AppShell` through to each page's `TopBar` instance. Alternatively, move the search button into `AppShell` and render it outside the per-page TopBar.                                                                                                                                    |
-| H4-03  | 4. Consistency and standards                               | `LeftNav` vs `MissionDetail` -- navigation to stages        | `LeftNav` shows only top-level nav (Workflows, Missions, Costs, History, Settings). `MissionDetail` has its own NAVIGATION section with links to Plan, Execute, Review, Escalation sub-pages. There is no tab bar or consistent sub-navigation pattern across mission stages.                                                                                                   | Users must remember to find stage navigation only on the MissionDetail page. When they are on, say, the MissionPlan page, there is no stage tab bar to switch to Execute or Review -- they must go back to MissionDetail first. This forces unnecessary round-trips.                                                                | 3               | Add a persistent stage tab bar (Plan / Execute / Review / Escalation) that appears on all mission sub-pages. This eliminates the need to return to the detail page to switch stages.                                                                                                                                                     |
-| H4-04  | 4. Consistency and standards                               | `Settings` -- `SelectControl` is non-functional             | `SelectControl` in `Settings.tsx` (lines 26--36) renders a static value with a down-arrow character but is not an actual `<select>` or dropdown. It has no `onClick`, no state, no options display.                                                                                                                                                                             | Every other form control on the Settings page works (toggles function, policies toggle). The notification preferences appear interactive but are purely decorative, creating an inconsistency in interactivity within the same panel.                                                                                               | 2               | Replace `SelectControl` with a functional `<select>` element or a custom dropdown that updates state. If keeping it decorative for the prototype, add a "(demo)" suffix to signal it.                                                                                                                                                    |
-| H4-05  | 4. Consistency and standards                               | `NotificationCenter` -- navigation target                   | Clicking a notification navigates to `/missions/${n.missionId}` (the MissionDetail overview), regardless of notification type. An escalation notification should go to the escalation page; a stage-change notification should go to the relevant stage.                                                                                                                        | A notification about an escalation that lands on the overview page forces the user to then navigate to the escalation sub-page manually. This breaks the expected direct-to-context navigation pattern.                                                                                                                             | 2               | Route notifications to their contextually relevant page: escalation notifications to `/missions/{id}/escalation`, evidence notifications to `/missions/{id}/review`, stage-change to `/missions/{id}/{stage}`.                                                                                                                           |
-| H5-01  | 5. Error prevention                                        | `MissionCreate` -- no validation                            | The "CREATE MISSION" button (`MissionCreate.tsx` line 312) fires `handleCreate()` regardless of whether any fields are filled. An empty title, empty goal, zero acceptance criteria -- all pass. The preview panel even shows "Untitled Mission" and "No goal specified" as defaults.                                                                                           | Submitting a mission with no title, no goal, and no acceptance criteria is almost certainly a user error. The system should prevent it. The preview panel already surfaces the problem ("Untitled Mission") but does not block submission.                                                                                          | 3               | Disable the Create button when required fields (title, goal) are empty. Show inline validation messages. Optionally highlight the missing fields in the preview panel in a warning color.                                                                                                                                                |
-| H5-02  | 5. Error prevention                                        | `AgentConfigPanel` -- Launch Agent is one-click             | The "LAUNCH AGENT" button (`AgentConfigPanel.tsx` line 172) immediately sets `launched = true` with no confirmation. Launching an agent is a resource-consuming action that starts a potentially expensive AI session.                                                                                                                                                          | Unlike the `ConsequencePanel` (which has inline confirmation), launching an agent has no gate. This is inconsistent and risky: a misclick launches an agent with whatever config happens to be set. Combined with the max-tokens slider (up to 200,000), an accidental launch could be costly.                                      | 2               | Add a brief confirmation step before launch, or at minimum show a summary ("Launch claude-opus-4-6 with 100,000 max tokens and 5 tools?") with Confirm/Cancel.                                                                                                                                                                           |
-| H5-03  | 5. Error prevention                                        | `AgentConfigPanel` -- `setTimeout` shadowing                | `AgentConfigPanel.tsx` line 24 declares `const [timeout, setTimeout] = useState(300)`, which shadows the global `setTimeout` function. While this is a code-level issue rather than a UI issue, it prevents any timer-based logic from working inside this component and could cause subtle bugs in production.                                                                 | A code-level error prevention issue. If a developer adds a `setTimeout()` call inside this component (e.g., for a confirmation timeout), it will silently call the state setter instead, producing bizarre behavior.                                                                                                                | 1               | Rename the state setter to `setTimeoutValue` or `setAgentTimeout` to avoid shadowing the global `setTimeout`.                                                                                                                                                                                                                            |
-| H5-04  | 5. Error prevention                                        | `WorkflowCreate` -- create with no missions                 | The "CREATE WORKFLOW" button fires regardless of whether any missions are selected. A workflow with zero missions is structurally meaningless.                                                                                                                                                                                                                                  | The "MISSION ORDER (0)" label shows the problem, but the system does not prevent submission. A zero-mission workflow would be an empty shell with no operational value.                                                                                                                                                             | 2               | Disable the Create button when `selectedMissionIds.length === 0`. Show a validation hint: "Select at least one mission."                                                                                                                                                                                                                 |
-| H6-01  | 6. Recognition rather than recall                          | `MissionHome` -- filter states not visually distinct enough | The stage and risk filter buttons (`MissionHome.tsx` lines 90--124) use a filled/outlined toggle, but the "all" filter and specific stage filters are the same size and style. There is no active filter summary (e.g., "Showing: execute + high risk").                                                                                                                        | When both filters are set (e.g., stage=execute, risk=high), the user must visually scan two rows of small buttons to determine the current filter state. A summary line would reduce cognitive load.                                                                                                                                | 1               | Add a filter summary line below the filter controls: "Showing {N} missions -- Stage: EXECUTE, Risk: HIGH" with a "Clear filters" link.                                                                                                                                                                                                   |
-| H6-02  | 6. Recognition rather than recall                          | `MissionDetail` -- navigation links are unlabeled buttons   | The NAVIGATION section in `MissionDetail` (`MissionDetail.tsx` lines 246--281) shows four stage links (PLAN, EXECUTE, REVIEW, ESCALATION) as visually identical bordered buttons. There is no indication of which stage is _current_ or which stages have meaningful content.                                                                                                   | The user must recall the mission's current stage (shown in the header badge above) and mentally match it to the navigation links. A current-stage highlight on the nav link would reduce this cognitive load.                                                                                                                       | 2               | Highlight the link matching the mission's current stage (e.g., filled background or underline). Show a dot indicator on stages that have content (e.g., evidence count on Review, escalation count on Escalation).                                                                                                                       |
-| H6-03  | 6. Recognition rather than recall                          | `AgentChatPanel` -- tool call messages require expansion    | `ChatMessage` renders tool-call and tool-result messages as collapsed blocks with `TOOL: {name}` and `RESULT [+]` labels. The user must click to expand and see what the tool actually did.                                                                                                                                                                                     | In a supervision context, the user needs to quickly scan agent actions. Collapsed-by-default tool calls force the user to click every entry to build a mental model of what happened. This is especially problematic during real-time monitoring.                                                                                   | 2               | Show a one-line summary of the tool call result alongside the collapsed block (e.g., "file_write: src/auth.ts -- 12 lines changed"). Keep expansion available for full details.                                                                                                                                                          |
-| H7-01  | 7. Flexibility and efficiency of use                       | `CommandPalette` -- limited actions                         | The CommandPalette (`CommandPalette.tsx` lines 22) offers only one action: "Create Mission." No actions for common power-user tasks: pause all agents, jump to escalation, filter missions, open Live View for a specific mission.                                                                                                                                              | The command palette is the primary power-user accelerator, but it is limited to navigation and a single action. Operators managing multiple missions need quick access to operational commands, not just page navigation.                                                                                                           | 2               | Add actions: "Pause all agents," "Open Live View for {mission}," "Filter by stage," "Go to latest escalation." Allow type-ahead filtering of these actions.                                                                                                                                                                              |
-| H7-02  | 7. Flexibility and efficiency of use                       | Global -- no keyboard shortcuts beyond Ctrl+K and Esc       | The only keyboard shortcuts are Ctrl+K (command palette) and Esc (exit Live View). No shortcuts for approving, rejecting, pausing agents, navigating stages, or switching between missions.                                                                                                                                                                                     | Power users managing 5+ concurrent missions will need rapid keyboard-driven workflows. The current mouse-heavy interaction model does not scale. The CHI 2024 research on interruption costs supports the need for minimal-friction interaction patterns.                                                                           | 2               | Define a keyboard shortcut scheme: `a` to approve (in review), `r` to reject, `p` to pause agent, `j/k` to navigate mission list, `1-4` to switch stage tabs. Show a shortcut legend in the command palette.                                                                                                                             |
-| H7-03  | 7. Flexibility and efficiency of use                       | `MissionHome` -- no sort options                            | The mission list sorts by stage priority then risk tier (hardcoded in `MissionHome.tsx` lines 53--59). Users cannot sort by date, owner, or verification state.                                                                                                                                                                                                                 | Different workflows require different sort orders. A user triaging escalations wants severity-first; a user doing daily review wants recency-first. The hardcoded sort prevents adaptation to different operational contexts.                                                                                                       | 1               | Add a sort dropdown (Priority, Date Updated, Risk, Owner) next to the filter controls. Persist the selection in URL search params.                                                                                                                                                                                                       |
-| H8-01  | 8. Aesthetic and minimalist design                         | `MissionExecute` -- three-column layout density             | The Execute page has a 260px left panel (mission context), a flexible center (agent work surface), and a 260px right panel (evidence rail). On a 1440px screen, the center gets ~920px. The center contains: header, view toggle, mission header, agent swimlanes, execute preview (320px tall grid), and session panes. This is a very tall, scrollable single column.         | The information density is high but not well-prioritized. The mission header (`MissionHeader`) repeats information already shown in the left panel (title, badges). The execute preview shows both an agent log and a code viewer in a cramped 320px-tall split. This creates visual noise without adding proportional value.       | 2               | Remove the duplicated `MissionHeader` from the center area (the left panel already shows this). Make the execute preview resizable. Consider collapsible sections for the agent swimlanes when there are many sessions.                                                                                                                  |
-| H8-02  | 8. Aesthetic and minimalist design                         | `TopBar` -- right-side clutter                              | The TopBar right side (`TopBar.tsx` lines 67--85) shows: search icon, notification bell, avatar circle ("SC"), and a date string ("MISSION.CTRL // {date}"). The date string duplicates the bottom bar timestamp and adds no unique value.                                                                                                                                      | Four items plus a decorative date string in a 52px-high bar creates visual clutter. The "MISSION.CTRL //" prefix is atmospheric but consumes space that could show genuinely useful information (like "3 agents running" or "1 escalation pending").                                                                                | 1               | Remove the date string from the TopBar (it exists in the bottom bar). Use that space for a compact global status indicator if needed.                                                                                                                                                                                                    |
-| H8-03  | 8. Aesthetic and minimalist design                         | `CostDashboard` -- SVG bars are not responsive              | The cost bar charts use a fixed `BAR_VIEW_WIDTH = 400` and `style={{ maxWidth: 400 }}`. On screens narrower than ~900px, the bars will overflow or be truncated.                                                                                                                                                                                                                | While the prototype likely targets desktop, the bars should scale with the container to avoid horizontal overflow or clipping in the `max-w-3xl` content area.                                                                                                                                                                      | 1               | Replace fixed-width SVG with a percentage-based width or use `viewBox` properly with `width="100%"` and `preserveAspectRatio`.                                                                                                                                                                                                           |
-| H9-01  | 9. Help users recognize, diagnose, and recover from errors | `MissionDetail` -- "Mission not found" is a dead end        | When a mission ID does not match, `MissionDetail` shows "Mission not found" with no context about _why_ or what to do. No suggestion to check the URL, no link to search, no list of valid missions.                                                                                                                                                                            | A user who follows a stale link (e.g., from a notification about a deleted mission) gets a terse error with no recovery path. The `NotFound` page (in `App.tsx`) is better -- it shows an `EmptyState` with a description and a link to Missions. The mission-level not-found should match this quality.                            | 2               | Use the `EmptyState` component with a description: "Mission {id} was not found. It may have been completed or removed." Add a "Search missions" link and a "View all missions" link.                                                                                                                                                     |
-| H9-02  | 9. Help users recognize, diagnose, and recover from errors | `AgentChatPanel` -- agent failure states                    | The `statusDot` mapping (`AgentChatPanel.tsx` line 14) maps "failed" to `aw.accentStrong` (terracotta). But there is no failure message, no error detail, and no recovery action when a session is in the "failed" state. The dot turns red; that is all.                                                                                                                       | An agent failure is a critical event. The user sees a red dot but gets no information about _what_ failed, _why_, or _how to recover_. There is no "Retry," "View error log," or "Report bug" action.                                                                                                                               | 3               | When an agent session has `status: 'failed'`, show an inline error banner in the chat panel with: the error message, a "View error details" expandable, and a "Retry" button.                                                                                                                                                            |
-| H9-03  | 9. Help users recognize, diagnose, and recover from errors | `ApprovalBar` -- blocker details not shown                  | The `ApprovalBar` shows "{N} blockers remaining" but does not list _what_ the blockers are. The user must scroll down to the evidence rail to find failing evidence items.                                                                                                                                                                                                      | The approval bar is the decision surface. Showing a count without specifics forces the user to hunt for the actual problems. This is exactly the pattern the CHI 2024 evidence-trail research warns against: counts without trails erode trust.                                                                                     | 2               | Add a compact list of blocker titles below the count in the ApprovalBar, or link each blocker to its evidence item. E.g., "2 blockers: EV-003 (failing E2E), EV-004 (missing test)."                                                                                                                                                     |
-| H10-01 | 10. Help and documentation                                 | Global -- no onboarding or help system                      | There is no onboarding flow, no help button, no tooltips, no documentation link, and no contextual hints anywhere in the prototype. The metaphor-heavy UI (missions, escalations, verification states, risk tiers) is introduced without explanation.                                                                                                                           | A new user encountering "ESCALATION" for the first time has no way to learn what it means in this system's context. There is no "What is a mission?" explainer, no "How do stages work?" guide, no "What does this risk tier mean?" tooltip. The military metaphor is powerful but opaque to newcomers.                             | 3               | Add (1) a first-run onboarding overlay explaining the Workflow -> Mission -> Live View hierarchy, (2) tooltips on StageBadge, RiskBadge, and VerificationBadge explaining their meaning, (3) a Help link in the LeftNav bottom section, and (4) contextual help icons (?) next to section headers like "SCOPE BOUNDARY" and "RISK TIER." |
-| H10-02 | 10. Help and documentation                                 | `CommandPalette` -- no shortcut hints                       | The command palette shows items but does not display keyboard shortcuts for common actions. No hint that Enter selects, Arrow keys navigate, or Esc closes.                                                                                                                                                                                                                     | Users unfamiliar with command palette conventions (from VS Code, Spotlight, etc.) may not discover arrow-key navigation or Enter selection. Adding hints reduces the learning curve.                                                                                                                                                | 1               | Show keyboard hints at the bottom of the palette: "Arrow keys to navigate, Enter to select, Esc to close."                                                                                                                                                                                                                               |
-| H10-03 | 10. Help and documentation                                 | `AgentConfigPanel` -- unexplained configuration options     | The system prompt is displayed as a read-only textarea with no explanation of why it is read-only, whether it can be edited elsewhere, or what effect changing model/tools/tokens has. The timeout slider (30--600s) has no units label until you read the value ("300s").                                                                                                      | An operator who does not understand what "MAX TOKENS: 100,000" means for cost or behavior has no way to learn from the UI. The read-only system prompt may confuse users who expect to customize it.                                                                                                                                | 2               | Add brief helper text under each config option: "MAX TOKENS: Maximum output length. Higher values increase cost." For the read-only system prompt, add a note: "Configured in mission plan. Edit via Plan stage." Add explicit "seconds" label to the timeout control.                                                                   |
+| #   | Heuristic                                               | Severity             | Pain Points |
+| --- | ------------------------------------------------------- | -------------------- | ----------- |
+| H1  | Visibility of system status                             | **4 -- Catastrophe** | A           |
+| H2  | Match between system and real world                     | **1 -- Cosmetic**    | --          |
+| H3  | User control and freedom                                | **3 -- Major**       | B           |
+| H4  | Consistency and standards                               | **2 -- Minor**       | A, B        |
+| H5  | Error prevention                                        | **1 -- Cosmetic**    | --          |
+| H6  | Recognition rather than recall                          | **2 -- Minor**       | C           |
+| H7  | Flexibility and efficiency of use                       | **2 -- Minor**       | A, B        |
+| H8  | Aesthetic and minimalist design                         | **1 -- Cosmetic**    | --          |
+| H9  | Help users recognize, diagnose, and recover from errors | **3 -- Major**       | --          |
+| H10 | Help and documentation                                  | **1 -- Cosmetic**    | --          |
+
+**Severity scale**: 0 = not a problem, 1 = cosmetic, 2 = minor usability problem, 3 = major usability problem, 4 = usability catastrophe (must fix before release)
 
 ---
 
-## Synthesis
+## H1: Visibility of System Status
 
-### Top 5 Highest-Severity Problems
+> _The design should always keep users informed about what is going on, through appropriate feedback within reasonable time._
 
-1. **H1-02 (Severity 4): Pause/Play control does nothing observable.** The agent lifecycle controls (`AgentChatPanel`) toggle local state without affecting the streaming simulation or the status display. This is the single most dangerous usability issue: it creates an illusion of control. An operator who believes they have paused an agent will not intervene through other means, potentially allowing an uncontrolled agent to continue executing. This directly instantiates Bainbridge's "ironies of automation" -- the control interface undermines the operator's ability to actually control. **Fix**: Wire pause/play to the simulation; update the StatusBar; show a visible pause banner.
+### Severity: 4 -- Usability Catastrophe
 
-2. **H1-01 and H1-04 (Severity 3): No real-time "what is the agent doing now?" indicator.** Both the Execute page swimlanes and the Live View header lack a current-step highlight or per-agent action summary. The user sees history and a count, but not present state. For a supervision tool, this is the core information need. **Fix**: Add a pulsing current-step marker in swimlanes; add per-agent status chips in the Live View header.
+### Pain Point Mapping: A (Inline Agent Visibility)
 
-3. **H4-02 (Severity 3): Search icon click does nothing.** The `TopBar` search button's `onOpenCommandPalette` callback is never wired. This is a broken affordance visible on every page. Users who click the magnifying glass icon will conclude the feature is broken. **Fix**: Thread the callback from `AppShell` to `TopBar`, or move the search trigger into the shell layout.
+### What works
 
-4. **H5-01 (Severity 3): Mission creation has zero validation.** A user can "create" a mission with all fields empty. No required-field enforcement, no inline errors, no prevention of meaningless submissions. For a system where missions drive agent behavior, an empty mission is a critical error. **Fix**: Add required-field validation; disable submit when incomplete; show inline error messages.
+1. **Stage badges** communicate mission lifecycle position clearly. `StageBadge` renders the current stage with color coding on every mission card and detail page.
+   - File: `apps/web/src/components/mission/StageBadge.tsx`
 
-5. **H10-01 (Severity 3): No onboarding, help, or contextual documentation.** The metaphor-heavy interface (missions, escalations, verification states, risk tiers, scope boundaries) is presented without any explanation. New users face a steep learning curve with no support. **Fix**: Add onboarding, tooltips, and a help system.
+2. **LeftNav bottom status** shows active mission count and review count at a glance, providing a persistent summary.
+   - File: `apps/web/src/components/shell/LeftNav.tsx:110-119`
 
-### Quickest Wins (Low Effort, High Impact)
+3. **Evidence summary** on `MissionDetail` shows pass/fail/warning counts, giving a quick verification pulse.
+   - File: `apps/web/src/pages/MissionDetail.tsx:209-220`
 
-1. **Wire the TopBar search button (H4-02).** Pass `onOpenCommandPalette` as a prop from `AppShell` to `TopBar`. This is a single prop-threading change that fixes a broken control on every page. **Effort**: ~15 minutes.
+4. **Agent session counts** are shown on the Execute page, with "X agents running" indicators.
+   - File: `apps/web/src/pages/MissionExecute.tsx:306-310`
 
-2. **Update the frozen timestamp (H1-03).** Add a `useEffect` with `setInterval` in `AppShell` to update the clock every second. **Effort**: ~10 minutes.
+5. **LiveView header bar** shows active agent count and branch name.
+   - File: `apps/web/src/pages/LiveView.tsx:86-90`
 
-3. **Add stage tab bar to mission sub-pages (H4-03).** Extract the NAVIGATION section from `MissionDetail` into a `StageTabBar` component and render it on Plan, Execute, Review, and Escalation pages. Highlight the current stage. **Effort**: ~1 hour.
+6. **Toast notifications** provide immediate feedback for approval, rejection, and re-plan actions.
+   - File: `apps/web/src/pages/MissionPlan.tsx:174` (plan approval toast)
+   - File: `apps/web/src/pages/MissionReview.tsx:71` (review action toast)
 
-4. **Add basic form validation to MissionCreate (H5-01).** Conditionally disable the Create button when title is empty. Add a red border to empty required fields on submit attempt. **Effort**: ~30 minutes.
+### What fails
 
-5. **Fix StageBadge color for REVIEW (H2-01).** Change `review` in `stageConfig` from `aw.accentStrong` to `semantic.info` or `aw.plate`. Single line change. **Effort**: ~5 minutes.
+1. **CRITICAL: No inline agent work visibility.** The primary job of a supervisor -- "see what the agent is doing right now" -- requires leaving the AppShell entirely and entering a fullscreen LiveView (`/missions/:id/live`). There is no inline panel, split view, or picture-in-picture mode that shows live agent work within the normal navigation context.
+   - File: `apps/web/src/App.tsx:48-49` -- LiveView routes are defined OUTSIDE the AppShell element tree
+   - File: `apps/web/src/pages/LiveView.tsx:170-204` -- entire page is `h-screen flex-col`, fully standalone
 
-### Structural Issues Requiring Redesign
+2. **MissionHome cards show no agent progress.** The `MissionCard` component displays stage, risk, and title, but no indicator of how far along an executing mission is. No progress bar, no percentage, no "last agent action 30s ago" timestamp.
+   - File: `apps/web/src/pages/MissionHome.tsx:184-190` -- card renders with no progress data
 
-1. **Agent lifecycle controls are purely decorative.** The Pause, Stop, Restart buttons in `AgentControls` and the entire `AgentConfigPanel` launch flow are visual shells with no behavioral backbone. This is not just a wiring issue -- the prototype needs a state machine for agent lifecycle (idle -> configuring -> launching -> active -> paused -> stopped -> failed) that all components observe and modify. The current per-component `useState` approach will not scale. **Redesign needed**: A shared agent state context (React context or state manager) that all agent-related components subscribe to.
+3. **Execute page shows partial agent status but no live workspace.** The Execute page (`MissionExecute`) has agent swimlanes (log entries) and a code preview, but these are NOT the same as the LiveView's `WorkspaceLayout` which includes file tree, browser preview, terminal emulator, and chat panel. A user seeing the Execute page might believe they have full visibility, but they are seeing a reduced, static-looking view.
+   - File: `apps/web/src/pages/MissionExecute.tsx:207-294` -- "EXECUTE PREVIEW" grid with agent log + code viewer
+   - Contrast with: `apps/web/src/components/workspace/WorkspaceLayout.tsx:47-77` -- full 3-column, 2-row grid with FileTree, CodeViewer, BrowserPreview, TerminalEmulator, AgentChatPanel
 
-2. **No persistent sub-navigation within a mission.** Navigating between Plan, Execute, Review, and Escalation requires returning to MissionDetail. This reflects a structural routing issue: the stages are siblings under `/missions/:id/` but have no shared layout component. **Redesign needed**: A `MissionLayout` route wrapper (similar to `AppShell`) that renders a stage tab bar and an `<Outlet />` for stage content. This would be a router restructuring.
+4. **No real-time indicators.** Since all data is static, there are no WebSocket connections, polling, or optimistic updates. But even the UI structure does not include placeholders for real-time status (no spinning indicators, no "last updated" timestamps on agent activity, no heartbeat indicators).
 
-3. **Notification routing is context-blind.** All notifications navigate to `/missions/:id` regardless of type. Fixing this properly requires the notification data model to include a `targetPath` field and for the `NotificationCenter` to use it. The current architecture assumes a single destination per mission, which does not match the multi-stage reality. **Redesign needed**: Extend the `Notification` interface with an explicit navigation target; update the click handler.
+### Cross-references
 
-4. **The command palette is navigation-only.** To become a true power-user accelerator, it needs an action dispatch system -- not just page links but operational commands (pause agent, approve mission, filter list). This requires an action registry pattern: a centralized list of available actions that the palette can search and execute. **Redesign needed**: An `ActionRegistry` that pages and components register actions into, and the palette queries.
+- **conceptual-model.md**: "Monitor agent work" identified as a primary action hidden behind fullscreen mode switch
+- **state-model.md**: No "viewing" substate exists for mission lifecycle
+- **information-architecture.md**: LiveView is architecturally disconnected from AppShell -- an orphan page
+- **user-journeys.md**: "Check what agent is doing" journey requires 4+ clicks and forces fullscreen context switch
 
 ---
 
-## Methodology Notes
+## H2: Match Between System and Real World
 
-- All findings are anchored to specific files, line numbers, and component names in the codebase at `apps/web/src/`.
-- Severity ratings follow Nielsen's 0--4 scale, calibrated for a supervision tool where incorrect operator mental models can have downstream consequences on agent behavior.
-- The evaluation accounts for the prototype status (static mock data, no backend) and does not penalize the absence of a backend API. However, it does flag cases where the prototype's behavior actively misleads users about system capabilities (e.g., the non-functional pause button).
-- HCI research references: Kersten & Murphy (task-based navigation), CHI 2024 (evidence trails > confidence scores), GitHub Developer Experience research (interruption cost), Parasuraman (automation levels), Bainbridge (ironies of automation).
+> _The design should speak the users' language. Use words, phrases, and concepts familiar to the user._
+
+### Severity: 1 -- Cosmetic
+
+### What works
+
+1. **"Mission" metaphor** is effective and well-executed. The military/space-operations framing (missions, escalations, evidence, supervision) creates a coherent domain language that maps well to the high-stakes nature of delegating code changes to AI agents.
+   - File: `apps/web/src/data/missions.ts:8-35` -- Mission type is well-structured with familiar software concepts (goal, scope, acceptance criteria, risks)
+
+2. **Stage lifecycle** (plan, execute, review, escalation) maps naturally to software development workflows that tech leads already understand.
+   - File: `apps/web/src/components/mission/StageTabBar.tsx:4-10` -- stages array with clear labels
+
+3. **Evidence** terminology correctly evokes quality assurance and verification concepts familiar to engineering leads.
+   - File: `apps/web/src/data/evidence.ts`
+
+4. **Risk tier** (low/medium/high) and **verification state** (pending/passing/failing/blocked) use standard engineering language.
+   - File: `apps/web/src/data/missions.ts:2-4`
+
+### What could improve
+
+1. **"Escalation" conflation.** Escalation serves as both a stage (`stage: 'escalation'`) and an overlay flag (`escalationActive: boolean`). The `@deprecated` comment on the Stage type (line 1 of `missions.ts`) acknowledges this is changing, but the UI still treats it as a stage in `StageTabBar`.
+   - File: `apps/web/src/data/missions.ts:1` -- `/** @deprecated 'escalation' as a stage is being replaced by the escalationActive overlay flag */`
+
+2. **"Live View" vs "Supervision Mode" vs "Workspace"** terminology drift. The banner says "LIVE SUPERVISION MODE" (line 176 of `LiveView.tsx`), the links say "ENTER LIVE VIEW", and the underlying component is `WorkspaceLayout`. Three different names for one concept.
+   - File: `apps/web/src/pages/LiveView.tsx:176` -- "LIVE SUPERVISION MODE"
+   - File: `apps/web/src/pages/MissionDetail.tsx:294` -- "ENTER LIVE VIEW"
+   - File: `apps/web/src/components/workspace/WorkspaceLayout.tsx` -- "WorkspaceLayout" component name
+
+### Cross-references
+
+- **glossary.md**: Documented "Live View" vs "workspace" vs "supervision mode" terminology drift
+- **glossary.md**: "Plan" conflates stage and content type
+
+---
+
+## H3: User Control and Freedom
+
+> _Users often perform actions by mistake. They need a clearly marked "emergency exit" to leave the unwanted action without having to go through an extended process._
+
+### Severity: 3 -- Major Usability Problem
+
+### Pain Point Mapping: B (Mode Switching)
+
+### What works
+
+1. **LiveView exit mechanisms** are present and discoverable:
+   - Esc key handler: `apps/web/src/pages/LiveView.tsx:106-109`
+   - "Press Esc to exit" label: `apps/web/src/pages/LiveView.tsx:177`
+   - X button in header bar: `apps/web/src/pages/LiveView.tsx:178-184`
+   - "Back" link to execute page: `apps/web/src/pages/LiveView.tsx:43-50`
+
+2. **Breadcrumb navigation** on TopBar provides context and back-navigation on all AppShell pages.
+   - File: `apps/web/src/components/shell/TopBar.tsx:80-107`
+
+3. **"Back to mission" links** appear consistently on sub-pages (Plan, Execute, Review, Escalation).
+   - File: `apps/web/src/pages/MissionPlan.tsx:85-96`
+   - File: `apps/web/src/pages/MissionExecute.tsx:100-111`
+   - File: `apps/web/src/pages/MissionReview.tsx:107-118`
+   - File: `apps/web/src/pages/MissionEscalation.tsx:116-127`
+
+4. **Escalation undo** is the one action with an undo mechanism. The `ConsequencePanel` supports an undo callback via toast.
+   - File: `apps/web/src/pages/MissionEscalation.tsx:194-198`
+
+### What fails
+
+1. **MAJOR: No quick toggle between supervisory and agent/dev modes.** Entering LiveView is a full page navigation that leaves the AppShell entirely. Re-entering requires navigating back through MissionDetail or Execute. There is no toggle, no split-view, no "peek" mode.
+   - File: `apps/web/src/App.tsx:48-49` -- LiveView routes outside AppShell
+   - File: `apps/web/src/pages/MissionExecute.tsx:182-193` -- "ENTER LIVE VIEW" is a navigation Link, not a toggle
+
+2. **No undo for plan approval.** Clicking "Approve Plan & Begin Execution" triggers a toast but performs an irreversible (conceptual) state change. No confirmation dialog, no undo.
+   - File: `apps/web/src/pages/MissionPlan.tsx:166-177` -- onClick directly calls `show()` toast
+
+3. **No undo for review approve/reject.** Same pattern: toast-only feedback, no confirmation step.
+   - File: `apps/web/src/pages/MissionReview.tsx:61-72` -- `handleAction` directly fires toast
+
+4. **LiveView re-entry cost.** After exiting LiveView via Esc, re-entering requires: navigate to mission detail or execute page, scroll to find "ENTER LIVE VIEW" link, click it. This is a 3-step process for what should be a quick toggle.
+   - File: `apps/web/src/pages/LiveView.tsx:101-103` -- exit always goes to execute page
+
+5. **No keyboard shortcut for LiveView.** While Cmd+K (command palette) and Cmd+Shift+M (mission switcher) exist, there is no keyboard shortcut to enter or re-enter LiveView for the current mission.
+   - File: `apps/web/src/components/shell/AppShell.tsx:38-53` -- only Cmd+K and Cmd+Shift+M registered
+
+### Cross-references
+
+- **user-journeys.md**: Journey 3 "Monitor Active Agents" documents the heavy context-switch cost
+- **information-architecture.md**: LiveView is an orphan page outside AppShell hierarchy
+- **consistency-audit.md**: Mode switching is a full page transition, not a panel toggle
+
+---
+
+## H4: Consistency and Standards
+
+> _Users should not have to wonder whether different words, situations, or actions mean the same thing._
+
+### Severity: 2 -- Minor Usability Problem
+
+### Pain Point Mapping: A, B
+
+### What works
+
+1. **Design system consistency.** The `aw` token system is applied consistently across all pages. Colors, typography classes (`aw-micro`, `aw-section`, `aw-body`), and spacing follow a coherent pattern.
+   - File: `apps/web/src/theme/tokens.ts:1-44`
+
+2. **`StageTabBar`** provides consistent stage navigation across all mission sub-pages (detail, plan, execute, review, escalation).
+   - File: `apps/web/src/components/mission/StageTabBar.tsx:14-50`
+
+3. **TopBar** structure is consistent across all AppShell pages: breadcrumbs, mission switcher, search, notifications, avatar.
+   - File: `apps/web/src/components/shell/TopBar.tsx:14-134`
+
+4. **"Not found" states** are handled on every mission page with consistent messaging.
+   - File: `apps/web/src/pages/MissionDetail.tsx:36-49`
+   - File: `apps/web/src/pages/MissionPlan.tsx:31-55`
+   - File: `apps/web/src/pages/MissionExecute.tsx:36-60`
+
+### What fails
+
+1. **Action button placement is inconsistent across review surfaces.**
+   - `MissionPlan.tsx:165-188`: Approve/Request Changes buttons are at the bottom of the main content area, left-aligned
+   - `MissionReview.tsx` via `ApprovalBar.tsx:19-91`: Approve/Reject/Re-plan buttons are in a sticky bar at the top of the page, right-aligned
+   - `MissionEscalation.tsx` via `ConsequencePanel.tsx`: Decision buttons are in the right rail
+
+2. **Evidence rail widths differ across pages.**
+   - `MissionPlan.tsx:193`: `w-[280px]` right rail
+   - `MissionExecute.tsx:342`: `w-[260px]` right rail
+   - `MissionEscalation.tsx:189`: `w-[300px]` right rail
+
+3. **Two different agent views create a conceptual split.** The Execute page shows a partial agent view (swimlanes + condensed log + code preview at 320px height), while LiveView shows a full `WorkspaceLayout` (file tree + code viewer + browser preview + terminal emulator + agent chat in a grid). These are different components rendering different data views of the same underlying concept.
+   - File: `apps/web/src/pages/MissionExecute.tsx:207-294` -- partial view
+   - File: `apps/web/src/components/workspace/WorkspaceLayout.tsx:47-77` -- full view
+
+4. **`MissionDetail` has redundant navigation.** Both `StageTabBar` (line 106) and inline navigation links (lines 260-296) provide routes to the same sub-pages, creating a "which one do I use?" moment.
+   - File: `apps/web/src/pages/MissionDetail.tsx:106` -- StageTabBar
+   - File: `apps/web/src/pages/MissionDetail.tsx:260-296` -- inline NAVIGATION section with duplicate links
+
+5. **`aw-focus-ring` class is applied to interactive elements but there are no ARIA landmark roles** on the main regions. LeftNav uses `<nav>` (good), but the main content area is just a `<main>` without `role` or `aria-label`.
+   - File: `apps/web/src/components/shell/AppShell.tsx:71-73` -- plain `<main>` tag
+
+### Cross-references
+
+- **consistency-audit.md**: Full audit of action button placement across all review surfaces
+- **consistency-audit.md**: Evidence rail width inconsistencies documented
+- **glossary.md**: Terminology drift between "Live View", "workspace", "supervision mode"
+
+---
+
+## H5: Error Prevention
+
+> _Good error messages are important, but the best designs carefully prevent problems from occurring in the first place._
+
+### Severity: 1 -- Cosmetic
+
+### What works
+
+1. **Conditional approve button.** On the review page, the Approve button is disabled when `canApprove` is false (blockers remain or verification is not passing). Visual opacity drops to 0.5 and cursor changes to `not-allowed`.
+   - File: `apps/web/src/components/review/ApprovalBar.tsx:72-87` -- `disabled={!canApprove}`, `opacity: canApprove ? 1 : 0.5`
+
+2. **Static data eliminates network errors.** Since all data is imported directly, there are no API calls that could fail, timeout, or return unexpected responses. This is a prototype advantage.
+   - File: `apps/web/src/data/missions.ts` -- all data is static
+
+3. **ErrorBoundary** wraps the main content area and resets on route changes.
+   - File: `apps/web/src/components/shell/AppShell.tsx:85-87` -- `<ErrorBoundary resetKey={location.pathname}>`
+
+### What could improve
+
+1. **No confirmation dialogs for destructive actions.** Plan approval, review approval, and review rejection all fire immediately on click. For high-risk missions (like MSN-001 with `riskTier: 'high'`), a confirmation dialog would be prudent.
+   - File: `apps/web/src/pages/MissionPlan.tsx:174` -- direct toast on click
+   - File: `apps/web/src/pages/MissionReview.tsx:71` -- direct toast on click
+
+2. **MissionCreate form** has no field validation indicators shown before submission (though this is less critical in a static prototype).
+
+3. **No "are you sure?" when exiting LiveView** during active agent work. The Esc key immediately navigates away.
+   - File: `apps/web/src/pages/LiveView.tsx:106-109` -- immediate navigation on Escape
+
+### Cross-references
+
+- **failure-path-audit.md**: No confirmation dialogs documented as a gap
+- **state-model.md**: No guard states before irreversible transitions
+
+---
+
+## H6: Recognition Rather Than Recall
+
+> _Minimize the user's memory load by making elements, actions, and options visible._
+
+### Severity: 2 -- Minor Usability Problem
+
+### Pain Point Mapping: C (Rich Plan Content)
+
+### What works
+
+1. **StageTabBar** provides excellent recognition. The five stage tabs (OVERVIEW, PLAN, EXECUTE, REVIEW, ESCALATION) are always visible with the active stage highlighted, so users never need to remember where they are in the lifecycle.
+   - File: `apps/web/src/components/mission/StageTabBar.tsx:27-49`
+
+2. **Breadcrumbs** in TopBar show the full navigation path, reducing recall burden for "where am I?".
+   - File: `apps/web/src/components/shell/TopBar.tsx:80-107`
+
+3. **MissionSwitcher dropdown** shows recent missions, reducing the need to navigate back to MissionHome to find a previously visited mission.
+   - File: `apps/web/src/components/shell/MissionSwitcherDropdown.tsx`
+
+4. **Filter state persistence** via URL search params means filters survive page refreshes.
+   - File: `apps/web/src/pages/MissionHome.tsx:29-59` -- `useSearchParams` for filter state
+
+5. **Command palette** (Cmd+K) allows action discovery without memorizing navigation paths.
+   - File: `apps/web/src/components/shell/CommandPalette.tsx:14-22` -- nav pages and actions listed
+
+### What fails
+
+1. **Plan content renders as plain text with no visual hierarchy.** Goals, scope boundaries, acceptance criteria, and risks are displayed using the same `aw-body` text style with only `aw-micro` uppercase labels as section dividers. For longer plans, this becomes a wall of undifferentiated text that users must read sequentially rather than scan.
+   - File: `apps/web/src/pages/MissionPlan.tsx:101-161` -- all content rendered via `{mission.goal}`, `{mission.scopeBoundary}` as raw text interpolation
+   - Contrast with: `apps/web/src/components/mission/MarkdownViewer.tsx:11-21` -- a capable markdown renderer that supports headings, code blocks, lists, bold, italic, and tables, but is ONLY used inside `ArtifactPanel`
+   - File: `apps/web/src/components/mission/ArtifactPanel.tsx:104-109` -- MarkdownViewer only used for artifact type 'markdown'
+
+2. **No visual differentiation between mission stages on MissionHome cards.** Stage is shown as a small badge, but card layout and content are identical regardless of whether the mission is in plan (needs review), execute (needs monitoring), or review (needs approval). Different stages imply different primary actions, but the card does not surface this.
+
+3. **LiveView has no indication of which acceptance criteria are being worked on.** When monitoring an agent in LiveView, the user must recall the acceptance criteria from the plan page. There is no panel showing criteria status.
+   - File: `apps/web/src/pages/LiveView.tsx:170-204` -- no acceptance criteria display
+
+### Cross-references
+
+- **conceptual-model.md**: Plan document should be an artifact type, enabling MarkdownViewer rendering
+- **user-journeys.md**: "Review and approve plan" journey notes difficulty scanning plain text plans
+- **glossary.md**: "Plan" conflates stage and content -- if plan were an artifact, it would get rich rendering
+
+---
+
+## H7: Flexibility and Efficiency of Use
+
+> _Accelerators -- unseen by the novice user -- may speed up the interaction for the expert user._
+
+### Severity: 2 -- Minor Usability Problem
+
+### Pain Point Mapping: A, B
+
+### What works
+
+1. **Keyboard shortcuts** for power users:
+   - Cmd+K / Ctrl+K: Command palette (`apps/web/src/components/shell/AppShell.tsx:41-44`)
+   - Cmd+Shift+M / Ctrl+Shift+M: Mission switcher (`apps/web/src/components/shell/AppShell.tsx:46-49`)
+   - Esc: Exit LiveView (`apps/web/src/pages/LiveView.tsx:106-109`)
+   - 'n': New mission from MissionHome (`apps/web/src/pages/MissionHome.tsx:78-88`)
+
+2. **Command palette** provides quick navigation to any page or mission without using the mouse.
+   - File: `apps/web/src/components/shell/CommandPalette.tsx:14-22`
+
+3. **Mission switcher dropdown** allows rapid switching between missions without returning to the inbox.
+   - File: `apps/web/src/components/shell/TopBar.tsx:29-41`
+
+4. **Filter and sort controls** on MissionHome allow efficient triage of the mission inbox.
+   - File: `apps/web/src/pages/MissionHome.tsx:119-178`
+
+### What fails
+
+1. **No keyboard shortcut for LiveView.** The most common expert action -- "quickly check what the agent is doing" -- has no keyboard accelerator. There is no Cmd+L or similar shortcut.
+   - File: `apps/web/src/components/shell/AppShell.tsx:38-53` -- only two shortcuts registered
+
+2. **No inline/split preview mode.** Expert users who want to monitor agent work while reviewing evidence or plan content must either use two browser windows or constantly switch between AppShell pages and fullscreen LiveView. No resizable panel or split-screen option exists.
+
+3. **No bulk actions on MissionHome.** A supervisor managing 5+ missions cannot bulk-approve plans, bulk-acknowledge escalations, or bulk-filter across workflows. Each action requires navigating to the individual mission.
+
+4. **Command palette does not include LiveView as a target.** The `navPages` array includes Missions, Workflows, History, Settings, and Costs, but not LiveView for any specific mission.
+   - File: `apps/web/src/components/shell/CommandPalette.tsx:14-20` -- no LiveView entries
+
+5. **No customizable workspace layout.** The WorkspaceLayout in LiveView has a fixed grid (`200px 1fr 380px` columns, `1fr 280px` rows). Users cannot resize panels, hide the file tree, or maximize the terminal.
+   - File: `apps/web/src/components/workspace/WorkspaceLayout.tsx:50-53` -- fixed grid template
+
+### Cross-references
+
+- **information-architecture.md**: LiveView not accessible from LeftNav or command palette
+- **user-journeys.md**: "Check what agent is doing" takes 4+ clicks
+
+---
+
+## H8: Aesthetic and Minimalist Design
+
+> _Interfaces should not contain information that is irrelevant or rarely needed._
+
+### Severity: 1 -- Cosmetic
+
+### What works
+
+1. **`aw` design system** creates a clean, cohesive visual language. The muted color palette (shell grays, paper whites, subtle accent red) avoids visual noise.
+   - File: `apps/web/src/theme/tokens.ts:1-21` -- restrained palette with clear hierarchy
+
+2. **Ambient visual effects** (AmbientDots, scanlines) add texture without overwhelming content.
+   - File: `apps/web/src/components/shell/AppShell.tsx:68` -- `<AmbientDots />`
+   - File: `apps/web/src/components/shell/AppShell.tsx:83` -- `aw-scanlines` class
+
+3. **PanelPins and CornerBrackets** provide visual framing for panels without heavy borders. This maintains the "operating surface" aesthetic while clearly delineating content regions.
+   - File: `apps/web/src/components/primitives/PanelPins.tsx`
+   - File: `apps/web/src/components/primitives/CornerBracket.tsx`
+
+4. **Bottom timestamp bar** provides system context minimally.
+   - File: `apps/web/src/components/shell/AppShell.tsx:92-107` -- "MISSION.CTRL // OPERATING SURFACE v0.1.0" + clock
+
+### What could improve
+
+1. **MissionDetail has redundant navigation.** Both StageTabBar and an inline NAVIGATION section provide links to the same sub-pages. This is information clutter.
+   - File: `apps/web/src/pages/MissionDetail.tsx:106` -- StageTabBar at top
+   - File: `apps/web/src/pages/MissionDetail.tsx:260-296` -- NAVIGATION section with same links plus LiveView link
+
+2. **MissionDetail repeats information from MissionPlan.** The detail page shows Goal, Scope Boundary, Acceptance Criteria, and Risk Assessment -- which are all repeated on the Plan page. For missions in plan stage, this is pure duplication.
+   - File: `apps/web/src/pages/MissionDetail.tsx:129-186` -- Goal, Scope, Criteria, Risks
+   - File: `apps/web/src/pages/MissionPlan.tsx:100-161` -- same content repeated
+
+3. **Execute page left panel repeats mission context** that is already available in the TopBar breadcrumbs and StageTabBar.
+   - File: `apps/web/src/pages/MissionExecute.tsx:96-155` -- 260px left panel showing ID, title, goal, scope, criteria
+
+### Cross-references
+
+- **consistency-audit.md**: Redundant navigation patterns documented
+
+---
+
+## H9: Help Users Recognize, Diagnose, and Recover from Errors
+
+> _Error messages should be expressed in plain language, precisely indicate the problem, and constructively suggest a solution._
+
+### Severity: 3 -- Major Usability Problem
+
+### What works
+
+1. **ErrorBoundary** catches rendering errors and displays a clear message with a "Back to Missions" link.
+   - File: `apps/web/src/components/primitives/ErrorBoundary.tsx:43-76`
+   - In dev mode, the full error stack trace is shown: `ErrorBoundary.tsx:52-65`
+
+2. **Mission-not-found states** are handled on all mission pages with consistent "Mission not found" text and a link back to the missions list.
+   - File: `apps/web/src/pages/MissionDetail.tsx:36-49`
+   - File: `apps/web/src/pages/MissionPlan.tsx:31-55`
+   - File: `apps/web/src/pages/MissionExecute.tsx:36-60`
+   - File: `apps/web/src/pages/MissionReview.tsx:31-55`
+   - File: `apps/web/src/pages/MissionEscalation.tsx:27-51`
+   - File: `apps/web/src/pages/LiveView.tsx:147-167`
+
+3. **Empty filter results** show "No missions match filters" with guidance text.
+   - File: `apps/web/src/pages/MissionHome.tsx:192-198`
+
+4. **Escalation undo** provides a recovery mechanism for one specific action type.
+   - File: `apps/web/src/pages/MissionEscalation.tsx:194-198` -- undo callback via toast
+
+### What fails
+
+1. **MAJOR: No error recovery in LiveView.** If something goes wrong in the fullscreen LiveView (component error, data issue), there is no recovery path beyond the ErrorBoundary -- but LiveView is OUTSIDE the AppShell's ErrorBoundary. The LiveView does not have its own ErrorBoundary.
+   - File: `apps/web/src/App.tsx:48-49` -- LiveView routes are outside the AppShell element tree
+   - File: `apps/web/src/components/shell/AppShell.tsx:85-87` -- ErrorBoundary only wraps `<Outlet />` inside AppShell
+
+2. **No retry affordances anywhere.** When an action fails (plan approval, review decision), the only feedback is a toast notification. There is no "retry" button, no suggestion of what went wrong, no recovery path.
+
+3. **No offline handling.** No service worker, no offline detection, no "you are offline" banner. In a production scenario, losing connectivity while monitoring a live agent would be critical.
+
+4. **Toast notifications auto-dismiss.** The default toast duration is 3000ms (with 5000ms for escalation toasts). If a user looks away, they miss the confirmation of their action entirely. No persistent notification log exists.
+   - File: `apps/web/src/hooks/useToast.ts` -- auto-dismiss behavior
+
+5. **Empty states provide no recovery guidance.** When MissionExecute shows "No agent activity yet", it does not explain how to start an agent or link to documentation.
+   - File: `apps/web/src/pages/MissionExecute.tsx:265-268` -- bare "No agent activity yet" text
+
+### Cross-references
+
+- **failure-path-audit.md**: Comprehensive catalog of missing error states and recovery paths
+- **failure-path-audit.md**: LiveView error recovery identified as a critical gap
+- **information-architecture.md**: LiveView orphan status means it falls outside AppShell's error boundary
+
+---
+
+## H10: Help and Documentation
+
+> _It may be necessary to provide documentation to help users understand how to complete their tasks._
+
+### Severity: 1 -- Cosmetic
+
+### What works
+
+1. **HelpModal** provides a structured guide with 5 sections covering Missions, Stages, Workflows, Evidence & Verification, and Escalations.
+   - File: `apps/web/src/components/primitives/HelpModal.tsx:7-28` -- content sections
+   - File: `apps/web/src/components/primitives/HelpModal.tsx:30-115` -- modal implementation
+
+2. **Help button** is positioned at bottom-left corner, persistently visible across all AppShell pages.
+   - File: `apps/web/src/components/primitives/HelpModal.tsx:36-42` -- fixed position bottom-6 left-6
+
+3. **Command palette** doubles as a discoverability tool, showing available navigation targets and actions.
+   - File: `apps/web/src/components/shell/CommandPalette.tsx:14-22`
+
+4. **Accessibility attributes** on HelpModal: `role="dialog"`, `aria-modal="true"`, `aria-label="Mission Control Guide"`.
+   - File: `apps/web/src/components/primitives/HelpModal.tsx:57-59`
+
+### What could improve
+
+1. **HelpModal does not mention keyboard shortcuts.** Users who might benefit from Cmd+K and Cmd+Shift+M are not informed of their existence.
+   - File: `apps/web/src/components/primitives/HelpModal.tsx:7-28` -- no keyboard shortcut section
+
+2. **HelpModal does not explain LiveView.** The help content covers missions, stages, workflows, evidence, and escalations, but not the LiveView/supervision mode concept.
+   - File: `apps/web/src/components/primitives/HelpModal.tsx:7-28` -- no LiveView section
+
+3. **No contextual help.** Help is always the same modal regardless of which page the user is on. On the Execute page, help about agent sessions would be more relevant than the general overview.
+
+4. **No onboarding flow.** First-time users see the full MissionHome immediately with no walkthrough, tooltip tour, or progressive disclosure of features.
+
+### Cross-references
+
+- **glossary.md**: Terminology drift not addressed in help documentation
+- **user-journeys.md**: First-time orientation journey identifies lack of onboarding
+
+---
+
+## Severity Summary
+
+```
+H1  Visibility of system status        ████████████████████  4 (Catastrophe)
+H3  User control and freedom           ███████████████       3 (Major)
+H9  Help users recover from errors     ███████████████       3 (Major)
+H4  Consistency and standards          ██████████            2 (Minor)
+H6  Recognition rather than recall     ██████████            2 (Minor)
+H7  Flexibility and efficiency         ██████████            2 (Minor)
+H2  Match system and real world        █████                 1 (Cosmetic)
+H5  Error prevention                   █████                 1 (Cosmetic)
+H8  Aesthetic and minimalist design    █████                 1 (Cosmetic)
+H10 Help and documentation             █████                 1 (Cosmetic)
+```
+
+### Total severity score: 20 out of 40 maximum
+
+### Breakdown by severity level
+
+| Severity           | Count | Heuristics      |
+| ------------------ | ----- | --------------- |
+| 4 -- Catastrophe   | 1     | H1              |
+| 3 -- Major         | 2     | H3, H9          |
+| 2 -- Minor         | 3     | H4, H6, H7      |
+| 1 -- Cosmetic      | 4     | H2, H5, H8, H10 |
+| 0 -- Not a problem | 0     | --              |
+
+---
+
+## Pain Point Distribution
+
+| Pain Point                      | Heuristics Affected   | Highest Severity                          |
+| ------------------------------- | --------------------- | ----------------------------------------- |
+| A -- Inline Agent Visibility    | H1, H4, H7            | **4** (H1)                                |
+| B -- Mode Switching             | H3, H4, H7            | **3** (H3)                                |
+| C -- Rich Plan Content          | H6                    | **2** (H6)                                |
+| D -- Demo/Deliverable Artifacts | (indirect via H1, H9) | **3** (H9 -- completed stage unexercised) |
+
+---
+
+## Top 5 Recommendations (by severity)
+
+1. **Add inline agent visibility (H1/Severity 4).** Introduce a resizable panel or split view within AppShell pages that shows live agent work (browser, terminal, code) without requiring fullscreen mode switch. This is the single most impactful change.
+
+2. **Add LiveView error recovery (H9/Severity 3).** Wrap LiveView in its own ErrorBoundary. Add a "Return to Mission" button in the error state. Consider a reconnection mechanism for when real-time data is added.
+
+3. **Add mode switching toggle (H3/Severity 3).** Add a keyboard shortcut (e.g., Cmd+Shift+L) and a persistent toggle button that opens/closes an inline agent preview panel. Eliminate the forced fullscreen context switch.
+
+4. **Standardize action button placement (H4/Severity 2).** Define a single pattern for approval/decision buttons. Recommendation: sticky bar at top (as in ApprovalBar) for all review surfaces, right-aligned.
+
+5. **Render plan content as markdown (H6/Severity 2).** Use the existing `MarkdownViewer` component on `MissionPlan` to render plan content with headings, code blocks, and lists. The component already exists and is proven in `ArtifactPanel`.
+
+---
+
+## Appendix: File Reference Index
+
+| File                                                    | Lines Referenced                           | Heuristic(s)       |
+| ------------------------------------------------------- | ------------------------------------------ | ------------------ |
+| `apps/web/src/App.tsx`                                  | 48-49                                      | H1, H3, H9         |
+| `apps/web/src/pages/LiveView.tsx`                       | 106-109, 170-204, 176-184                  | H1, H2, H3, H7, H9 |
+| `apps/web/src/pages/MissionPlan.tsx`                    | 101-161, 165-188                           | H5, H6, H8         |
+| `apps/web/src/pages/MissionExecute.tsx`                 | 96-155, 182-193, 207-294, 265-268, 306-310 | H1, H3, H7, H8, H9 |
+| `apps/web/src/pages/MissionDetail.tsx`                  | 36-49, 106, 129-186, 209-220, 260-296      | H1, H4, H8         |
+| `apps/web/src/pages/MissionReview.tsx`                  | 61-72                                      | H3, H5             |
+| `apps/web/src/pages/MissionEscalation.tsx`              | 194-198                                    | H3                 |
+| `apps/web/src/pages/MissionHome.tsx`                    | 78-88, 119-178, 184-190, 192-198           | H1, H7, H9         |
+| `apps/web/src/components/shell/AppShell.tsx`            | 38-53, 68, 71-73, 83, 85-87, 92-107        | H3, H4, H7, H8, H9 |
+| `apps/web/src/components/shell/LeftNav.tsx`             | 6-12, 110-119                              | H1                 |
+| `apps/web/src/components/shell/TopBar.tsx`              | 29-41, 80-107                              | H3, H6             |
+| `apps/web/src/components/shell/CommandPalette.tsx`      | 14-22                                      | H7, H10            |
+| `apps/web/src/components/mission/StageTabBar.tsx`       | 4-10, 14-50                                | H2, H4, H6         |
+| `apps/web/src/components/mission/ArtifactPanel.tsx`     | 104-109                                    | H6                 |
+| `apps/web/src/components/mission/MarkdownViewer.tsx`    | 11-21                                      | H6                 |
+| `apps/web/src/components/mission/ActivityPreview.tsx`   | 47, 153-159                                | H1                 |
+| `apps/web/src/components/review/ApprovalBar.tsx`        | 19-91, 72-87                               | H4, H5             |
+| `apps/web/src/components/workspace/WorkspaceLayout.tsx` | 47-77, 50-53                               | H1, H4, H7         |
+| `apps/web/src/components/primitives/ErrorBoundary.tsx`  | 43-76, 52-65                               | H5, H9             |
+| `apps/web/src/components/primitives/HelpModal.tsx`      | 7-28, 30-115, 36-42, 57-59                 | H10                |
+| `apps/web/src/data/missions.ts`                         | 1, 2-4, 8-35, 37-192                       | H1, H2             |
+| `apps/web/src/data/artifacts.ts`                        | 1-154                                      | H6                 |
+| `apps/web/src/theme/tokens.ts`                          | 1-44                                       | H4, H8             |

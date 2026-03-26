@@ -1,421 +1,364 @@
-# Vocabulary Audit: Mission Control
+# Glossary of Canonical Terms
 
-**Date**: 2026-03-23
-**Scope**: All UI-visible labels, type definitions, status indicators, and action verbs across the Mission Control prototype.
-**Method**: Exhaustive extraction from every `.tsx` page, component, and `.ts` data file in `apps/web/src/`.
-
----
-
-## 1. Canonical Glossary
-
-### Entity Nouns
-
-| Term                    | Type              | Exact meaning                                                                                                                                 | Where used                                                                                                                                           | Notes                                                                                                                                                                |
-| ----------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Mission**             | noun              | A bounded unit of agentic work with a goal, scope boundary, acceptance criteria, risk tier, and lifecycle stages. Has an owner.               | Everywhere: data/missions.ts, all pages, LeftNav, MissionCard, FocusPanel, CommandPalette, TopBar breadcrumbs                                        | Primary entity. Well-defined. No synonyms.                                                                                                                           |
-| **Workflow**            | noun              | An orchestration container grouping multiple related missions. Has an owner and a status.                                                     | data/workflows.ts, Workflows page, WorkflowDetail (Kanban board), WorkflowCreate, LeftNav, breadcrumbs                                               | Clean separation from Mission. Good.                                                                                                                                 |
-| **Agent Session**       | noun              | A single AI agent execution context tied to a mission. Has a role (e.g. "Implementation Agent"), model, status, steps, token usage, and cost. | data/agent-sessions.ts, AgentSwimlane, AgentChatPanel, MissionExecute, LiveView, SessionTabs                                                         | "Session" is overloaded -- see problems below.                                                                                                                       |
-| **Step**                | noun              | A discrete action performed by an agent within a session. Has action name, status, detail, and timestamp.                                     | data/agent-sessions.ts (AgentStep), StepCard, AgentSwimlane, ReplayTimeline                                                                          | Not "phase" or "stage" -- good. Distinct from Stage.                                                                                                                 |
-| **Evidence**            | noun              | A verifiable artifact (test result, policy check, requirement trace, or risk explanation) produced during execution. Has a status.            | data/evidence.ts, EvidenceCard, EvidenceRail, EvidenceDetailModal, MissionDetail, MissionPlan, MissionExecute, MissionReview                         | Well-defined. Four subtypes.                                                                                                                                         |
-| **Escalation**          | noun              | A decision point raised when an agent cannot proceed autonomously. Classified by type. Contains options for human decision.                   | data/escalations.ts, EscalationHeader, ConsequencePanel, MissionEscalation, MissionDetail                                                            | Good military metaphor alignment.                                                                                                                                    |
-| **Branch**              | noun              | A git branch associated with a mission's code changes.                                                                                        | data/branches.ts, BranchBadge, LiveView, WorkspaceInfoBar                                                                                            | Clear and standard.                                                                                                                                                  |
-| **Workspace**           | noun (deprecated) | An IDE-like environment linking a mission to files, terminal, browser, and agent sessions.                                                    | data/workspaces.ts (marked `@deprecated`), Workspace.tsx page, WorkspaceRedirect.tsx, WorkspaceLayout, WorkspaceTabs                                 | **PROBLEM**: Entity deprecated in data layer (`@deprecated` JSDoc) but still has a full page, components, and route. See section 5.                                  |
-| **Live View**           | noun/mode         | A fullscreen supervision mode showing real-time agent work: code editor, terminal, browser, and chat. Replaces the Workspace concept.         | LiveView.tsx page, "ENTER LIVE VIEW" buttons, LiveViewHeader, banner "LIVE SUPERVISION MODE"                                                         | **Decision recorded**: Workspace dissolved into this. But both still coexist.                                                                                        |
-| **Notification**        | noun              | A system alert about stage changes, escalations, agent failures, approvals, or evidence events.                                               | data/notifications.ts, NotificationCenter                                                                                                            | Clear.                                                                                                                                                               |
-| **Mission Event**       | noun              | A timestamped lifecycle event in a mission's history.                                                                                         | data/mission-events.ts, MissionTimeline                                                                                                              | Displayed as TIMELINE in UI. Not called "event" in labels.                                                                                                           |
-| **Browser Session**     | noun              | An agent's browser automation context for testing/verification.                                                                               | data/browser-sessions.ts, SessionPane (BrowserSessionPane), WorkspaceLayout                                                                          |                                                                                                                                                                      |
-| **Terminal Session**    | noun              | An agent's terminal execution context.                                                                                                        | data/terminal-sessions.ts, SessionPane (TerminalSessionPane), WorkspaceLayout                                                                        |                                                                                                                                                                      |
-| **Policy**              | noun              | A configurable governance rule (e.g., "High-risk missions require 2 approvals").                                                              | Settings page (Active Policies section)                                                                                                              | Only appears in Settings. Not referenced from mission lifecycle.                                                                                                     |
-| **Risk Tier**           | noun              | Classification of mission risk: low, medium, high.                                                                                            | data/missions.ts (RiskTier type), RiskBadge, MissionCreate, Settings (Risk Tier Thresholds)                                                          |                                                                                                                                                                      |
-| **Verification State**  | noun              | Aggregate verification status of a mission: pending, passing, failing, blocked.                                                               | data/missions.ts (VerificationState type), VerificationBadge                                                                                         | Distinct from Evidence status.                                                                                                                                       |
-| **Scope Boundary**      | noun              | Explicit definition of what is in and out of scope for a mission.                                                                             | Mission interface (scopeBoundary field), MissionPlan, MissionCreate, FocusPanel, MissionExecute                                                      | Label varies: "SCOPE BOUNDARY" (MissionPlan, MissionCreate, MissionDetail) vs. "SCOPE" (MissionExecute left panel) vs. "Scope boundary" (FocusPanel). See section 5. |
-| **Acceptance Criteria** | noun              | Measurable conditions that must be satisfied for a mission to pass review.                                                                    | Mission interface, MissionPlan, MissionCreate, MissionExecute, FocusPanel                                                                            | Consistent labeling across the UI.                                                                                                                                   |
-| **Goal**                | noun              | The purpose and intended outcome of a mission.                                                                                                | Mission interface (goal field), MissionPlan ("MISSION GOAL"), MissionCreate ("GOAL"), MissionDetail ("GOAL"), FocusPanel (unlabeled, just displayed) | Label varies: "MISSION GOAL" vs. "GOAL".                                                                                                                             |
-| **Owner**               | noun              | The human responsible for a mission or workflow.                                                                                              | Mission/Workflow interfaces, MissionDetail, MissionHeader, MissionCard, WorkflowDetail, Settings                                                     | Consistent.                                                                                                                                                          |
-| **Checkpoint**          | noun              | The specific point in an agent session's execution where an escalation was raised.                                                            | Escalation interface (checkpoint field), EscalationHeader                                                                                            | Only visible on escalation pages.                                                                                                                                    |
-| **Decision Option**     | noun              | A proposed resolution path for an escalation, with risk assessment.                                                                           | EscalationOption interface, ConsequencePanel                                                                                                         | Panel title: "DECISION OPTIONS".                                                                                                                                     |
-
-### Chat/Agent Message Vocabulary
-
-| Term               | Type | Exact meaning                                                             | Where used                                                        | Notes                         |
-| ------------------ | ---- | ------------------------------------------------------------------------- | ----------------------------------------------------------------- | ----------------------------- |
-| **Plan Proposal**  | noun | A structured plan submitted by an agent for human approval.               | agent-chat.ts (role: 'plan-proposal'), ChatPlanProposal component | Label in UI: "PROPOSED PLAN". |
-| **Tool Call**      | noun | An agent invoking a tool (file_read, file_write, terminal, browser, git). | agent-chat.ts (role: 'tool-call'), ChatMessage                    | Label in UI: "TOOL: {name}".  |
-| **Tool Result**    | noun | The output returned from a tool invocation.                               | agent-chat.ts (role: 'tool-result'), ChatMessage                  | Label in UI: "RESULT".        |
-| **System Message** | noun | An automated status message (e.g., "Plan approved. Agent proceeding.").   | agent-chat.ts (role: 'system'), ChatMessage                       | Italicized, centered in chat. |
+> HCI Review Document -- Mission Control Prototype
+> Date: 2026-03-24
+> Scope: Canonical definitions, source references, and terminology drift analysis
 
 ---
 
-## 2. Terms to Merge or Ban
+## 1. Canonical Terms Table
 
-| Avoid this term                                                   | Use instead                                                                           | Reason                                                                                                                                                                                                                                                                                                                                                                      |
-| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | ------- | ---------------------------------------------------------------------------------- |
-| **Workspace** (as entity)                                         | **Live View** (as mode name)                                                          | The `@deprecated` JSDoc on Workspace type says it is dissolved, but `Workspace.tsx` page and `WorkspaceTabs.tsx` still exist with full routes. The entity name persists in code (`WorkspaceLayout`, `WorkspaceInfoBar`, `WorkspaceTabs`, `aria-label="Add workspace"`). Must complete the dissolution: rename remaining components or remove the standalone Workspace page. |
-| **SESSIONS** (section header)                                     | **BROWSER & TERMINAL** or just omit the header                                        | On MissionExecute, "SESSIONS" labels browser and terminal panes. But "Agent Sessions" is a separate concept shown above. Two meanings of "session" on the same screen.                                                                                                                                                                                                      |
-| **WARN** (evidence summary)                                       | **WARNING**                                                                           | MissionDetail shows `{count} WARN` but EvidenceRail shows `{count} warn`. The EvidenceStatus type uses `warning`. All three forms exist. Pick one: `WARNING`.                                                                                                                                                                                                               |
-| **MED RISK** (RiskBadge)                                          | **MEDIUM RISK**                                                                       | RiskBadge truncates "MEDIUM" to "MED". Filter buttons say "MEDIUM". Select options say "MEDIUM". The badge is the only place that abbreviates. Inconsistent.                                                                                                                                                                                                                |
-| **Back to missions** / **Back to workflow** / **Back to mission** | Standardize casing: **Back to Missions** / **Back to Workflow** / **Back to Mission** | Link text uses inconsistent capitalization: sometimes title case ("Return to Missions"), sometimes sentence case ("Back to missions"). Pick one convention.                                                                                                                                                                                                                 |
-| **Scope boundary** (FocusPanel, mixed case)                       | **SCOPE BOUNDARY**                                                                    | FocusPanel uses sentence case "Scope boundary" while every other instance uses all-caps "SCOPE BOUNDARY". The label should match.                                                                                                                                                                                                                                           |
-| **Acceptance criteria** (FocusPanel, mixed case)                  | **ACCEPTANCE CRITERIA**                                                               | Same issue as above. FocusPanel uses "Acceptance criteria" in sentence case.                                                                                                                                                                                                                                                                                                |
-| **IDENTIFIED RISKS** (MissionPlan, MissionCreate)                 | **RISK ASSESSMENT** or **IDENTIFIED RISKS**                                           | MissionDetail uses "RISK ASSESSMENT", MissionPlan and MissionCreate use "IDENTIFIED RISKS". Same data, two labels.                                                                                                                                                                                                                                                          |
-| **AGENT LOG** (MissionExecute)                                    | Consider **AGENT ACTIVITY**                                                           | "Log" implies raw output. What is shown is a high-level activity feed of step actions. But this is a minor concern.                                                                                                                                                                                                                                                         |
-| **EXECUTE PREVIEW**                                               | Consider **EXECUTION PREVIEW**                                                        | "Execute" is a verb used as an adjective here. "Execution" is the noun form and reads better as a label.                                                                                                                                                                                                                                                                    |
-| **success** (step status check)                                   | **completed**                                                                         | In MissionExecute agent log, code checks `step.status === 'success'` but the AgentStep type defines statuses as `completed                                                                                                                                                                                                                                                  | running | pending | failed`. There is no `success` status. This is a bug, not just a vocabulary issue. |
-| **MISSION HISTORY & APPROVAL CHAIN**                              | **MISSION HISTORY**                                                                   | The History page displays `MISSION HISTORY & APPROVAL CHAIN` but shows no approval chain data -- just a timeline of missions sorted by update date. The label promises more than it delivers.                                                                                                                                                                               |
-| **OPERATING SURFACE**                                             | Remove or explain                                                                     | AppShell bottom bar says `MISSION.CTRL // OPERATING SURFACE v0.1.0`. "Operating surface" is not defined anywhere. It is decorative jargon.                                                                                                                                                                                                                                  |
-| **AGENT SUPERVISION**                                             | Remove or explain                                                                     | LeftNav subtitle reads `AGENT SUPERVISION`. This is a tagline, not a navigable concept. It may confuse users into thinking there is a dedicated supervision view.                                                                                                                                                                                                           |
+The following table defines every significant term used in the Mission Control prototype, with source file references and known aliases or drift patterns.
 
----
+### 1.1 Domain Objects
 
-## 3. Status Vocabulary
+| Term                  | Definition                                                                                                                                                                                      | Source File(s)                                                                                                                                                                      | Aliases / Drift                                                                                                                                                                                                                                |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Mission**           | A unit of supervised agentic work with a defined goal, scope boundary, risk tier, acceptance criteria, and lifecycle stage. The primary organizing entity in Mission Control.                   | `apps/web/src/data/missions.ts:8-35` (interface), `apps/web/src/pages/MissionHome.tsx` (list), `apps/web/src/pages/MissionDetail.tsx` (detail)                                      | None -- term is consistently used. Prefixed `MSN-` in IDs.                                                                                                                                                                                     |
+| **Workflow**          | A grouping of related missions under a strategic initiative. Contains an ordered list of mission IDs. Has its own status (`active`, `completed`, `paused`).                                     | `apps/web/src/data/workflows.ts:1-9` (interface), `apps/web/src/pages/Workflows.tsx` (list)                                                                                         | None -- but conceptual confusion exists because Workflows and Missions are parallel nav items yet workflows _contain_ missions. See Section 3.                                                                                                 |
+| **Agent Session**     | A single instance of an AI agent working on a mission. Has a role (e.g., "Implementation Agent", "Test Agent", "Research Agent"), a model ID, a sequence of steps, and a status.                | `apps/web/src/data/agent-sessions.ts:15-29` (interface)                                                                                                                             | Sometimes shortened to "session" in UI labels (e.g., `MissionExecute.tsx:210`: "AGENT SESSIONS"). Conflicts with Browser Session and Terminal Session -- see Section 3.                                                                        |
+| **Browser Session**   | A headless browser instance that an agent uses to interact with web interfaces during execution.                                                                                                | `apps/web/src/data/browser-sessions.ts` (interface), `apps/web/src/components/execute/SessionPane.tsx` (BrowserSessionPane)                                                         | Called "browser session" consistently.                                                                                                                                                                                                         |
+| **Terminal Session**  | A terminal/CLI session that an agent uses for command execution during mission work.                                                                                                            | `apps/web/src/data/terminal-sessions.ts` (interface), `apps/web/src/components/execute/SessionPane.tsx` (TerminalSessionPane)                                                       | Called "terminal session" consistently. Sometimes "terminal" without "session" in status text (`MissionExecute.tsx:302`).                                                                                                                      |
+| **Evidence**          | A verification artifact produced during or after mission execution. Has a status (`pass`, `fail`, `warning`, `pending`) and contributes to the mission's VerificationState.                     | `apps/web/src/data/evidence.ts` (interface + data), `apps/web/src/components/evidence/EvidenceRail.tsx` (display), `apps/web/src/components/evidence/VerificationBadge.tsx` (badge) | Called "evidence" in data layer but sometimes "verification" in UI contexts. The EvidenceRail component name and the VerificationBadge component name use different root terms for related concepts.                                           |
+| **Escalation**        | An issue that requires human decision-making because an agent has encountered a problem it cannot resolve autonomously. Contains a title, summary, detail, type, and a set of decision options. | `apps/web/src/data/escalations.ts` (interface), `apps/web/src/pages/MissionEscalation.tsx` (page), `apps/web/src/components/escalation/` (components)                               | "Escalation" refers to both the event and the page/stage -- see Section 3 for extensive drift analysis.                                                                                                                                        |
+| **Escalation Option** | A possible decision the supervisor can make when resolving an escalation. Each option has a label, description, and risk assessment.                                                            | `apps/web/src/data/escalations.ts` (EscalationOption interface), `apps/web/src/components/escalation/ConsequencePanel.tsx` (display)                                                | Called "option" in code, "DECISION OPTIONS" in UI (`ConsequencePanel.tsx:45`).                                                                                                                                                                 |
+| **Artifact**          | A deliverable produced by agent work. Can be of type `image`, `video`, `markdown`, or `html`. Contains inline content or URL references.                                                        | `apps/web/src/data/artifacts.ts:1-13` (interface), `apps/web/src/components/mission/ArtifactPanel.tsx` (gallery/viewer)                                                             | Consistently "artifact" in code. Labeled "ARTIFACTS" in the ArtifactPanel UI (`ArtifactPanel.tsx:31`).                                                                                                                                         |
+| **Code File**         | A source file that is part of the mission's codebase, viewable in the CodeViewer component.                                                                                                     | `apps/web/src/data/code-files.ts`                                                                                                                                                   | Sometimes "file" without "code" qualifier.                                                                                                                                                                                                     |
+| **Branch**            | A git branch associated with a mission's code changes. Has properties like `name`, `baseBranch`, `aheadBy`, `behindBy`.                                                                         | `apps/web/src/data/branches.ts` (interface)                                                                                                                                         | Referenced as `mission.branch` (string name) on the Mission interface and as a full `Branch` object in the branches data.                                                                                                                      |
+| **Workspace**         | **DEPRECATED.** A dissolved entity that previously grouped a mission's branch, open files, and session references into a single object.                                                         | `apps/web/src/data/workspaces.ts:1-12` (interface, deprecated)                                                                                                                      | Legacy term. Still referenced in `LiveView.tsx:117` ("bridge until Workspace entity fully dissolved"), `ActivityPreview.tsx:26` (`workspaces.find`), and via the `WorkspaceRedirect.tsx` legacy URL handler. See Section 3 for detailed drift. |
 
-### Mission Stage (lifecycle position)
+### 1.2 Lifecycle Terms
 
-| Status         | Meaning                                                                                                  | Entered when                                                                | Exited when                                                   |
-| -------------- | -------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| **plan**       | Mission is being scoped: goal, risks, acceptance criteria defined; awaiting approval to begin execution. | Mission created                                                             | Plan approved ("Approve Plan & Begin Execution" clicked)      |
-| **execute**    | Agents are actively working. Code changes, tests, evidence being produced.                               | Plan approved                                                               | All acceptance criteria addressed and agent sessions complete |
-| **review**     | Work complete; human reviews diffs, evidence, and decides to approve or reject.                          | Execution completes                                                         | Human approves or rejects                                     |
-| **escalation** | Agent hit a blocker requiring human decision. Options presented with consequences.                       | Agent raises escalation (ambiguous requirement, conflicting evidence, etc.) | Human selects a decision option and confirms                  |
+| Term                   | Definition                                                                                                    | Source File(s)                                                                                     | Aliases / Drift                                                                                                              |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| **Stage**              | The current phase of a mission's lifecycle. One of: `plan`, `execute`, `review`, `escalation`, `completed`.   | `apps/web/src/data/missions.ts:2` (type), `apps/web/src/components/mission/StageBadge.tsx` (badge) | "Stage" is the canonical type name. "Phase" is not used. BUT "stage" also means the tab in StageTabBar -- see Section 3.     |
+| **Verification State** | A computed state derived from a mission's evidence items. One of: `pending`, `passing`, `failing`, `blocked`. | `apps/web/src/data/missions.ts:4` (type), `missions.ts:197-207` (computation)                      | Used as `verificationState` on Mission interface. The `computeVerificationState` function derives it from evidence statuses. |
+| **Risk Tier**          | The assessed risk level of a mission. One of: `low`, `medium`, `high`.                                        | `apps/web/src/data/missions.ts:3` (type), `apps/web/src/components/review/RiskBadge.tsx` (badge)   | Consistently "risk tier" in code. Labeled "RISK" in filter UI and badges.                                                    |
+| **Priority**           | The urgency of a mission. One of: `low`, `medium`, `high`, `critical`.                                        | `apps/web/src/data/missions.ts:6` (type)                                                           | Defined but not prominently displayed in the current UI. Not to be confused with Risk Tier.                                  |
 
-**Display**: StageBadge renders as all-caps: `PLAN`, `EXECUTE`, `REVIEW`, `ESCALATION`.
+### 1.3 UI Structure Terms
 
-**Issue**: "escalation" is both a stage and a noun (an Escalation entity). A mission in the "review" stage can have escalations too (see MSN-001: stage=review but has ESC-001). The stage label implies escalation is a phase you move into, but escalations can exist in any stage. This is the most confusing overload in the vocabulary.
+| Term                  | Definition                                                                                                                                                                               | Source File(s)                                                     | Aliases / Drift                                                                                                                                                                              |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **AppShell**          | The outer layout wrapper that provides the LeftNav, main content area (via Outlet), keyboard shortcuts, and bottom timestamp bar. All pages except LiveView render inside the AppShell.  | `apps/web/src/components/shell/AppShell.tsx:22-113`                | "Shell" in code, never exposed as a label to users.                                                                                                                                          |
+| **LeftNav**           | The 200px left sidebar providing primary navigation. Contains links to Workflows, Missions, Costs, History, and Settings. Shows active mission count and "needs review" count at bottom. | `apps/web/src/components/shell/LeftNav.tsx:14-122`                 | "Nav" or "sidebar" informally. The component is named `LeftNav` in code.                                                                                                                     |
+| **TopBar**            | The top bar providing breadcrumbs, mission switcher dropdown, search button, notification center, and user avatar. 52px tall.                                                            | `apps/web/src/components/shell/TopBar.tsx:14-134`                  | "Header" informally. Distinct from the LiveView header bar.                                                                                                                                  |
+| **StageTabBar**       | Horizontal tab navigation showing OVERVIEW, PLAN, EXECUTE, REVIEW, and ESCALATION tabs. Appears on all mission sub-pages within the AppShell.                                            | `apps/web/src/components/mission/StageTabBar.tsx:1-50`             | "Stage tabs" informally. Tab keys defined at `StageTabBar.tsx:4-10`. Note: `stages` array in StageTabBar has 5 items, but the `Stage` type has 5 values (with `completed` absent from tabs). |
+| **Command Palette**   | A Cmd+K overlay for quick navigation to missions, pages, and actions. Searches by mission title, ID, or owner.                                                                           | `apps/web/src/components/shell/CommandPalette.tsx:24-254`          | "Search" on the TopBar button icon. "Command palette" in code only -- never labeled in UI.                                                                                                   |
+| **Mission Switcher**  | A dropdown from the TopBar that allows quick switching between missions while preserving the current stage context. Triggered by Cmd+Shift+M or clicking the mission ID badge.           | `apps/web/src/components/shell/MissionSwitcherDropdown.tsx:25-242` | "Switcher" in code. Not labeled in UI -- activated by clicking the mission ID chip in the TopBar.                                                                                            |
+| **Focus Panel**       | The right panel on MissionHome that shows details of the currently selected mission card.                                                                                                | `apps/web/src/components/mission/FocusPanel.tsx`                   | Not labeled in UI.                                                                                                                                                                           |
+| **Evidence Rail**     | A vertical sidebar showing evidence items with status indicators. Appears on MissionPlan (right, 280px), MissionExecute (right, 260px), and MissionReview (right, 280px).                | `apps/web/src/components/evidence/EvidenceRail.tsx`                | "Rail" in code. Labeled "RISK & EVIDENCE SUMMARY" on MissionPlan (`MissionPlan.tsx:197`).                                                                                                    |
+| **Approval Bar**      | A sticky top bar on the MissionReview page showing blocker count, warning count, and approve/reject/re-plan buttons.                                                                     | `apps/web/src/components/review/ApprovalBar.tsx:6-91`              | Not a navigation bar -- it is an action bar. Distinct from TopBar.                                                                                                                           |
+| **Consequence Panel** | The right sidebar on MissionEscalation showing decision options for the selected escalation. 300px wide.                                                                                 | `apps/web/src/components/escalation/ConsequencePanel.tsx:19-156`   | Labeled "DECISION OPTIONS" in UI (`ConsequencePanel.tsx:45`).                                                                                                                                |
 
-### Agent Session Status
+### 1.4 View Mode Terms
 
-| Status        | Meaning                                           | Entered when                                          | Exited when                            |
-| ------------- | ------------------------------------------------- | ----------------------------------------------------- | -------------------------------------- |
-| **active**    | Agent is running and producing output.            | Session starts                                        | Session completes, fails, or is paused |
-| **paused**    | Agent stopped by system or human; can be resumed. | Human pauses or agent self-pauses (awaiting decision) | Human resumes                          |
-| **completed** | Agent finished its task successfully.             | All steps done                                        | Terminal state                         |
-| **failed**    | Agent encountered an unrecoverable error.         | Step fails                                            | Terminal state (unless restarted)      |
-
-**Display**: AgentSwimlane renders status as uppercase text next to a colored dot. AgentChatPanel StatusBar renders `session.status.toUpperCase()`.
-
-### Agent Step Status
-
-| Status        | Meaning                      | Entered when            | Exited when             |
-| ------------- | ---------------------------- | ----------------------- | ----------------------- |
-| **completed** | Step finished successfully.  | Step runs to completion | Terminal                |
-| **running**   | Step is currently executing. | Step begins             | Step completes or fails |
-| **pending**   | Step has not started yet.    | Step is queued          | Step begins running     |
-| **failed**    | Step encountered an error.   | Step throws/errors      | Terminal                |
-
-**Issue**: StepCard maps these to icons (CheckCircle, Loader, Circle, XCircle) and colors. The MissionExecute agent log checks for `step.status === 'success'` which does not exist in the type. Bug.
-
-### Evidence Status
-
-| Status      | Meaning                                                | Entered when                                       | Exited when                      |
-| ----------- | ------------------------------------------------------ | -------------------------------------------------- | -------------------------------- |
-| **pass**    | Evidence confirms the requirement/policy is satisfied. | Test passes, policy check succeeds, trace verified | Evidence re-evaluated and fails  |
-| **fail**    | Evidence shows a violation or failure.                 | Test fails, policy violation detected              | Evidence re-evaluated and passes |
-| **warning** | Evidence shows a concern that may or may not block.    | Partial compliance, edge case detected             | Resolved or escalated            |
-| **pending** | Evidence has not been evaluated yet.                   | Evidence item created but not yet run              | Evaluation completes             |
-
-**Display**: EvidenceCard renders status as uppercase text. EvidenceDetailModal renders as title case: "Passing", "Failing", "Warning", "Pending".
-
-**Issue**: EvidenceDetailModal uses `statusLabels` with present participle forms ("Passing", "Failing") but the raw status values are simple ("pass", "fail"). This is a **tense mismatch**: the evidence status is `pass` (a result), but the detail modal calls it "Passing" (an ongoing state). These are different concepts: "Passing" implies it could change; "Pass" implies a verdict.
-
-### Verification State (mission-level aggregate)
-
-| Status      | Meaning                                               | Entered when               | Exited when               |
-| ----------- | ----------------------------------------------------- | -------------------------- | ------------------------- |
-| **pending** | No evidence evaluated yet.                            | Mission created            | First evidence evaluated  |
-| **passing** | All evidence passes (or passes with warnings).        | All evidence items pass    | Any evidence fails        |
-| **failing** | At least one evidence item fails.                     | Any evidence fails         | Failing evidence resolved |
-| **blocked** | Mission cannot proceed; depends on external decision. | Escalation blocks progress | Escalation resolved       |
-
-**Display**: VerificationBadge renders as all-caps: `PENDING`, `PASSING`, `FAILING`, `BLOCKED`.
-
-**Issue**: These are present participle forms, which is correct -- they describe ongoing states. But they don't match the evidence status vocabulary (`pass`/`fail` vs. `passing`/`failing`). The user must mentally map between two different tense conventions.
-
-### Branch Status
-
-| Status     | Meaning                                                      | Entered when                          | Exited when                 |
-| ---------- | ------------------------------------------------------------ | ------------------------------------- | --------------------------- |
-| **active** | Branch is current and receiving commits.                     | Branch created                        | Branch merged or goes stale |
-| **merged** | Branch has been merged into base.                            | PR merged                             | Terminal                    |
-| **stale**  | Branch has not received commits and is significantly behind. | Branch falls behind base by threshold | Branch receives new commits |
-
-**Display**: BranchBadge shows a colored dot (green=active, yellow=stale, gray=merged) but does not render the status text.
-
-### Workflow Status
-
-| Status        | Meaning                                | Entered when                       | Exited when           |
-| ------------- | -------------------------------------- | ---------------------------------- | --------------------- |
-| **active**    | Workflow has missions in progress.     | Workflow created                   | All missions complete |
-| **completed** | All missions in the workflow are done. | All missions reach completed stage | N/A                   |
-| **paused**    | Workflow is halted.                    | Human pauses                       | Human resumes         |
-
-**Display**: RuleLabel on Workflows and WorkflowDetail pages renders `workflow.status.toUpperCase()`.
-
-### Browser Session Status
-
-| Status        | Meaning                                        | Entered when                        | Exited when                    |
-| ------------- | ---------------------------------------------- | ----------------------------------- | ------------------------------ |
-| **active**    | Browser is currently being driven by an agent. | Session starts                      | Session completes or goes idle |
-| **idle**      | Browser is open but not being actively used.   | Agent finishes current browser task | Agent resumes browser work     |
-| **completed** | Browser session is finished.                   | Testing complete                    | Terminal                       |
-
-### Terminal Session Status
-
-| Status        | Meaning                        | Entered when       | Exited when                |
-| ------------- | ------------------------------ | ------------------ | -------------------------- |
-| **active**    | Terminal command is running.   | Command starts     | Command completes or fails |
-| **completed** | Command finished successfully. | Exit code 0        | Terminal                   |
-| **failed**    | Command finished with error.   | Non-zero exit code | Terminal                   |
-
-### Notification Type
-
-| Type              | Meaning                                    | Rendered as           |
-| ----------------- | ------------------------------------------ | --------------------- |
-| **stage-change**  | Mission moved to a new stage.              | ArrowRightCircle icon |
-| **escalation**    | Escalation raised on a mission.            | AlertTriangle icon    |
-| **agent-failure** | Agent session failed or paused with error. | XCircle icon          |
-| **approval**      | Plan or review approved.                   | CheckCircle icon      |
-| **evidence**      | New evidence collected.                    | FileText icon         |
-
-### Escalation Type
-
-| Type                       | Display label          | Meaning                                                                                      |
-| -------------------------- | ---------------------- | -------------------------------------------------------------------------------------------- |
-| **ambiguous-requirement**  | AMBIGUOUS REQUIREMENT  | Acceptance criteria or scope is unclear; agent cannot determine correct behavior.            |
-| **conflicting-evidence**   | CONFLICTING EVIDENCE   | Different evidence sources contradict each other (e.g., unit tests pass but E2E tests fail). |
-| **security-sensitive**     | SECURITY SENSITIVE     | Change involves credentials, auth, or security-critical code requiring human review.         |
-| **scope-breach**           | SCOPE BREACH           | Agent's work would exceed the defined scope boundary.                                        |
-| **architectural-friction** | ARCHITECTURAL FRICTION | Proposed changes conflict with existing architecture or design patterns.                     |
-
-### Evidence Type
-
-| Type                  | Filter label | Meaning                                                                      |
-| --------------------- | ------------ | ---------------------------------------------------------------------------- |
-| **test-result**       | Tests        | Automated test output (unit, integration, E2E).                              |
-| **policy-check**      | Policy       | Evaluation against a defined policy (security, compliance).                  |
-| **requirement-trace** | Traces       | Traceability link between a requirement and its implementation/verification. |
-| **risk-explanation**  | Risk         | Analysis of a specific risk and its mitigation status.                       |
-
-**Issue**: The filter label "Traces" for `requirement-trace` is potentially confusing in a system that also deals with OpenTelemetry tracing (MSN-005). "Traces" as an evidence filter could be mistaken for distributed tracing data.
-
-### Mission Event Type
-
-| Type                   | Display            | Meaning                     |
-| ---------------------- | ------------------ | --------------------------- |
-| **created**            | CREATED            | Mission was created.        |
-| **plan-approved**      | PLAN-APPROVED      | Mission plan was approved.  |
-| **execution-started**  | EXECUTION-STARTED  | Agent execution began.      |
-| **evidence-collected** | EVIDENCE-COLLECTED | New evidence was gathered.  |
-| **escalation-raised**  | ESCALATION-RAISED  | An escalation was raised.   |
-| **review-approved**    | REVIEW-APPROVED    | Review was approved.        |
-| **completed**          | COMPLETED          | Mission reached completion. |
-
-**Issue**: MissionTimeline renders `event.type.toUpperCase()` directly, which produces hyphenated labels like "PLAN-APPROVED". These would read better as "PLAN APPROVED" (space-separated). The escalation type labels in EscalationHeader correctly use `.replace(/-/g, ' ')` before uppercasing. MissionTimeline does not.
+| Term                 | Definition                                                                                                                                                                                                               | Source File(s)                                                            | Aliases / Drift                                                                                                                                                                                                |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Live View**        | A fullscreen page for real-time supervision of agent work. Renders outside the AppShell, showing code, terminal, browser, and agent session panels. Entered via "ENTER LIVE VIEW" links; exited via Esc or close button. | `apps/web/src/pages/LiveView.tsx:98-205` (page), `App.tsx:48-49` (routes) | **SIGNIFICANT DRIFT** -- see Section 3.1. Called "LIVE SUPERVISION MODE" in the header bar (`LiveView.tsx:176`), "Live View" in link text (`MissionDetail.tsx:294`), "Live" in breadcrumb (`LiveView.tsx:81`). |
+| **Workspace Layout** | The internal layout component used by LiveView to render the multi-panel agent workspace (code, terminal, browser, chat).                                                                                                | `apps/web/src/components/workspace/WorkspaceLayout.tsx`                   | "Workspace" persists as a component namespace even though the Workspace entity is deprecated.                                                                                                                  |
+| **Supervision Mode** | The label used on the LiveView accent-colored header bar.                                                                                                                                                                | `LiveView.tsx:176` ("LIVE SUPERVISION MODE")                              | Used only once in the entire codebase. Not used in navigation, documentation, or component names.                                                                                                              |
 
 ---
 
-## 4. Action Vocabulary
+## 2. Term Definitions -- Extended
 
-### Primary Actions (buttons the user can click)
+### 2.1 Mission
 
-| Action verb                       | Button label                                     | Where used                                                       | What it does                                              |
-| --------------------------------- | ------------------------------------------------ | ---------------------------------------------------------------- | --------------------------------------------------------- |
-| **Create** (mission)              | `+ NEW MISSION`, `CREATE MISSION`                | MissionHome, MissionCreate                                       | Creates a new mission in the plan stage.                  |
-| **Create** (workflow)             | `+ CREATE WORKFLOW`, `CREATE WORKFLOW`           | Workflows page, WorkflowCreate                                   | Creates a new workflow containing selected missions.      |
-| **Approve** (plan)                | `Approve Plan & Begin Execution`                 | MissionPlan                                                      | Advances mission from plan to execute stage.              |
-| **Approve** (review)              | `Approve`                                        | ApprovalBar                                                      | Approves the reviewed changes for merge.                  |
-| **Approve** (plan proposal)       | `APPROVE` / `APPROVED`                           | ChatPlanProposal in AgentChatPanel                               | Approves an agent's proposed plan within chat.            |
-| **Reject** (review)               | `Reject`                                         | ApprovalBar                                                      | Rejects the reviewed changes.                             |
-| **Reject** (plan proposal)        | `REJECT` / `REJECTED`                            | ChatPlanProposal in AgentChatPanel                               | Rejects an agent's proposed plan within chat.             |
-| **Request Changes**               | `Request Changes`                                | MissionPlan                                                      | Asks for plan modifications before approving.             |
-| **Re-plan**                       | `Re-plan`                                        | ApprovalBar                                                      | Returns to plan stage for revision.                       |
-| **Pause**                         | Pause icon button                                | AgentControls in AgentChatPanel                                  | Pauses the active agent session.                          |
-| **Resume**                        | Play icon button (title: "Resume")               | AgentControls                                                    | Resumes a paused agent session.                           |
-| **Stop**                          | Square icon button (title: "Stop")               | AgentControls                                                    | Stops the agent. Requires confirmation ("Confirm?").      |
-| **Restart**                       | RotateCcw icon button (title: "Restart")         | AgentControls                                                    | Restarts a stopped or failed agent session.               |
-| **Confirm** (escalation decision) | `CONFIRM`                                        | ConsequencePanel                                                 | Confirms the selected escalation decision option.         |
-| **Cancel** (escalation decision)  | `CANCEL`                                         | ConsequencePanel                                                 | Cancels the pending escalation decision selection.        |
-| **Launch Agent**                  | `LAUNCH AGENT` / `AGENT LAUNCHED`                | AgentConfigPanel                                                 | Launches a new agent session with selected configuration. |
-| **Send** (chat message)           | `SEND`                                           | AgentChatPanel InputArea                                         | Sends a message to the active agent session.              |
-| **Mark read**                     | `Mark read`                                      | NotificationCenter                                               | Marks a notification as read.                             |
-| **Mark as Reviewed**              | `Mark as Reviewed` / `Reviewed` (with checkmark) | EvidenceDetailModal                                              | Marks an evidence item as reviewed.                       |
-| **Save**                          | `Save Changes`                                   | Settings                                                         | Saves settings modifications.                             |
-| **Open Mission**                  | `Open Mission`                                   | FocusPanel                                                       | Navigates to the mission's current stage page.            |
-| **Enter Live View**               | `ENTER LIVE VIEW`                                | MissionDetail, MissionExecute, WorkflowDetail (MissionBoardCard) | Opens the fullscreen Live View for a mission.             |
-| **View Board**                    | `VIEW BOARD`                                     | Workflows page                                                   | Navigates to the workflow detail (Kanban) view.           |
+A Mission is the atomic unit of work in Mission Control. It represents a bounded software engineering task being performed by one or more AI agents under human supervision. Key properties:
 
-### Navigation Actions
+- **Goal**: Natural language description of the desired outcome (`mission.goal`)
+- **Scope Boundary**: Explicit statement of what is in and out of scope (`mission.scopeBoundary`)
+- **Acceptance Criteria**: Verifiable conditions that must be met (`mission.acceptanceCriteria[]`)
+- **Risks**: Identified risks that could affect the work (`mission.risks[]`)
+- **Stage**: Current lifecycle phase (`mission.stage`)
+- **Risk Tier**: Assessed risk level (`mission.riskTier`)
+- **Verification State**: Derived from evidence (`mission.verificationState`)
+- **Owner**: Human supervisor responsible (`mission.owner`)
 
-| Label                   | Where                                                                                    | What it does                |
-| ----------------------- | ---------------------------------------------------------------------------------------- | --------------------------- |
-| `Back`                  | LiveView header                                                                          | Returns to execute page.    |
-| `Back to missions`      | MissionPlan, MissionReview, MissionEscalation, MissionExecute (when no workflow)         | Returns to mission list.    |
-| `Back to workflow`      | MissionPlan, MissionReview, MissionEscalation, MissionExecute (when in workflow context) | Returns to workflow detail. |
-| `Back to mission`       | Workspace page (WorkspaceInfoBar)                                                        | Returns to mission detail.  |
-| `Return to Missions`    | LiveView (mission not found state)                                                       | Returns to mission list.    |
-| `Go to Missions`        | NotFound page                                                                            | Returns to mission list.    |
-| `View all workflows`    | WorkflowDetail (not found state)                                                         | Returns to workflows list.  |
-| `Workflow` / `Missions` | MissionExecute left panel back link                                                      | Contextual back navigation. |
-| `Press Esc to exit`     | LiveView mode banner                                                                     | Exits Live View.            |
+Missions can block other missions via `blockedBy` and `blocks` arrays. Missions may belong to a Workflow via `workflowId`.
 
-### Sort/Filter Actions
+### 2.2 Plan Content vs Plan Stage
 
-| Label                                          | Where                     | What it does                                          |
-| ---------------------------------------------- | ------------------------- | ----------------------------------------------------- |
-| `FILTER BY STAGE`                              | MissionHome               | Filters mission list by stage.                        |
-| `FILTER BY RISK`                               | MissionHome               | Filters mission list by risk tier.                    |
-| `NEWEST` / `STATUS` toggle                     | EvidenceRail              | Sorts evidence by newest-first or by status severity. |
-| `All` / `Tests` / `Policy` / `Traces` / `Risk` | EvidenceRail filter pills | Filters evidence by type.                             |
+A critical distinction exists between:
+
+- **Plan Stage** (`mission.stage === 'plan'`): The lifecycle phase where the mission's plan is being reviewed and approved. Navigates to `MissionPlan.tsx`.
+- **Plan Content**: The actual plan document, which consists of `mission.goal`, `mission.scopeBoundary`, `mission.acceptanceCriteria`, and `mission.risks`. These are plain-text fields on the Mission interface, NOT artifacts.
+
+The conflation of "plan" as both stage and document content creates ambiguity. When a user says "review the plan," do they mean:
+
+1. Navigate to the plan stage/page?
+2. Read the plan document content?
+3. Both?
+
+The plan content is rendered as plain text in styled divs on MissionPlan (`MissionPlan.tsx:101-161`). It is NOT an Artifact type, does NOT use MarkdownViewer, and has no standalone existence outside the Mission interface.
+
+### 2.3 Live View
+
+Live View is a fullscreen page for real-time observation of agent work. It renders the `WorkspaceLayout` component showing:
+
+- Code editor with open files
+- Terminal session output
+- Browser session viewport
+- Agent session panels
+
+The page exists OUTSIDE the AppShell (`App.tsx:48-49`), meaning it has no LeftNav, no StageTabBar, and only a minimal custom header bar. It can be entered from two locations:
+
+1. "ENTER LIVE VIEW" link on MissionDetail (`MissionDetail.tsx:284-295`)
+2. "ENTER LIVE VIEW" link on MissionExecute (`MissionExecute.tsx:182-193`)
+
+Exit is via Escape key (`LiveView.tsx:106-113`) or the close button (`LiveView.tsx:178-184`), both of which navigate back to the execute page.
 
 ---
 
-## 5. Naming Problems and Recommendations
+## 3. Terminology Drift Analysis
 
-### Problem 1: "Workspace" entity is half-dissolved
+### 3.1 "Live View" vs "Workspace" vs "Supervision Mode" vs "Browser Session"
 
-**Severity**: High
+This is the most significant terminology drift in the codebase. Four different terms are used for overlapping concepts related to observing agent work:
 
-The data layer marks `Workspace` as `@deprecated` with the comment "Workspace entity is dissolved -- use Mission.branch + LiveViewState instead." But:
+| Usage                        | Term Used                                       | Location                                                | Context                                                   |
+| ---------------------------- | ----------------------------------------------- | ------------------------------------------------------- | --------------------------------------------------------- |
+| Page component name          | `LiveView`                                      | `apps/web/src/pages/LiveView.tsx:98`                    | React component export                                    |
+| Route path                   | `/live`                                         | `App.tsx:48-49`                                         | URL segment                                               |
+| Header bar label             | "LIVE SUPERVISION MODE"                         | `LiveView.tsx:176`                                      | Accent-colored top bar text                               |
+| Link text on MissionDetail   | "ENTER LIVE VIEW"                               | `MissionDetail.tsx:294`                                 | Button label                                              |
+| Link text on MissionExecute  | "ENTER LIVE VIEW"                               | `MissionExecute.tsx:192`                                | Button label                                              |
+| Link text on ActivityPreview | "ENTER LIVE VIEW"                               | `ActivityPreview.tsx:169`                               | Button label (execute stage only)                         |
+| Breadcrumb segment           | "Live"                                          | `LiveView.tsx:81`                                       | Last breadcrumb item                                      |
+| Layout component             | `WorkspaceLayout`                               | `apps/web/src/components/workspace/WorkspaceLayout.tsx` | Layout used inside LiveView                               |
+| Deprecated data entity       | `Workspace`                                     | `apps/web/src/data/workspaces.ts:2`                     | Interface (deprecated, line 1 comment)                    |
+| Legacy URL                   | `/workspace/:id`                                | `App.tsx:52`                                            | Redirects to LiveView via `WorkspaceRedirect.tsx`         |
+| LiveView internal variable   | `effectiveWorkspace`                            | `LiveView.tsx:136`                                      | Compatibility bridge for WorkspaceLayout                  |
+| LiveView comment             | "bridge until Workspace entity fully dissolved" | `LiveView.tsx:116`                                      | Inline code comment                                       |
+| Data interface               | `LiveViewState`                                 | `workspaces.ts:64-69`                                   | Ephemeral view state (defined but not used in components) |
+| Close button title           | "Close Live View"                               | `LiveView.tsx:181`                                      | Button title attribute                                    |
+| LeftNav branding             | "AGENT SUPERVISION"                             | `LeftNav.tsx:37`                                        | Subtitle under "Mission Control" logo                     |
 
-- `Workspace.tsx` page still exists with full UI, routes, and `WorkspaceTabs`
-- `WorkspaceLayout.tsx` component is used by both the deprecated Workspace page AND LiveView
-- The router has `workspace/:id` which redirects to Live View, but the direct `Workspace` page is still importable
-- `WorkspaceTabs` has `aria-label="Add workspace"`
-- `WorkspaceInfoBar` sub-component renders in Workspace page
+**Assessment**: "Live View" is the most commonly used term for the fullscreen observation page. "Workspace" is a legacy term that persists in component directory names (`components/workspace/`), the data layer (`workspaces.ts`), and the LiveView's internal bridge code. "Supervision Mode" appears exactly once (`LiveView.tsx:176`). The LeftNav subtitle "AGENT SUPERVISION" (`LeftNav.tsx:37`) uses yet another formulation.
 
-**Recommendation**: Complete the dissolution. Remove `Workspace.tsx` page and `WorkspaceTabs.tsx`. Keep `WorkspaceLayout.tsx` but rename it to `LiveViewLayout.tsx`. Keep the redirect route. Remove the Workspace type once no components reference it.
+**Recommendation**: Standardize on "Live View" as the canonical term for the fullscreen observation mode. Remove "workspace" from component directory names and the data layer (complete the dissolution). Replace "LIVE SUPERVISION MODE" with "LIVE VIEW" for consistency. Consider whether "supervision" belongs in the vocabulary at all, or whether "monitoring" or "observation" is more precise.
 
-### Problem 2: "Session" is overloaded three ways
+### 3.2 "Plan" Ambiguity
 
-**Severity**: High
+The word "plan" is overloaded:
 
-On MissionExecute, the user sees:
+| Usage                                         | Meaning                        | Location                             |
+| --------------------------------------------- | ------------------------------ | ------------------------------------ |
+| `mission.stage === 'plan'`                    | Lifecycle stage                | `missions.ts:2`                      |
+| MissionPlan page                              | Page for the plan stage        | `apps/web/src/pages/MissionPlan.tsx` |
+| StageTabBar "PLAN" tab                        | Navigation to plan page        | `StageTabBar.tsx:6`                  |
+| `mission.goal`, `mission.scopeBoundary`, etc. | Plan document content          | `missions.ts:10-14`                  |
+| "Approve Plan & Begin Execution"              | Approve action on plan content | `MissionPlan.tsx:176`                |
+| "Re-plan" button in ApprovalBar               | Send back to plan stage        | `ApprovalBar.tsx:57`                 |
 
-1. **"AGENT SESSIONS (2)"** -- the AI agent execution contexts
-2. **"SESSIONS"** -- a section header for browser and terminal panes
-3. Individual Browser/Terminal session panes labeled **"BROWSER // ACTIVE"** and **"TERMINAL // COMPLETED"**
+**Assessment**: "Plan" simultaneously means "the current lifecycle phase" and "the document that describes the mission's approach." When the ApprovalBar's "Re-plan" button is clicked, does the supervisor expect the mission to return to the plan stage, or for the plan document content to be revised, or both?
 
-Three different kinds of "session" on one screen. The Agent Session is a first-class entity with its own lifecycle. The Browser/Terminal sessions are tool contexts. They need different names.
+### 3.3 "Review" Ambiguity
 
-**Recommendation**: Keep "Agent Session" as the canonical term. Rename the browser/terminal panes section to "TOOL PANES" or "ACTIVE TOOLS". Or remove the "SESSIONS" section header entirely and let the individual pane headers (BROWSER, TERMINAL) stand alone.
+Similar to "plan," the word "review" is overloaded:
 
-### Problem 3: "Escalation" is both a stage and an entity
+| Usage                        | Meaning                             | Location                               |
+| ---------------------------- | ----------------------------------- | -------------------------------------- |
+| `mission.stage === 'review'` | Lifecycle stage                     | `missions.ts:2`                        |
+| MissionReview page           | Page for the review stage           | `apps/web/src/pages/MissionReview.tsx` |
+| StageTabBar "REVIEW" tab     | Navigation to review page           | `StageTabBar.tsx:8`                    |
+| "Approve" / "Reject" buttons | Review actions                      | `ApprovalBar.tsx:48-87`                |
+| LeftNav "needs review" count | Count of missions needing attention | `LeftNav.tsx:19-21`                    |
+| "Review approved" toast      | Approval confirmation               | `MissionReview.tsx:66`                 |
 
-**Severity**: High
+**Assessment**: "Review" is both a stage and an action. The LeftNav "needs review" count (`LeftNav.tsx:19-21`) counts missions in `review` OR `escalation` stages, conflating two types of "needs attention." The "Approve" button performs a "review" action but the approval itself is not called a "review" -- it is an approval.
 
-A Mission has a `stage: 'escalation'` lifecycle position AND zero-or-more `Escalation` entities. MSN-001 is in the `review` stage but has ESC-001 (an escalation about a race condition). This means:
+### 3.4 "Session" Collision
 
-- A mission can have escalations without being in the escalation stage
-- A mission in the escalation stage always has at least one escalation entity
-- The stage label "ESCALATION" in the Kanban board and breadcrumbs looks identical to the entity concept
+Three different entity types share the word "session":
 
-Users will ask: "Is this mission escalated?" and the answer could be "it has an escalation but it's in review stage" which is confusing.
+| Term             | Meaning                             | Source                    |
+| ---------------- | ----------------------------------- | ------------------------- |
+| Agent Session    | An AI agent instance's work session | `agent-sessions.ts:15-29` |
+| Browser Session  | A headless browser instance         | `browser-sessions.ts`     |
+| Terminal Session | A CLI terminal instance             | `terminal-sessions.ts`    |
 
-**Recommendation**: Rename the stage to **"Blocked"** (since `verificationState: 'blocked'` already captures this concept). This frees "escalation" to be purely the noun for the decision-request entity. The stage `blocked` is concrete: the mission cannot proceed. The noun `Escalation` is the reason it is blocked. Clear separation.
+The MissionExecute page labels a section "SESSIONS" (`MissionExecute.tsx:318`) that shows browser and terminal sessions, while "AGENT SESSIONS" (`MissionExecute.tsx:210`) is a separate section above. This creates a visual hierarchy where "sessions" by default means browser/terminal, not agent, which contradicts the data model where all three are equally "sessions."
 
-### Problem 4: Evidence status tense inconsistency
+### 3.5 "Evidence" vs "Verification"
 
-**Severity**: Medium
+Two related terms are used somewhat interchangeably:
 
-- Evidence status type values: `pass`, `fail`, `warning`, `pending` (result tense)
-- VerificationState values: `passing`, `failing`, `pending`, `blocked` (progressive tense)
-- EvidenceDetailModal statusLabels: `Passing`, `Failing`, `Warning`, `Pending` (progressive tense, contradicting the `pass`/`fail` values they represent)
-- EvidenceRail summary: `{n} pass`, `{n} fail`, `{n} warn` (abbreviated result tense)
-- MissionDetail summary: `{n} PASS`, `{n} FAIL`, `{n} WARN` (abbreviated result tense)
+| Term                      | Usage                                    | Location                                   |
+| ------------------------- | ---------------------------------------- | ------------------------------------------ |
+| Evidence                  | Data items with pass/fail/warning status | `evidence.ts`, `EvidenceRail.tsx`          |
+| Verification State        | Computed summary of evidence             | `missions.ts:4` (`VerificationState` type) |
+| Verification Badge        | UI component showing verification state  | `VerificationBadge.tsx`                    |
+| "RISK & EVIDENCE SUMMARY" | Rail label on MissionPlan                | `MissionPlan.tsx:197`                      |
 
-The evidence status describes a **result** ("this test passed") but the modal labels describe an **ongoing state** ("this is passing"). These are semantically different.
+**Assessment**: "Evidence" is the collection; "Verification State" is the aggregate. The component naming is inconsistent: `EvidenceRail` displays evidence items, but `VerificationBadge` displays the computed state. The MissionPlan rail label "RISK & EVIDENCE SUMMARY" combines two concepts that are separately managed.
 
-**Recommendation**: Standardize on result tense for evidence: `pass`, `fail`, `warning`, `pending`. Use progressive tense only for the mission-level VerificationState which IS an ongoing aggregate. Change EvidenceDetailModal labels to `Passed`, `Failed`, `Warning`, `Pending`. Change EvidenceRail display to unabbreviated: `{n} passed`, `{n} failed`, `{n} warnings`.
+### 3.6 Escalation Model Terminology
 
-### Problem 5: Section label casing inconsistency
+The escalation concept has structural terminology drift due to the in-progress model change:
 
-**Severity**: Medium
+| Term                 | Old Model                                       | New Model                                 | Source              |
+| -------------------- | ----------------------------------------------- | ----------------------------------------- | ------------------- |
+| Escalation Stage     | `stage === 'escalation'` (a lifecycle position) | Deprecated (`missions.ts:1` comment)      | `missions.ts:2`     |
+| Escalation Overlay   | N/A                                             | `escalationActive: true` (a boolean flag) | `missions.ts:33`    |
+| Escalation Page      | Always navigable via StageTabBar                | Still always navigable (no change)        | `StageTabBar.tsx:9` |
+| "Needs review" count | Counts `stage === 'escalation'`                 | Also counts `stage === 'escalation'`      | `LeftNav.tsx:19-21` |
 
-The system has two casing conventions for section labels and neither is applied consistently:
-
-| Convention A: ALL CAPS (`.aw-micro`) | Convention B: Title/Sentence case | Location                             |
-| ------------------------------------ | --------------------------------- | ------------------------------------ |
-| `SCOPE BOUNDARY`                     | `Scope boundary`                  | MissionPlan vs. FocusPanel           |
-| `ACCEPTANCE CRITERIA`                | `Acceptance criteria`             | MissionCreate vs. FocusPanel         |
-| `RISK ASSESSMENT`                    | `IDENTIFIED RISKS`                | MissionDetail vs. MissionPlan/Create |
-| `GOAL`                               | `MISSION GOAL`                    | MissionDetail/Create vs. MissionPlan |
-
-**Recommendation**: Use ALL CAPS for all section labels consistently. The design system's `.aw-micro` class already applies `text-transform: uppercase`, so any mixed-case labels in `.aw-micro` elements are already rendered as caps. The issue is that FocusPanel uses sentence case in elements that are NOT `.aw-micro` styled. Either apply `.aw-micro` to all section labels or adopt title case for non-micro labels consistently.
-
-### Problem 6: "MED RISK" abbreviation in RiskBadge
-
-**Severity**: Low
-
-RiskBadge renders medium risk as `MED RISK`. Every other surface in the system uses `MEDIUM`: filter buttons, select dropdowns, the RiskTier type. The badge is 9px text with generous padding -- there is room for the full word.
-
-**Recommendation**: Change to `MEDIUM RISK` for consistency.
-
-### Problem 7: Mission event type display with hyphens
-
-**Severity**: Low
-
-MissionTimeline renders event types as `event.type.toUpperCase()`, producing `PLAN-APPROVED`, `EXECUTION-STARTED`, `ESCALATION-RAISED`. The EscalationHeader correctly strips hyphens with `.replace(/-/g, ' ')`. The timeline should do the same.
-
-**Recommendation**: Apply `.replace(/-/g, ' ')` in MissionTimeline before `.toUpperCase()`.
-
-### Problem 8: `step.status === 'success'` bug
-
-**Severity**: Low (visual only, unlikely to manifest since no step has `success` status)
-
-In MissionExecute's agent log section, code checks `step.status === 'success'` to render a checkmark. The `AgentStep` type defines statuses as `completed | running | pending | failed`. The `success` check will never match.
-
-**Recommendation**: Change to `step.status === 'completed'`.
-
-### Problem 9: "Inbox" breadcrumb on MissionHome
-
-**Severity**: Low
-
-MissionHome's TopBar breadcrumbs show `Missions / Inbox`. No other page references an "inbox" concept. The page is a mission list with filters, not an inbox. The term implies messages/tasks directed at the user, but this page shows all missions regardless of ownership.
-
-**Recommendation**: Remove the "Inbox" breadcrumb. `Missions` alone is sufficient, matching the LeftNav label.
-
-### Problem 10: Decorative jargon in chrome
-
-**Severity**: Low
-
-- AppShell bottom bar: `MISSION.CTRL // OPERATING SURFACE v0.1.0`
-- TopBar right side: `MISSION.CTRL // {date}`
-- LeftNav subtitle: `AGENT SUPERVISION`
-
-These are atmospheric. "Operating surface" is not a defined concept. "Agent supervision" is a tagline, not a feature. For an internal tool, decorative chrome is fine. For external users, these would need to be either defined or removed.
-
-**Recommendation**: Keep for now but document as decorative. Do not use these terms in documentation or help text.
+**Assessment**: The LeftNav filter at `LeftNav.tsx:19-21` counts `m.stage === 'review' || m.stage === 'escalation'`, which uses the old model. But MSN-004 uses the new model (`stage: 'review'`, `escalationActive: true`) and would be counted as "needs review" by virtue of its `review` stage, not its escalation overlay. The two models happen to produce the same LeftNav count for the current data but would diverge if a mission in `execute` stage had `escalationActive: true`.
 
 ---
 
-## Synthesis
+## 4. Component-to-Label Mapping
 
-### Five Most Damaging Terminology Inconsistencies
+This table maps every React component name to its user-facing label (if any), revealing mismatches between internal naming and what the user sees.
 
-1. **"Workspace" vs. "Live View"**: The deprecated entity still has a full page, components, and route. Users encounter both concepts. This creates confusion about what the IDE-like environment is actually called and where to find it.
+### 4.1 Page Components
 
-2. **"Session" overload (3 meanings)**: Agent Session, Browser Session, Terminal Session, plus a "SESSIONS" section header. On the MissionExecute page, "session" refers to at least two different concepts visible simultaneously.
+| Component Name      | File                                       | User-Facing Label                       | Mismatch                                                   |
+| ------------------- | ------------------------------------------ | --------------------------------------- | ---------------------------------------------------------- |
+| `MissionHome`       | `apps/web/src/pages/MissionHome.tsx`       | "Missions" (TopBar breadcrumb)          | Component says "Home", user sees "Missions"                |
+| `MissionDetail`     | `apps/web/src/pages/MissionDetail.tsx`     | "Overview" (breadcrumb + StageTabBar)   | Component says "Detail", UI says "Overview"                |
+| `MissionPlan`       | `apps/web/src/pages/MissionPlan.tsx`       | "Plan" (breadcrumb + StageTabBar)       | Match                                                      |
+| `MissionExecute`    | `apps/web/src/pages/MissionExecute.tsx`    | "Execute" (breadcrumb + StageTabBar)    | Match                                                      |
+| `MissionReview`     | `apps/web/src/pages/MissionReview.tsx`     | "Review" (breadcrumb + StageTabBar)     | Match                                                      |
+| `MissionEscalation` | `apps/web/src/pages/MissionEscalation.tsx` | "Escalation" (breadcrumb + StageTabBar) | Match                                                      |
+| `MissionCreate`     | `apps/web/src/pages/MissionCreate.tsx`     | "NEW MISSION" (button text)             | Component says "Create", button says "NEW MISSION"         |
+| `LiveView`          | `apps/web/src/pages/LiveView.tsx`          | "LIVE SUPERVISION MODE" (header bar)    | Component says "LiveView", UI says "LIVE SUPERVISION MODE" |
+| `CostDashboard`     | `apps/web/src/pages/CostDashboard.tsx`     | "Costs" (LeftNav)                       | Component says "Dashboard", nav says "Costs"               |
+| `Workflows`         | `apps/web/src/pages/Workflows.tsx`         | "Workflows" (LeftNav)                   | Match                                                      |
+| `WorkflowDetail`    | `apps/web/src/pages/WorkflowDetail.tsx`    | Workflow title (breadcrumb)             | Component says "Detail", user sees workflow title          |
+| `WorkflowCreate`    | `apps/web/src/pages/WorkflowCreate.tsx`    | (no breadcrumb visible)                 | --                                                         |
+| `History`           | `apps/web/src/pages/History.tsx`           | "History" (LeftNav)                     | Match                                                      |
+| `Settings`          | `apps/web/src/pages/Settings.tsx`          | "Settings" (LeftNav)                    | Match                                                      |
+| `WorkspaceRedirect` | `apps/web/src/pages/WorkspaceRedirect.tsx` | (no label -- redirect only)             | Legacy component                                           |
 
-3. **"Escalation" as both a lifecycle stage and an entity**: A mission can have escalation entities in any stage, but "escalation" is also a stage name. The Kanban board shows a column called "ESCALATION" while individual escalation entities appear on non-escalation-stage missions.
+### 4.2 Shell Components
 
-4. **Evidence status tense mismatch**: `pass`/`fail` (result) in the data model vs. `Passing`/`Failing` (progressive) in the detail modal vs. `WARN` (abbreviation) in summaries. Three conventions for the same concept.
+| Component Name            | File                                                        | User-Facing Label                                 | Mismatch                                              |
+| ------------------------- | ----------------------------------------------------------- | ------------------------------------------------- | ----------------------------------------------------- |
+| `AppShell`                | `apps/web/src/components/shell/AppShell.tsx`                | (invisible wrapper)                               | No user label                                         |
+| `LeftNav`                 | `apps/web/src/components/shell/LeftNav.tsx`                 | "Mission Control / AGENT SUPERVISION" (logo area) | Component name describes position; user sees branding |
+| `TopBar`                  | `apps/web/src/components/shell/TopBar.tsx`                  | (no label -- structural)                          | No user label                                         |
+| `CommandPalette`          | `apps/web/src/components/shell/CommandPalette.tsx`          | "Search missions, pages..." (placeholder text)    | Component says "CommandPalette", user sees "Search"   |
+| `MissionSwitcherDropdown` | `apps/web/src/components/shell/MissionSwitcherDropdown.tsx` | (no label -- activated by mission ID click)       | No user label                                         |
+| `NotificationCenter`      | `apps/web/src/components/shell/NotificationCenter.tsx`      | (bell icon, no text label)                        | No user label                                         |
+| `PageTransition`          | `apps/web/src/components/shell/PageTransition.tsx`          | (invisible animation wrapper)                     | No user label                                         |
 
-5. **Section label casing**: FocusPanel uses sentence case ("Scope boundary", "Acceptance criteria") while every other component uses ALL CAPS. Same data fields, different label conventions.
+### 4.3 Mission Components
 
-### Overloaded or Ambiguous Concepts
+| Component Name    | File                                                  | User-Facing Label                                      |
+| ----------------- | ----------------------------------------------------- | ------------------------------------------------------ |
+| `StageTabBar`     | `apps/web/src/components/mission/StageTabBar.tsx`     | "OVERVIEW \| PLAN \| EXECUTE \| REVIEW \| ESCALATION"  |
+| `MissionCard`     | `apps/web/src/components/mission/MissionCard.tsx`     | Mission title as card heading                          |
+| `MissionHeader`   | `apps/web/src/components/mission/MissionHeader.tsx`   | Mission title + badges                                 |
+| `MissionTimeline` | `apps/web/src/components/mission/MissionTimeline.tsx` | "TIMELINE" section label                               |
+| `StageBadge`      | `apps/web/src/components/mission/StageBadge.tsx`      | Stage name in badge (e.g., "REVIEW")                   |
+| `FocusPanel`      | `apps/web/src/components/mission/FocusPanel.tsx`      | (no label -- right panel on MissionHome)               |
+| `ActivityPreview` | `apps/web/src/components/mission/ActivityPreview.tsx` | "LIVE ACTIVITY" or "RESULT PREVIEW" depending on stage |
+| `ArtifactPanel`   | `apps/web/src/components/mission/ArtifactPanel.tsx`   | "ARTIFACTS"                                            |
+| `MarkdownViewer`  | `apps/web/src/components/mission/MarkdownViewer.tsx`  | (no label -- renders markdown content inline)          |
 
-- **"Session"**: Agent Session (AI execution context), Browser Session (browser automation context), Terminal Session (command execution context), "SESSIONS" (section header for browser+terminal). Four uses.
-- **"Escalation"**: A mission lifecycle stage AND a decision-request entity. Two distinct meanings.
-- **"Status"**: Every entity has a status field but with different vocabularies (active/paused/completed/failed for agents vs. pass/fail/warning/pending for evidence vs. active/merged/stale for branches). Not inherently wrong, but there is no system-wide status legend.
-- **"Risk"**: RiskTier (low/medium/high classification), risk items on a mission (free-text), EscalationOption risk (free-text consequence), evidence type "risk-explanation", and evidence filter label "Risk". Five uses.
+### 4.4 Review and Evidence Components
 
-### Priority Terms to Standardize Before Next Implementation Cycle
+| Component Name      | File                                                     | User-Facing Label                                |
+| ------------------- | -------------------------------------------------------- | ------------------------------------------------ |
+| `ApprovalBar`       | `apps/web/src/components/review/ApprovalBar.tsx`         | "Ready for approval" or "N blockers remaining"   |
+| `DiffByIntent`      | `apps/web/src/components/review/DiffByIntent.tsx`        | (renders diff blocks)                            |
+| `RiskBadge`         | `apps/web/src/components/review/RiskBadge.tsx`           | "LOW" / "MEDIUM" / "HIGH"                        |
+| `EvidenceRail`      | `apps/web/src/components/evidence/EvidenceRail.tsx`      | (no section label by default; labeled by parent) |
+| `VerificationBadge` | `apps/web/src/components/evidence/VerificationBadge.tsx` | "PASSING" / "FAILING" / "BLOCKED" / "PENDING"    |
 
-1. **Dissolve Workspace completely** -- rename `WorkspaceLayout` to `LiveViewLayout`, remove `Workspace.tsx` page, remove `WorkspaceTabs`, update all aria-labels. Estimated: 1-2 hours.
+### 4.5 Escalation Components
 
-2. **Rename the "escalation" stage to "blocked"** -- update `Stage` type, `StageBadge` config, `stageColumns` in WorkflowDetail, filter labels in MissionHome, navigation links in MissionDetail, route paths, breadcrumbs. Estimated: 2-3 hours. High conceptual payoff.
+| Component Name     | File                                                      | User-Facing Label                  |
+| ------------------ | --------------------------------------------------------- | ---------------------------------- |
+| `EscalationHeader` | `apps/web/src/components/escalation/EscalationHeader.tsx` | Escalation title + type + severity |
+| `ReplayTimeline`   | `apps/web/src/components/escalation/ReplayTimeline.tsx`   | (renders agent step replay)        |
+| `ConsequencePanel` | `apps/web/src/components/escalation/ConsequencePanel.tsx` | "DECISION OPTIONS"                 |
 
-3. **Standardize evidence display labels** -- fix tense (result tense for evidence, progressive for verification state), fix abbreviation (`WARNING` not `WARN`), fix the `success` bug in MissionExecute. Estimated: 1 hour.
+### 4.6 Execute Components
 
-4. **Normalize section label casing** -- audit all section headers, ensure ALL CAPS convention is applied via `.aw-micro` class everywhere. Fix FocusPanel labels. Fix "RISK ASSESSMENT" vs "IDENTIFIED RISKS" split (pick one). Fix "GOAL" vs "MISSION GOAL" split (pick one). Estimated: 1 hour.
+| Component Name        | File                                                   | User-Facing Label          |
+| --------------------- | ------------------------------------------------------ | -------------------------- |
+| `AgentSwimlane`       | `apps/web/src/components/execute/AgentSwimlane.tsx`    | Agent role name as heading |
+| `AgentChatPanel`      | `apps/web/src/components/execute/AgentChatPanel.tsx`   | "CHAT" (view mode toggle)  |
+| `AgentConfigPanel`    | `apps/web/src/components/execute/AgentConfigPanel.tsx` | (modal -- title varies)    |
+| `BrowserSessionPane`  | `apps/web/src/components/execute/SessionPane.tsx`      | "BROWSER SESSION"          |
+| `TerminalSessionPane` | `apps/web/src/components/execute/SessionPane.tsx`      | "TERMINAL SESSION"         |
 
-5. **Disambiguate "session" on MissionExecute** -- rename the "SESSIONS" section header to something that does not collide with "AGENT SESSIONS". Estimated: 15 minutes.
+---
+
+## 5. Action Verbs in the UI
+
+This section catalogs the action verbs used in buttons and interactive elements, assessing consistency.
+
+### 5.1 Approval-Related Verbs
+
+| Verb            | Button Text                      | Location                   | Meaning                                    |
+| --------------- | -------------------------------- | -------------------------- | ------------------------------------------ |
+| Approve         | "Approve Plan & Begin Execution" | `MissionPlan.tsx:176`      | Accept the plan, transition to execute     |
+| Approve         | "Approve"                        | `ApprovalBar.tsx:86`       | Accept the review, transition to completed |
+| Reject          | "Reject"                         | `ApprovalBar.tsx:69`       | Deny the review                            |
+| Re-plan         | "Re-plan"                        | `ApprovalBar.tsx:57`       | Send back to plan stage                    |
+| Request Changes | "Request Changes"                | `MissionPlan.tsx:184`      | Ask for plan modifications                 |
+| Confirm         | "CONFIRM"                        | `ConsequencePanel.tsx:138` | Confirm an escalation decision             |
+| Cancel          | "CANCEL"                         | `ConsequencePanel.tsx:144` | Cancel the current selection               |
+
+**Assessment**: "Approve" is used for two different transitions (plan-to-execute, review-to-completed). "Request Changes" on the plan page and "Re-plan" on the review page describe similar concepts (send work back for revision) but use different verbs. A user may not realize these are analogous actions.
+
+### 5.2 Navigation-Related Verbs
+
+| Verb / Phrase        | Location                                                                                             | Meaning                         |
+| -------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------- |
+| "ENTER LIVE VIEW"    | `MissionDetail.tsx:294`, `MissionExecute.tsx:192`, `ActivityPreview.tsx:169`                         | Navigate to fullscreen LiveView |
+| "Back to mission"    | `MissionPlan.tsx:95`, `MissionExecute.tsx:110`, `MissionReview.tsx:117`, `MissionEscalation.tsx:126` | Navigate to MissionDetail       |
+| "Back to missions"   | `MissionPlan.tsx:50`, `MissionExecute.tsx:55` (not-found state)                                      | Navigate to MissionHome         |
+| "Back"               | `LiveView.tsx:49`                                                                                    | Navigate to execute page        |
+| "Return to Missions" | `LiveView.tsx:163` (not-found state)                                                                 | Navigate to MissionHome         |
+| "Go to Missions"     | `App.tsx:39` (NotFound page)                                                                         | Navigate to MissionHome         |
+| "+ NEW MISSION"      | `MissionHome.tsx:110`                                                                                | Navigate to MissionCreate       |
+| "Create Mission"     | `CommandPalette.tsx:22`                                                                              | Navigate to MissionCreate       |
+
+**Assessment**: The "back" navigation uses three different phrasings ("Back to mission", "Back to missions", "Back") and two different targets (MissionDetail, MissionHome). "ENTER LIVE VIEW" uses all-caps while "Back to mission" uses sentence case -- inconsistent casing conventions.
+
+### 5.3 Section Labels (All-Caps Conventions)
+
+The UI uses all-caps for section headings. These are the section labels found across pages:
+
+| Label                                  | Page                                       | Component |
+| -------------------------------------- | ------------------------------------------ | --------- |
+| "GOAL" / "MISSION GOAL"                | MissionDetail / MissionPlan                | Inline    |
+| "SCOPE BOUNDARY" / "SCOPE"             | MissionDetail / MissionExecute             | Inline    |
+| "ACCEPTANCE CRITERIA"                  | MissionDetail, MissionPlan, MissionExecute | Inline    |
+| "RISK ASSESSMENT" / "IDENTIFIED RISKS" | MissionDetail / MissionPlan                | Inline    |
+| "AGENT SESSIONS"                       | MissionDetail, MissionExecute              | Inline    |
+| "EVIDENCE SUMMARY"                     | MissionDetail                              | Inline    |
+| "RISK & EVIDENCE SUMMARY"              | MissionPlan                                | Inline    |
+| "ESCALATION ALERTS"                    | MissionDetail                              | Inline    |
+| "TIMELINE"                             | MissionDetail                              | Inline    |
+| "NAVIGATION"                           | MissionDetail                              | Inline    |
+| "AGENT LOG"                            | MissionExecute                             | Inline    |
+| "EXECUTE PREVIEW"                      | MissionExecute                             | Inline    |
+| "SESSIONS"                             | MissionExecute                             | Inline    |
+| "ISSUE DETAIL"                         | MissionEscalation                          | Inline    |
+| "ALL ESCALATIONS"                      | MissionEscalation                          | Inline    |
+| "DECISION OPTIONS"                     | ConsequencePanel                           | Component |
+| "ROLLBACK PREVIEW"                     | MissionReview                              | Inline    |
+| "ARTIFACTS"                            | ArtifactPanel                              | Component |
+| "LIVE ACTIVITY" / "RESULT PREVIEW"     | ActivityPreview                            | Component |
+| "LIVE SUPERVISION MODE"                | LiveView                                   | Inline    |
+| "AGENT SUPERVISION"                    | LeftNav                                    | Inline    |
+
+**Assessment**: Two naming inconsistencies stand out:
+
+1. "GOAL" on MissionDetail vs "MISSION GOAL" on MissionPlan -- the same field, different labels.
+2. "RISK ASSESSMENT" on MissionDetail vs "IDENTIFIED RISKS" on MissionPlan -- same data, different framing.
+
+---
+
+## 6. Cross-References
+
+- **Object definitions**: See `conceptual-model.md` Section 2 for the full object inventory and relationship diagram.
+- **State definitions**: See `state-model.md` for detailed state machine analysis of each term's associated states.
+- **Navigation terms**: See `information-architecture.md` for how AppShell, LeftNav, TopBar, and StageTabBar relate structurally.
