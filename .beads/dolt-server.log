@@ -1,0 +1,579 @@
+Starting server with Config HP="127.0.0.1:65381"|T="28800000"|R="false"|L="info"
+time="2026-03-26T11:22:53+11:00" level=info msg="Creating root@localhost superuser"
+time="2026-03-26T11:22:53+11:00" level=info msg="Server ready. Accepting connections."
+time="2026-03-26T11:22:53+11:00" level=warning msg="secure_file_priv is set to \"\", which is insecure."
+time="2026-03-26T11:22:53+11:00" level=warning msg="Any user with GRANT FILE privileges will be able to read any file which the sql-server process can read."
+time="2026-03-26T11:22:53+11:00" level=warning msg="Please consider restarting the server with secure_file_priv set to a safe (or non-existent) directory."
+time="2026-03-26T11:22:53+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=1
+time="2026-03-26T11:22:53+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=2
+time="2026-03-26T11:22:53+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=3
+time="2026-03-26T11:22:53+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:65389: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 1"
+time="2026-03-26T11:22:53+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:65390: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 2"
+time="2026-03-26T11:22:53+11:00" level=info msg=ConnectionClosed connectionID=1
+time="2026-03-26T11:22:53+11:00" level=info msg=ConnectionClosed connectionID=2
+time="2026-03-26T11:22:53+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=4
+time="2026-03-26T11:22:53+11:00" level=info msg=ConnectionClosed connectionID=3
+time="2026-03-26T11:22:53+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=5
+time="2026-03-26T11:22:53+11:00" level=warning msg="error running query" connectTime="2026-03-26 11:22:53.4987419 +1100 AEDT m=+0.711972201" connectionDb=beads_bead connectionID=5 error="Duplicate key name 'idx_issues_issue_type'" queryTime="2026-03-26 11:22:53.538025 +1100 AEDT m=+0.751255301"
+time="2026-03-26T11:22:53+11:00" level=warning msg="error running query" connectTime="2026-03-26 11:22:53.4987419 +1100 AEDT m=+0.711972201" connectionDb=beads_bead connectionID=5 error="foreign key `fk_dep_depends_on` was not found on the table `dependencies`" queryTime="2026-03-26 11:22:53.5385493 +1100 AEDT m=+0.751779601"
+time="2026-03-26T11:22:53+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=6
+time="2026-03-26T11:22:55+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=7
+time="2026-03-26T11:22:55+11:00" level=info msg=ConnectionClosed connectionID=7
+time="2026-03-26T11:22:55+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=8
+time="2026-03-26T11:22:55+11:00" level=info msg=ConnectionClosed connectionID=8
+time="2026-03-26T11:22:56+11:00" level=info msg=ConnectionClosed connectionID=6
+time="2026-03-26T11:22:56+11:00" level=info msg=ConnectionClosed connectionID=4
+time="2026-03-26T11:22:56+11:00" level=info msg=ConnectionClosed connectionID=5
+time="2026-03-26T13:01:36+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=9
+time="2026-03-26T13:01:36+11:00" level=info msg=ConnectionClosed connectionID=9
+time="2026-03-26T13:01:36+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=10
+time="2026-03-26T13:01:36+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=11
+time="2026-03-26T13:01:36+11:00" level=info msg=ConnectionClosed connectionID=10
+time="2026-03-26T13:01:36+11:00" level=warning msg="error running query" connectTime="2026-03-26 13:01:36.6851643 +1100 AEDT m=+5923.898394601" connectionDb=beads_bead connectionID=11 error="nothing to commit" queryTime="2026-03-26 13:01:36.7323073 +1100 AEDT m=+5923.945537601"
+time="2026-03-26T13:01:37+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=12
+time="2026-03-26T13:01:37+11:00" level=info msg=ConnectionClosed connectionID=12
+time="2026-03-26T13:01:37+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=13
+time="2026-03-26T13:01:37+11:00" level=info msg=ConnectionClosed connectionID=13
+time="2026-03-26T13:01:37+11:00" level=info msg=ConnectionClosed connectionID=11
+time="2026-03-26T13:01:37+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=14
+time="2026-03-26T13:01:37+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:50297: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 14"
+time="2026-03-26T13:01:37+11:00" level=info msg=ConnectionClosed connectionID=14
+time="2026-03-26T13:01:37+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=15
+time="2026-03-26T13:01:37+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=16
+time="2026-03-26T13:01:37+11:00" level=info msg=ConnectionClosed connectionID=15
+time="2026-03-26T13:01:37+11:00" level=warning msg="error running query" connectTime="2026-03-26 13:01:37.5532946 +1100 AEDT m=+5924.766524901" connectionDb=beads_bead connectionID=16 error="nothing to commit" queryTime="2026-03-26 13:01:37.583141 +1100 AEDT m=+5924.796371301"
+time="2026-03-26T13:01:37+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=17
+time="2026-03-26T13:01:37+11:00" level=info msg=ConnectionClosed connectionID=17
+time="2026-03-26T13:01:38+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=18
+time="2026-03-26T13:01:38+11:00" level=info msg=ConnectionClosed connectionID=18
+time="2026-03-26T13:01:38+11:00" level=info msg=ConnectionClosed connectionID=16
+time="2026-03-26T13:01:46+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=19
+time="2026-03-26T13:01:46+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:61781: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 19"
+time="2026-03-26T13:01:46+11:00" level=info msg=ConnectionClosed connectionID=19
+time="2026-03-26T13:01:46+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=20
+time="2026-03-26T13:01:46+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=21
+time="2026-03-26T13:01:46+11:00" level=info msg=ConnectionClosed connectionID=20
+time="2026-03-26T13:01:52+11:00" level=warning msg="error running query" connectTime="2026-03-26 13:01:46.2381889 +1100 AEDT m=+5933.451419201" connectionDb=beads_bead connectionID=21 error="nothing to commit" queryTime="2026-03-26 13:01:52.9407743 +1100 AEDT m=+5940.154004601"
+time="2026-03-26T13:01:53+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=22
+time="2026-03-26T13:01:53+11:00" level=info msg=ConnectionClosed connectionID=22
+time="2026-03-26T13:01:53+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=23
+time="2026-03-26T13:01:53+11:00" level=info msg=ConnectionClosed connectionID=23
+time="2026-03-26T13:01:54+11:00" level=info msg=ConnectionClosed connectionID=21
+time="2026-03-26T13:02:02+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=24
+time="2026-03-26T13:02:02+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:61808: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 24"
+time="2026-03-26T13:02:02+11:00" level=info msg=ConnectionClosed connectionID=24
+time="2026-03-26T13:02:02+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=25
+time="2026-03-26T13:02:02+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=26
+time="2026-03-26T13:02:02+11:00" level=info msg=ConnectionClosed connectionID=25
+time="2026-03-26T13:02:02+11:00" level=warning msg="error running query" connectTime="2026-03-26 13:02:02.4953807 +1100 AEDT m=+5949.708611001" connectionDb=beads_bead connectionID=26 error="nothing to commit" queryTime="2026-03-26 13:02:02.7305591 +1100 AEDT m=+5949.943789401"
+time="2026-03-26T13:02:03+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=27
+time="2026-03-26T13:02:03+11:00" level=info msg=ConnectionClosed connectionID=27
+time="2026-03-26T13:02:03+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=28
+time="2026-03-26T13:02:03+11:00" level=info msg=ConnectionClosed connectionID=28
+time="2026-03-26T13:02:03+11:00" level=info msg=ConnectionClosed connectionID=26
+time="2026-03-26T13:02:10+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=29
+time="2026-03-26T13:02:10+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:61829: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 29"
+time="2026-03-26T13:02:10+11:00" level=info msg=ConnectionClosed connectionID=29
+time="2026-03-26T13:02:10+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=30
+time="2026-03-26T13:02:10+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=31
+time="2026-03-26T13:02:10+11:00" level=info msg=ConnectionClosed connectionID=30
+time="2026-03-26T13:02:10+11:00" level=warning msg="error running query" connectTime="2026-03-26 13:02:10.3750091 +1100 AEDT m=+5957.588239401" connectionDb=beads_bead connectionID=31 error="nothing to commit" queryTime="2026-03-26 13:02:10.5948363 +1100 AEDT m=+5957.808066601"
+time="2026-03-26T13:02:10+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=32
+time="2026-03-26T13:02:10+11:00" level=info msg=ConnectionClosed connectionID=32
+time="2026-03-26T13:02:11+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=33
+time="2026-03-26T13:02:11+11:00" level=info msg=ConnectionClosed connectionID=33
+time="2026-03-26T13:02:11+11:00" level=info msg=ConnectionClosed connectionID=31
+time="2026-03-26T13:02:19+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=34
+time="2026-03-26T13:02:19+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:56313: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 34"
+time="2026-03-26T13:02:19+11:00" level=info msg=ConnectionClosed connectionID=34
+time="2026-03-26T13:02:19+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=35
+time="2026-03-26T13:02:19+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=36
+time="2026-03-26T13:02:19+11:00" level=info msg=ConnectionClosed connectionID=35
+time="2026-03-26T13:02:19+11:00" level=warning msg="error running query" connectTime="2026-03-26 13:02:19.4207067 +1100 AEDT m=+5966.633937001" connectionDb=beads_bead connectionID=36 error="nothing to commit" queryTime="2026-03-26 13:02:19.4512339 +1100 AEDT m=+5966.664464201"
+time="2026-03-26T13:02:19+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=37
+time="2026-03-26T13:02:19+11:00" level=info msg=ConnectionClosed connectionID=37
+time="2026-03-26T13:02:20+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=38
+time="2026-03-26T13:02:20+11:00" level=info msg=ConnectionClosed connectionID=38
+time="2026-03-26T13:02:20+11:00" level=info msg=ConnectionClosed connectionID=36
+time="2026-03-26T13:02:27+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=39
+time="2026-03-26T13:02:27+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:56333: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 39"
+time="2026-03-26T13:02:27+11:00" level=info msg=ConnectionClosed connectionID=39
+time="2026-03-26T13:02:27+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=40
+time="2026-03-26T13:02:27+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=41
+time="2026-03-26T13:02:27+11:00" level=info msg=ConnectionClosed connectionID=40
+time="2026-03-26T13:02:27+11:00" level=warning msg="error running query" connectTime="2026-03-26 13:02:27.0456832 +1100 AEDT m=+5974.258913501" connectionDb=beads_bead connectionID=41 error="nothing to commit" queryTime="2026-03-26 13:02:27.0743277 +1100 AEDT m=+5974.287558001"
+time="2026-03-26T13:02:27+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=42
+time="2026-03-26T13:02:27+11:00" level=info msg=ConnectionClosed connectionID=42
+time="2026-03-26T13:02:27+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=43
+time="2026-03-26T13:02:27+11:00" level=info msg=ConnectionClosed connectionID=43
+time="2026-03-26T13:02:27+11:00" level=info msg=ConnectionClosed connectionID=41
+time="2026-03-26T13:02:35+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=44
+time="2026-03-26T13:02:35+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:56349: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 44"
+time="2026-03-26T13:02:35+11:00" level=info msg=ConnectionClosed connectionID=44
+time="2026-03-26T13:02:35+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=45
+time="2026-03-26T13:02:35+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=46
+time="2026-03-26T13:02:35+11:00" level=info msg=ConnectionClosed connectionID=45
+time="2026-03-26T13:02:36+11:00" level=warning msg="error running query" connectTime="2026-03-26 13:02:35.5481819 +1100 AEDT m=+5982.761412201" connectionDb=beads_bead connectionID=46 error="nothing to commit" queryTime="2026-03-26 13:02:36.3900796 +1100 AEDT m=+5983.603309901"
+time="2026-03-26T13:02:37+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=47
+time="2026-03-26T13:02:37+11:00" level=info msg=ConnectionClosed connectionID=47
+time="2026-03-26T13:02:38+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=48
+time="2026-03-26T13:02:38+11:00" level=info msg=ConnectionClosed connectionID=48
+time="2026-03-26T13:02:38+11:00" level=info msg=ConnectionClosed connectionID=46
+time="2026-03-26T13:02:48+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=49
+time="2026-03-26T13:02:48+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:56373: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 49"
+time="2026-03-26T13:02:48+11:00" level=info msg=ConnectionClosed connectionID=49
+time="2026-03-26T13:02:48+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=50
+time="2026-03-26T13:02:48+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=51
+time="2026-03-26T13:02:48+11:00" level=info msg=ConnectionClosed connectionID=50
+time="2026-03-26T13:02:48+11:00" level=warning msg="error running query" connectTime="2026-03-26 13:02:48.4737838 +1100 AEDT m=+5995.687014101" connectionDb=beads_bead connectionID=51 error="nothing to commit" queryTime="2026-03-26 13:02:48.8297828 +1100 AEDT m=+5996.043013101"
+time="2026-03-26T13:02:49+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=52
+time="2026-03-26T13:02:49+11:00" level=info msg=ConnectionClosed connectionID=52
+time="2026-03-26T13:02:49+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=53
+time="2026-03-26T13:02:49+11:00" level=info msg=ConnectionClosed connectionID=53
+time="2026-03-26T13:02:49+11:00" level=info msg=ConnectionClosed connectionID=51
+time="2026-03-26T13:02:57+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=54
+time="2026-03-26T13:02:57+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:56394: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 54"
+time="2026-03-26T13:02:57+11:00" level=info msg=ConnectionClosed connectionID=54
+time="2026-03-26T13:02:57+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=55
+time="2026-03-26T13:02:57+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=56
+time="2026-03-26T13:02:57+11:00" level=info msg=ConnectionClosed connectionID=55
+time="2026-03-26T13:02:58+11:00" level=warning msg="error running query" connectTime="2026-03-26 13:02:57.514985 +1100 AEDT m=+6004.728215301" connectionDb=beads_bead connectionID=56 error="nothing to commit" queryTime="2026-03-26 13:02:58.3562257 +1100 AEDT m=+6005.569456001"
+time="2026-03-26T13:02:58+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=57
+time="2026-03-26T13:02:58+11:00" level=info msg=ConnectionClosed connectionID=57
+time="2026-03-26T13:02:58+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=58
+time="2026-03-26T13:02:58+11:00" level=info msg=ConnectionClosed connectionID=58
+time="2026-03-26T13:02:59+11:00" level=info msg=ConnectionClosed connectionID=56
+time="2026-03-26T13:03:06+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=59
+time="2026-03-26T13:03:06+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:56416: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 59"
+time="2026-03-26T13:03:06+11:00" level=info msg=ConnectionClosed connectionID=59
+time="2026-03-26T13:03:06+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=60
+time="2026-03-26T13:03:06+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=61
+time="2026-03-26T13:03:06+11:00" level=info msg=ConnectionClosed connectionID=60
+time="2026-03-26T13:03:06+11:00" level=warning msg="error running query" connectTime="2026-03-26 13:03:06.6957209 +1100 AEDT m=+6013.908951201" connectionDb=beads_bead connectionID=61 error="nothing to commit" queryTime="2026-03-26 13:03:06.7352658 +1100 AEDT m=+6013.948496101"
+time="2026-03-26T13:03:07+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=62
+time="2026-03-26T13:03:07+11:00" level=info msg=ConnectionClosed connectionID=62
+time="2026-03-26T13:03:07+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=63
+time="2026-03-26T13:03:07+11:00" level=info msg=ConnectionClosed connectionID=63
+time="2026-03-26T13:03:07+11:00" level=info msg=ConnectionClosed connectionID=61
+time="2026-03-26T13:03:13+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=64
+time="2026-03-26T13:03:13+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:56449: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 64"
+time="2026-03-26T13:03:13+11:00" level=info msg=ConnectionClosed connectionID=64
+time="2026-03-26T13:03:13+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=65
+time="2026-03-26T13:03:13+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=66
+time="2026-03-26T13:03:13+11:00" level=info msg=ConnectionClosed connectionID=65
+time="2026-03-26T13:03:13+11:00" level=warning msg="error running query" connectTime="2026-03-26 13:03:13.6190298 +1100 AEDT m=+6020.832260101" connectionDb=beads_bead connectionID=66 error="nothing to commit" queryTime="2026-03-26 13:03:13.933941 +1100 AEDT m=+6021.147171301"
+time="2026-03-26T13:03:14+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=67
+time="2026-03-26T13:03:14+11:00" level=info msg=ConnectionClosed connectionID=67
+time="2026-03-26T13:03:14+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=68
+time="2026-03-26T13:03:14+11:00" level=info msg=ConnectionClosed connectionID=68
+time="2026-03-26T13:03:14+11:00" level=info msg=ConnectionClosed connectionID=66
+time="2026-03-26T13:03:22+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=69
+time="2026-03-26T13:03:22+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:56468: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 69"
+time="2026-03-26T13:03:22+11:00" level=info msg=ConnectionClosed connectionID=69
+time="2026-03-26T13:03:22+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=70
+time="2026-03-26T13:03:22+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=71
+time="2026-03-26T13:03:22+11:00" level=info msg=ConnectionClosed connectionID=70
+time="2026-03-26T13:03:22+11:00" level=warning msg="error running query" connectTime="2026-03-26 13:03:22.2071653 +1100 AEDT m=+6029.420395601" connectionDb=beads_bead connectionID=71 error="nothing to commit" queryTime="2026-03-26 13:03:22.2298988 +1100 AEDT m=+6029.443129101"
+time="2026-03-26T13:03:22+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=72
+time="2026-03-26T13:03:22+11:00" level=info msg=ConnectionClosed connectionID=72
+time="2026-03-26T13:03:22+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=73
+time="2026-03-26T13:03:22+11:00" level=info msg=ConnectionClosed connectionID=73
+time="2026-03-26T13:03:23+11:00" level=info msg=ConnectionClosed connectionID=71
+time="2026-03-26T13:03:29+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=74
+time="2026-03-26T13:03:29+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:56488: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 74"
+time="2026-03-26T13:03:29+11:00" level=info msg=ConnectionClosed connectionID=74
+time="2026-03-26T13:03:29+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=75
+time="2026-03-26T13:03:29+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=76
+time="2026-03-26T13:03:29+11:00" level=info msg=ConnectionClosed connectionID=75
+time="2026-03-26T13:03:29+11:00" level=warning msg="error running query" connectTime="2026-03-26 13:03:29.2008556 +1100 AEDT m=+6036.414085901" connectionDb=beads_bead connectionID=76 error="nothing to commit" queryTime="2026-03-26 13:03:29.2444996 +1100 AEDT m=+6036.457729901"
+time="2026-03-26T13:03:29+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=77
+time="2026-03-26T13:03:29+11:00" level=info msg=ConnectionClosed connectionID=77
+time="2026-03-26T13:03:29+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=78
+time="2026-03-26T13:03:29+11:00" level=info msg=ConnectionClosed connectionID=78
+time="2026-03-26T13:03:30+11:00" level=info msg=ConnectionClosed connectionID=76
+time="2026-03-26T13:03:37+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=79
+time="2026-03-26T13:03:37+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:56513: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 79"
+time="2026-03-26T13:03:37+11:00" level=info msg=ConnectionClosed connectionID=79
+time="2026-03-26T13:03:37+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=80
+time="2026-03-26T13:03:37+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=81
+time="2026-03-26T13:03:37+11:00" level=info msg=ConnectionClosed connectionID=80
+time="2026-03-26T13:03:37+11:00" level=warning msg="error running query" connectTime="2026-03-26 13:03:37.4767993 +1100 AEDT m=+6044.690029601" connectionDb=beads_bead connectionID=81 error="nothing to commit" queryTime="2026-03-26 13:03:37.7463804 +1100 AEDT m=+6044.959610701"
+time="2026-03-26T13:03:38+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=82
+time="2026-03-26T13:03:38+11:00" level=info msg=ConnectionClosed connectionID=82
+time="2026-03-26T13:03:38+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=83
+time="2026-03-26T13:03:38+11:00" level=info msg=ConnectionClosed connectionID=83
+time="2026-03-26T13:03:38+11:00" level=info msg=ConnectionClosed connectionID=81
+time="2026-03-26T13:03:45+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=84
+time="2026-03-26T13:03:45+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:56535: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 84"
+time="2026-03-26T13:03:45+11:00" level=info msg=ConnectionClosed connectionID=84
+time="2026-03-26T13:03:45+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=85
+time="2026-03-26T13:03:45+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=86
+time="2026-03-26T13:03:45+11:00" level=info msg=ConnectionClosed connectionID=85
+time="2026-03-26T13:03:45+11:00" level=warning msg="error running query" connectTime="2026-03-26 13:03:45.6565136 +1100 AEDT m=+6052.869743901" connectionDb=beads_bead connectionID=86 error="nothing to commit" queryTime="2026-03-26 13:03:45.6892401 +1100 AEDT m=+6052.902470401"
+time="2026-03-26T13:03:45+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=87
+time="2026-03-26T13:03:45+11:00" level=info msg=ConnectionClosed connectionID=87
+time="2026-03-26T13:03:46+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=88
+time="2026-03-26T13:03:46+11:00" level=info msg=ConnectionClosed connectionID=88
+time="2026-03-26T13:03:46+11:00" level=info msg=ConnectionClosed connectionID=86
+time="2026-03-26T14:16:29+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=89
+time="2026-03-26T14:16:29+11:00" level=info msg=ConnectionClosed connectionID=89
+time="2026-03-26T14:16:29+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=90
+time="2026-03-26T14:16:29+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=91
+time="2026-03-26T14:16:29+11:00" level=info msg=ConnectionClosed connectionID=90
+time="2026-03-26T14:16:30+11:00" level=warning msg="error running query" connectTime="2026-03-26 14:16:29.6264142 +1100 AEDT m=+10416.839644501" connectionDb=beads_bead connectionID=91 error="nothing to commit" queryTime="2026-03-26 14:16:30.7602098 +1100 AEDT m=+10417.973440101"
+time="2026-03-26T14:16:31+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=92
+time="2026-03-26T14:16:31+11:00" level=info msg=ConnectionClosed connectionID=92
+time="2026-03-26T14:16:31+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=93
+time="2026-03-26T14:16:31+11:00" level=info msg=ConnectionClosed connectionID=93
+time="2026-03-26T14:16:31+11:00" level=info msg=ConnectionClosed connectionID=91
+time="2026-03-26T14:18:17+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=94
+time="2026-03-26T14:18:17+11:00" level=info msg=ConnectionClosed connectionID=94
+time="2026-03-26T14:18:17+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=95
+time="2026-03-26T14:18:17+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=96
+time="2026-03-26T14:18:17+11:00" level=info msg=ConnectionClosed connectionID=95
+time="2026-03-26T14:18:18+11:00" level=warning msg="error running query" connectTime="2026-03-26 14:18:17.7863552 +1100 AEDT m=+10524.999585501" connectionDb=beads_bead connectionID=96 error="nothing to commit" queryTime="2026-03-26 14:18:18.3267053 +1100 AEDT m=+10525.539935601"
+time="2026-03-26T14:18:18+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=97
+time="2026-03-26T14:18:18+11:00" level=info msg=ConnectionClosed connectionID=97
+time="2026-03-26T14:18:19+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=98
+time="2026-03-26T14:18:19+11:00" level=info msg=ConnectionClosed connectionID=98
+time="2026-03-26T14:18:19+11:00" level=info msg=ConnectionClosed connectionID=96
+time="2026-03-26T19:19:27+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=99
+time="2026-03-26T19:19:27+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:64674: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 99"
+time="2026-03-26T19:19:27+11:00" level=info msg=ConnectionClosed connectionID=99
+time="2026-03-26T19:19:27+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=100
+time="2026-03-26T19:19:27+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=101
+time="2026-03-26T19:19:27+11:00" level=info msg=ConnectionClosed connectionID=100
+time="2026-03-26T19:19:27+11:00" level=info msg=ConnectionClosed connectionID=101
+time="2026-03-26T19:19:33+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=102
+time="2026-03-26T19:19:33+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:64685: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 102"
+time="2026-03-26T19:19:33+11:00" level=info msg=ConnectionClosed connectionID=102
+time="2026-03-26T19:19:33+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=103
+time="2026-03-26T19:19:33+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=104
+time="2026-03-26T19:19:33+11:00" level=info msg=ConnectionClosed connectionID=103
+time="2026-03-26T19:19:33+11:00" level=info msg=ConnectionClosed connectionID=104
+time="2026-03-26T19:19:33+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=105
+time="2026-03-26T19:19:33+11:00" level=info msg=ConnectionClosed connectionID=105
+time="2026-03-26T19:19:33+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=106
+time="2026-03-26T19:19:33+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=107
+time="2026-03-26T19:19:33+11:00" level=info msg=ConnectionClosed connectionID=106
+time="2026-03-26T19:19:33+11:00" level=warning msg="error running query" connectTime="2026-03-26 19:19:33.3298178 +1100 AEDT m=+28600.543048101" connectionDb=beads_bead connectionID=107 error="nothing to commit" queryTime="2026-03-26 19:19:33.5812571 +1100 AEDT m=+28600.794487401"
+time="2026-03-26T19:19:34+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=108
+time="2026-03-26T19:19:34+11:00" level=info msg=ConnectionClosed connectionID=108
+time="2026-03-26T19:19:35+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=109
+time="2026-03-26T19:19:35+11:00" level=info msg=ConnectionClosed connectionID=109
+time="2026-03-26T19:19:35+11:00" level=info msg=ConnectionClosed connectionID=107
+time="2026-03-26T19:19:52+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=110
+time="2026-03-26T19:19:52+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:59516: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 110"
+time="2026-03-26T19:19:52+11:00" level=info msg=ConnectionClosed connectionID=110
+time="2026-03-26T19:19:52+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=111
+time="2026-03-26T19:19:52+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=112
+time="2026-03-26T19:19:52+11:00" level=info msg=ConnectionClosed connectionID=111
+time="2026-03-26T19:19:52+11:00" level=info msg=ConnectionClosed connectionID=112
+time="2026-03-26T19:20:00+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=113
+time="2026-03-26T19:20:00+11:00" level=info msg=ConnectionClosed connectionID=113
+time="2026-03-26T19:20:00+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=114
+time="2026-03-26T19:20:00+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=115
+time="2026-03-26T19:20:00+11:00" level=info msg=ConnectionClosed connectionID=114
+time="2026-03-26T19:20:00+11:00" level=info msg=ConnectionClosed connectionID=115
+time="2026-03-26T19:20:01+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=116
+time="2026-03-26T19:20:01+11:00" level=info msg=ConnectionClosed connectionID=116
+time="2026-03-26T19:20:01+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=117
+time="2026-03-26T19:20:01+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=118
+time="2026-03-26T19:20:01+11:00" level=info msg=ConnectionClosed connectionID=117
+time="2026-03-26T19:20:01+11:00" level=info msg=ConnectionClosed connectionID=118
+time="2026-03-26T19:20:15+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=119
+time="2026-03-26T19:20:15+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:60309: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 119"
+time="2026-03-26T19:20:15+11:00" level=info msg=ConnectionClosed connectionID=119
+time="2026-03-26T19:20:15+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=120
+time="2026-03-26T19:20:15+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=121
+time="2026-03-26T19:20:15+11:00" level=info msg=ConnectionClosed connectionID=120
+time="2026-03-26T19:20:15+11:00" level=info msg=ConnectionClosed connectionID=121
+time="2026-03-26T19:20:16+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=122
+time="2026-03-26T19:20:16+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:60318: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 122"
+time="2026-03-26T19:20:16+11:00" level=info msg=ConnectionClosed connectionID=122
+time="2026-03-26T19:20:16+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=123
+time="2026-03-26T19:20:16+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=124
+time="2026-03-26T19:20:16+11:00" level=info msg=ConnectionClosed connectionID=123
+time="2026-03-26T19:20:16+11:00" level=info msg=ConnectionClosed connectionID=124
+time="2026-03-26T19:20:16+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=125
+time="2026-03-26T19:20:16+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:60321: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 125"
+time="2026-03-26T19:20:16+11:00" level=info msg=ConnectionClosed connectionID=125
+time="2026-03-26T19:20:16+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=126
+time="2026-03-26T19:20:16+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=127
+time="2026-03-26T19:20:16+11:00" level=info msg=ConnectionClosed connectionID=126
+time="2026-03-26T19:20:16+11:00" level=info msg=ConnectionClosed connectionID=127
+time="2026-03-26T19:20:52+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=128
+time="2026-03-26T19:20:52+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:56396: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 128"
+time="2026-03-26T19:20:52+11:00" level=info msg=ConnectionClosed connectionID=128
+time="2026-03-26T19:20:52+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=129
+time="2026-03-26T19:20:52+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=130
+time="2026-03-26T19:20:52+11:00" level=info msg=ConnectionClosed connectionID=129
+time="2026-03-26T19:20:52+11:00" level=warning msg="error running query" connectTime="2026-03-26 19:20:52.3903791 +1100 AEDT m=+28679.603609401" connectionDb=beads_bead connectionID=130 error="nothing to commit" queryTime="2026-03-26 19:20:52.4229897 +1100 AEDT m=+28679.636220001"
+time="2026-03-26T19:20:52+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=131
+time="2026-03-26T19:20:52+11:00" level=info msg=ConnectionClosed connectionID=131
+time="2026-03-26T19:20:53+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=132
+time="2026-03-26T19:20:53+11:00" level=info msg=ConnectionClosed connectionID=132
+time="2026-03-26T19:20:53+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=133
+time="2026-03-26T19:20:53+11:00" level=info msg=ConnectionClosed connectionID=133
+time="2026-03-26T19:20:53+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=134
+time="2026-03-26T19:20:53+11:00" level=warning msg="error running query" connectTime="2026-03-26 19:20:53.3735512 +1100 AEDT m=+28680.586781501" connectionDb=beads_bead connectionID=134 error="fatal: remote 'origin' not found.\nPlease make sure the remote exists." queryTime="2026-03-26 19:20:53.3780994 +1100 AEDT m=+28680.591329701"
+time="2026-03-26T19:20:53+11:00" level=info msg=ConnectionClosed connectionID=134
+time="2026-03-26T19:20:53+11:00" level=error msg="Error reading packet from client 130 (127.0.0.1:56398): read tcp 127.0.0.1:65381->127.0.0.1:56398: wsarecv: An existing connection was forcibly closed by the remote host.\nio.ReadFull(header size) failed"
+time="2026-03-26T19:20:53+11:00" level=info msg=ConnectionClosed connectionID=130
+time="2026-03-26T19:21:51+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=135
+time="2026-03-26T19:21:51+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:63043: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 135"
+time="2026-03-26T19:21:51+11:00" level=info msg=ConnectionClosed connectionID=135
+time="2026-03-26T19:21:51+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=136
+time="2026-03-26T19:21:51+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=137
+time="2026-03-26T19:21:51+11:00" level=info msg=ConnectionClosed connectionID=136
+time="2026-03-26T19:21:51+11:00" level=info msg=ConnectionClosed connectionID=137
+time="2026-03-26T19:22:24+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=138
+time="2026-03-26T19:22:24+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:64710: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 138"
+time="2026-03-26T19:22:24+11:00" level=info msg=ConnectionClosed connectionID=138
+time="2026-03-26T19:22:24+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=139
+time="2026-03-26T19:22:24+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=140
+time="2026-03-26T19:22:24+11:00" level=info msg=ConnectionClosed connectionID=139
+time="2026-03-26T19:22:24+11:00" level=warning msg="error running query" connectTime="2026-03-26 19:22:24.2252734 +1100 AEDT m=+28771.438503701" connectionDb=beads_bead connectionID=140 error="nothing to commit" queryTime="2026-03-26 19:22:24.2582471 +1100 AEDT m=+28771.471477401"
+time="2026-03-26T19:22:24+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=141
+time="2026-03-26T19:22:24+11:00" level=info msg=ConnectionClosed connectionID=141
+time="2026-03-26T19:22:24+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=142
+time="2026-03-26T19:22:24+11:00" level=info msg=ConnectionClosed connectionID=142
+time="2026-03-26T19:22:24+11:00" level=info msg=ConnectionClosed connectionID=140
+time="2026-03-26T19:22:30+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=143
+time="2026-03-26T19:22:30+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:61927: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 143"
+time="2026-03-26T19:22:30+11:00" level=info msg=ConnectionClosed connectionID=143
+time="2026-03-26T19:22:30+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=144
+time="2026-03-26T19:22:30+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=145
+time="2026-03-26T19:22:30+11:00" level=info msg=ConnectionClosed connectionID=144
+time="2026-03-26T19:22:30+11:00" level=warning msg="error running query" connectTime="2026-03-26 19:22:30.8809145 +1100 AEDT m=+28778.094144801" connectionDb=beads_bead connectionID=145 error="nothing to commit" queryTime="2026-03-26 19:22:30.9140109 +1100 AEDT m=+28778.127241201"
+time="2026-03-26T19:22:31+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=146
+time="2026-03-26T19:22:31+11:00" level=info msg=ConnectionClosed connectionID=146
+time="2026-03-26T19:22:31+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=147
+time="2026-03-26T19:22:31+11:00" level=info msg=ConnectionClosed connectionID=147
+time="2026-03-26T19:22:31+11:00" level=error msg="Error reading packet from client 145 (127.0.0.1:61929): read tcp 127.0.0.1:65381->127.0.0.1:61929: wsarecv: An existing connection was forcibly closed by the remote host.\nio.ReadFull(header size) failed"
+time="2026-03-26T19:22:31+11:00" level=info msg=ConnectionClosed connectionID=145
+time="2026-03-26T19:23:27+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=148
+time="2026-03-26T19:23:27+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:49589: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 148"
+time="2026-03-26T19:23:27+11:00" level=info msg=ConnectionClosed connectionID=148
+time="2026-03-26T19:23:27+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=149
+time="2026-03-26T19:23:27+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=150
+time="2026-03-26T19:23:27+11:00" level=info msg=ConnectionClosed connectionID=149
+time="2026-03-26T19:23:27+11:00" level=warning msg="error running query" connectTime="2026-03-26 19:23:27.8344217 +1100 AEDT m=+28835.047652001" connectionDb=beads_bead connectionID=150 error="nothing to commit" queryTime="2026-03-26 19:23:27.8695078 +1100 AEDT m=+28835.082738101"
+time="2026-03-26T19:23:28+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=151
+time="2026-03-26T19:23:28+11:00" level=info msg=ConnectionClosed connectionID=151
+time="2026-03-26T19:23:28+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=152
+time="2026-03-26T19:23:28+11:00" level=info msg=ConnectionClosed connectionID=152
+time="2026-03-26T19:23:28+11:00" level=info msg=ConnectionClosed connectionID=150
+time="2026-03-26T19:23:33+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=153
+time="2026-03-26T19:23:33+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:49471: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 153"
+time="2026-03-26T19:23:33+11:00" level=info msg=ConnectionClosed connectionID=153
+time="2026-03-26T19:23:33+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=154
+time="2026-03-26T19:23:33+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=155
+time="2026-03-26T19:23:33+11:00" level=info msg=ConnectionClosed connectionID=154
+time="2026-03-26T19:23:44+11:00" level=error msg="Error reading packet from client 155 (127.0.0.1:49473): read tcp 127.0.0.1:65381->127.0.0.1:49473: wsarecv: An established connection was aborted by the software in your host machine.\nio.ReadFull(header size) failed"
+time="2026-03-26T19:23:44+11:00" level=info msg=ConnectionClosed connectionID=155
+time="2026-03-26T19:23:59+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=156
+time="2026-03-26T19:23:59+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:56806: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 156"
+time="2026-03-26T19:23:59+11:00" level=info msg=ConnectionClosed connectionID=156
+time="2026-03-26T19:23:59+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=157
+time="2026-03-26T19:23:59+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=158
+time="2026-03-26T19:23:59+11:00" level=info msg=ConnectionClosed connectionID=157
+time="2026-03-26T19:24:00+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=159
+time="2026-03-26T19:24:00+11:00" level=info msg=ConnectionClosed connectionID=159
+time="2026-03-26T19:24:00+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=160
+time="2026-03-26T19:24:00+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:56812: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 160"
+time="2026-03-26T19:24:00+11:00" level=info msg=ConnectionClosed connectionID=160
+time="2026-03-26T19:24:00+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=161
+time="2026-03-26T19:24:00+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=162
+time="2026-03-26T19:24:00+11:00" level=info msg=ConnectionClosed connectionID=161
+time="2026-03-26T19:24:00+11:00" level=info msg=ConnectionClosed connectionID=162
+time="2026-03-26T19:24:00+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=163
+time="2026-03-26T19:24:00+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:56815: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 163"
+time="2026-03-26T19:24:00+11:00" level=info msg=ConnectionClosed connectionID=163
+time="2026-03-26T19:24:00+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=164
+time="2026-03-26T19:24:00+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=165
+time="2026-03-26T19:24:00+11:00" level=info msg=ConnectionClosed connectionID=164
+time="2026-03-26T19:24:00+11:00" level=info msg=ConnectionClosed connectionID=165
+time="2026-03-26T19:24:00+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=166
+time="2026-03-26T19:24:00+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:56818: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 166"
+time="2026-03-26T19:24:00+11:00" level=info msg=ConnectionClosed connectionID=166
+time="2026-03-26T19:24:00+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=167
+time="2026-03-26T19:24:00+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=168
+time="2026-03-26T19:24:00+11:00" level=info msg=ConnectionClosed connectionID=167
+time="2026-03-26T19:24:00+11:00" level=info msg=ConnectionClosed connectionID=168
+time="2026-03-26T19:24:00+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=169
+time="2026-03-26T19:24:00+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:56821: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 169"
+time="2026-03-26T19:24:00+11:00" level=info msg=ConnectionClosed connectionID=169
+time="2026-03-26T19:24:00+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=170
+time="2026-03-26T19:24:00+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=171
+time="2026-03-26T19:24:00+11:00" level=info msg=ConnectionClosed connectionID=170
+time="2026-03-26T19:24:00+11:00" level=info msg=ConnectionClosed connectionID=171
+time="2026-03-26T19:24:00+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=172
+time="2026-03-26T19:24:00+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:56824: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 172"
+time="2026-03-26T19:24:00+11:00" level=info msg=ConnectionClosed connectionID=172
+time="2026-03-26T19:24:00+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=173
+time="2026-03-26T19:24:00+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:56825: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 173"
+time="2026-03-26T19:24:00+11:00" level=info msg=ConnectionClosed connectionID=173
+time="2026-03-26T19:24:00+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=174
+time="2026-03-26T19:24:00+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=175
+time="2026-03-26T19:24:00+11:00" level=info msg=ConnectionClosed connectionID=174
+time="2026-03-26T19:24:00+11:00" level=info msg=ConnectionClosed connectionID=175
+time="2026-03-26T19:24:00+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=176
+time="2026-03-26T19:24:00+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:56828: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 176"
+time="2026-03-26T19:24:00+11:00" level=info msg=ConnectionClosed connectionID=176
+time="2026-03-26T19:24:00+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=177
+time="2026-03-26T19:24:00+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=178
+time="2026-03-26T19:24:00+11:00" level=info msg=ConnectionClosed connectionID=177
+time="2026-03-26T19:24:01+11:00" level=warning msg="error running query" connectTime="2026-03-26 19:24:00.9485915 +1100 AEDT m=+28868.161821801" connectionDb=beads_bead connectionID=178 error="nothing to commit" queryTime="2026-03-26 19:24:01.0173222 +1100 AEDT m=+28868.230552501"
+time="2026-03-26T19:24:01+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=179
+time="2026-03-26T19:24:01+11:00" level=info msg=ConnectionClosed connectionID=179
+time="2026-03-26T19:24:01+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=180
+time="2026-03-26T19:24:01+11:00" level=info msg=ConnectionClosed connectionID=180
+time="2026-03-26T19:24:01+11:00" level=info msg=ConnectionClosed connectionID=178
+time="2026-03-26T19:24:01+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=181
+time="2026-03-26T19:24:01+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:56837: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 181"
+time="2026-03-26T19:24:01+11:00" level=info msg=ConnectionClosed connectionID=181
+time="2026-03-26T19:24:01+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=182
+time="2026-03-26T19:24:01+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=183
+time="2026-03-26T19:24:01+11:00" level=info msg=ConnectionClosed connectionID=182
+time="2026-03-26T19:24:01+11:00" level=info msg=ConnectionClosed connectionID=183
+time="2026-03-26T19:24:01+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=184
+time="2026-03-26T19:24:01+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:56840: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 184"
+time="2026-03-26T19:24:01+11:00" level=info msg=ConnectionClosed connectionID=184
+time="2026-03-26T19:24:01+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=185
+time="2026-03-26T19:24:01+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=186
+time="2026-03-26T19:24:01+11:00" level=info msg=ConnectionClosed connectionID=185
+time="2026-03-26T19:24:01+11:00" level=info msg=ConnectionClosed connectionID=186
+time="2026-03-26T19:24:01+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=187
+time="2026-03-26T19:24:01+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:56843: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 187"
+time="2026-03-26T19:24:01+11:00" level=info msg=ConnectionClosed connectionID=187
+time="2026-03-26T19:24:01+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=188
+time="2026-03-26T19:24:01+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=189
+time="2026-03-26T19:24:01+11:00" level=info msg=ConnectionClosed connectionID=188
+time="2026-03-26T19:24:01+11:00" level=info msg=ConnectionClosed connectionID=189
+time="2026-03-26T19:24:01+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=190
+time="2026-03-26T19:24:01+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:56846: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 190"
+time="2026-03-26T19:24:01+11:00" level=info msg=ConnectionClosed connectionID=190
+time="2026-03-26T19:24:01+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=191
+time="2026-03-26T19:24:01+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=192
+time="2026-03-26T19:24:01+11:00" level=info msg=ConnectionClosed connectionID=191
+time="2026-03-26T19:24:01+11:00" level=info msg=ConnectionClosed connectionID=192
+time="2026-03-26T19:24:01+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=193
+time="2026-03-26T19:24:01+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:56849: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 193"
+time="2026-03-26T19:24:01+11:00" level=info msg=ConnectionClosed connectionID=193
+time="2026-03-26T19:24:01+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=194
+time="2026-03-26T19:24:01+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=195
+time="2026-03-26T19:24:01+11:00" level=info msg=ConnectionClosed connectionID=194
+time="2026-03-26T19:24:01+11:00" level=info msg=ConnectionClosed connectionID=195
+time="2026-03-26T19:24:01+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=196
+time="2026-03-26T19:24:01+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:56852: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 196"
+time="2026-03-26T19:24:01+11:00" level=info msg=ConnectionClosed connectionID=196
+time="2026-03-26T19:24:01+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=197
+time="2026-03-26T19:24:01+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=198
+time="2026-03-26T19:24:01+11:00" level=info msg=ConnectionClosed connectionID=197
+time="2026-03-26T19:24:01+11:00" level=info msg=ConnectionClosed connectionID=198
+time="2026-03-26T19:24:01+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=199
+time="2026-03-26T19:24:01+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:56855: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 199"
+time="2026-03-26T19:24:01+11:00" level=info msg=ConnectionClosed connectionID=199
+time="2026-03-26T19:24:01+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=200
+time="2026-03-26T19:24:01+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=201
+time="2026-03-26T19:24:01+11:00" level=info msg=ConnectionClosed connectionID=200
+time="2026-03-26T19:24:02+11:00" level=info msg=ConnectionClosed connectionID=201
+time="2026-03-26T19:24:02+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=202
+time="2026-03-26T19:24:02+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:56858: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 202"
+time="2026-03-26T19:24:02+11:00" level=info msg=ConnectionClosed connectionID=202
+time="2026-03-26T19:24:02+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=203
+time="2026-03-26T19:24:02+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=204
+time="2026-03-26T19:24:02+11:00" level=info msg=ConnectionClosed connectionID=203
+time="2026-03-26T19:24:02+11:00" level=info msg=ConnectionClosed connectionID=204
+time="2026-03-26T19:24:02+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=205
+time="2026-03-26T19:24:02+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:56861: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 205"
+time="2026-03-26T19:24:02+11:00" level=info msg=ConnectionClosed connectionID=205
+time="2026-03-26T19:24:02+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=206
+time="2026-03-26T19:24:02+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=207
+time="2026-03-26T19:24:02+11:00" level=info msg=ConnectionClosed connectionID=206
+time="2026-03-26T19:24:02+11:00" level=warning msg="error running query" connectTime="2026-03-26 19:24:02.1317892 +1100 AEDT m=+28869.345019501" connectionDb=beads_bead connectionID=207 error="nothing to commit" queryTime="2026-03-26 19:24:02.1666576 +1100 AEDT m=+28869.379887901"
+time="2026-03-26T19:24:02+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=208
+time="2026-03-26T19:24:02+11:00" level=info msg=ConnectionClosed connectionID=208
+time="2026-03-26T19:24:02+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=209
+time="2026-03-26T19:24:02+11:00" level=info msg=ConnectionClosed connectionID=209
+time="2026-03-26T19:24:02+11:00" level=info msg=ConnectionClosed connectionID=207
+time="2026-03-26T19:24:02+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=210
+time="2026-03-26T19:24:02+11:00" level=info msg=ConnectionClosed connectionID=210
+time="2026-03-26T19:24:03+11:00" level=info msg=ConnectionClosed connectionID=158
+time="2026-03-26T19:24:17+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=211
+time="2026-03-26T19:24:17+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:60163: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 211"
+time="2026-03-26T19:24:17+11:00" level=info msg=ConnectionClosed connectionID=211
+time="2026-03-26T19:24:17+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=212
+time="2026-03-26T19:24:17+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=213
+time="2026-03-26T19:24:17+11:00" level=info msg=ConnectionClosed connectionID=212
+time="2026-03-26T19:24:17+11:00" level=warning msg="error running query" connectTime="2026-03-26 19:24:17.2831325 +1100 AEDT m=+28884.496362801" connectionDb=beads_bead connectionID=213 error="nothing to commit" queryTime="2026-03-26 19:24:17.622335 +1100 AEDT m=+28884.835565301"
+time="2026-03-26T19:24:17+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=214
+time="2026-03-26T19:24:17+11:00" level=info msg=ConnectionClosed connectionID=214
+time="2026-03-26T19:24:18+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=215
+time="2026-03-26T19:24:18+11:00" level=info msg=ConnectionClosed connectionID=215
+time="2026-03-26T19:24:18+11:00" level=info msg=ConnectionClosed connectionID=213
+time="2026-03-26T19:24:22+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=216
+time="2026-03-26T19:24:22+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:60174: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 216"
+time="2026-03-26T19:24:22+11:00" level=info msg=ConnectionClosed connectionID=216
+time="2026-03-26T19:24:22+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=217
+time="2026-03-26T19:24:22+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=218
+time="2026-03-26T19:24:22+11:00" level=info msg=ConnectionClosed connectionID=217
+time="2026-03-26T19:24:22+11:00" level=warning msg="error running query" connectTime="2026-03-26 19:24:22.2191802 +1100 AEDT m=+28889.432410501" connectionDb=beads_bead connectionID=218 error="nothing to commit" queryTime="2026-03-26 19:24:22.2605487 +1100 AEDT m=+28889.473779001"
+time="2026-03-26T19:24:22+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=219
+time="2026-03-26T19:24:22+11:00" level=info msg=ConnectionClosed connectionID=219
+time="2026-03-26T19:24:22+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=220
+time="2026-03-26T19:24:22+11:00" level=info msg=ConnectionClosed connectionID=220
+time="2026-03-26T19:24:22+11:00" level=info msg=ConnectionClosed connectionID=218
+time="2026-03-26T19:24:28+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=221
+time="2026-03-26T19:24:28+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:60186: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 221"
+time="2026-03-26T19:24:28+11:00" level=info msg=ConnectionClosed connectionID=221
+time="2026-03-26T19:24:28+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=222
+time="2026-03-26T19:24:28+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=223
+time="2026-03-26T19:24:28+11:00" level=info msg=ConnectionClosed connectionID=222
+time="2026-03-26T19:24:29+11:00" level=warning msg="error running query" connectTime="2026-03-26 19:24:28.9948101 +1100 AEDT m=+28896.208040401" connectionDb=beads_bead connectionID=223 error="nothing to commit" queryTime="2026-03-26 19:24:29.0237949 +1100 AEDT m=+28896.237025201"
+time="2026-03-26T19:24:29+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=224
+time="2026-03-26T19:24:29+11:00" level=info msg=ConnectionClosed connectionID=224
+time="2026-03-26T19:24:29+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=225
+time="2026-03-26T19:24:29+11:00" level=info msg=ConnectionClosed connectionID=225
+time="2026-03-26T19:24:32+11:00" level=info msg=ConnectionClosed connectionID=223
+time="2026-03-26T19:24:36+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=226
+time="2026-03-26T19:24:36+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:56154: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 226"
+time="2026-03-26T19:24:36+11:00" level=info msg=ConnectionClosed connectionID=226
+time="2026-03-26T19:24:36+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=227
+time="2026-03-26T19:24:36+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=228
+time="2026-03-26T19:24:36+11:00" level=info msg=ConnectionClosed connectionID=227
+time="2026-03-26T19:24:37+11:00" level=warning msg="error running query" connectTime="2026-03-26 19:24:36.5148776 +1100 AEDT m=+28903.728107901" connectionDb=beads_bead connectionID=228 error="nothing to commit" queryTime="2026-03-26 19:24:37.105251 +1100 AEDT m=+28904.318481301"
+time="2026-03-26T19:24:37+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=229
+time="2026-03-26T19:24:37+11:00" level=info msg=ConnectionClosed connectionID=229
+time="2026-03-26T19:24:37+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=230
+time="2026-03-26T19:24:37+11:00" level=info msg=ConnectionClosed connectionID=230
+time="2026-03-26T19:24:38+11:00" level=info msg=ConnectionClosed connectionID=228
+time="2026-03-26T19:24:43+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=231
+time="2026-03-26T19:24:43+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:61967: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 231"
+time="2026-03-26T19:24:43+11:00" level=info msg=ConnectionClosed connectionID=231
+time="2026-03-26T19:24:43+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=232
+time="2026-03-26T19:24:43+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=233
+time="2026-03-26T19:24:43+11:00" level=info msg=ConnectionClosed connectionID=232
+time="2026-03-26T19:24:43+11:00" level=info msg=ConnectionClosed connectionID=233
+time="2026-03-26T19:24:54+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=234
+time="2026-03-26T19:24:54+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:61907: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 234"
+time="2026-03-26T19:24:54+11:00" level=info msg=ConnectionClosed connectionID=234
+time="2026-03-26T19:24:54+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=235
+time="2026-03-26T19:24:54+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=236
+time="2026-03-26T19:24:54+11:00" level=info msg=ConnectionClosed connectionID=235
+time="2026-03-26T19:24:54+11:00" level=info msg=ConnectionClosed connectionID=236
+time="2026-03-26T19:37:49+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=237
+time="2026-03-26T19:37:49+11:00" level=error msg="Cannot send HandshakeV10 packet: write tcp 127.0.0.1:65381->127.0.0.1:56851: wsasend: An established connection was aborted by the software in your host machine.\nWrite(packet) failed\nconn 237"
+time="2026-03-26T19:37:49+11:00" level=info msg=ConnectionClosed connectionID=237
+time="2026-03-26T19:37:49+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=238
+time="2026-03-26T19:37:49+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=239
+time="2026-03-26T19:37:49+11:00" level=info msg=ConnectionClosed connectionID=238
+time="2026-03-26T19:37:49+11:00" level=warning msg="error running query" connectTime="2026-03-26 19:37:49.3512934 +1100 AEDT m=+29696.564523701" connectionDb=beads_bead connectionID=239 error="nothing to commit" queryTime="2026-03-26 19:37:49.380537 +1100 AEDT m=+29696.593767301"
+time="2026-03-26T19:37:51+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=240
+time="2026-03-26T19:37:51+11:00" level=info msg=ConnectionClosed connectionID=240
+time="2026-03-26T19:37:51+11:00" level=info msg=NewConnection DisableClientMultiStatements=false connectionID=241
+time="2026-03-26T19:37:51+11:00" level=info msg=ConnectionClosed connectionID=241
+time="2026-03-26T19:37:51+11:00" level=info msg=ConnectionClosed connectionID=239
+time="2026-03-27T08:42:30+11:00" level=info msg="Server closing listener. No longer accepting connections."
+time="2026-03-27T08:42:31+11:00" level=info msg="stats stopped: context canceled"
